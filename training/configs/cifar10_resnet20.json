@@ -1,0 +1,14 @@
+{
+  "dataset": "cifar10",
+  "architecture": "resnet20",
+  "batch_size": 128,
+  "num_epochs": 200,
+  "learning_rate": 0.001,
+  "num_burn_in": 100,
+  "prior_std": 1.0,
+  "temperature": 1.0,
+  "mcmc_method": "sgld",
+  "device": "auto",
+  "num_workers": 2,
+  "experiment_name": "cifar10_resnet20"
+}
