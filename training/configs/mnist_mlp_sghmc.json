@@ -13,6 +13,7 @@
   "mcmc_sigma": 1.0,
   "device": "auto",
   "num_workers": 0,
+  "seed": 42,
   "experiment_name": "mnist_mlp_sghmc",
   "mlp_hidden_sizes": [128, 64],
   "dropout_rate": 0

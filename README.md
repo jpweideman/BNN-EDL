@@ -31,7 +31,7 @@ bnn-edl/
 │   │   └── __init__.py
 │   ├── utils/
 │   │   ├── training.py          # Training utilities and model comparison
-│   │   ├── evaluation.py        # Evaluation metrics and uncertainty analysis
+│   │   ├── evaluation.py        # Placeholder
 │   │   └── __init__.py
 │   └── losses/
 │       ├── edl_loss.py          # EDL loss functions (for future use)

@@ -11,12 +11,17 @@
   "device": "auto",
   "num_workers": 2,
   "experiment_name": "cifar10_small_cnn",
-  
-  "cnn_conv_channels": [16, 32],
+  "cnn_conv_channels": [
+    16,
+    32
+  ],
   "cnn_conv_layers_per_block": 3,
-  "cnn_fc_hidden_sizes": [256],
+  "cnn_fc_hidden_sizes": [
+    256
+  ],
   "cnn_kernel_size": 3,
   "cnn_pool_size": 2,
   "cnn_use_batch_norm": true,
-  "dropout_rate": 0.2
+  "dropout_rate": 0.2,
+  "seed": 42
 }

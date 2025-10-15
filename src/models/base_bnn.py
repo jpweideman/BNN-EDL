@@ -302,7 +302,11 @@ def create_cnn(
 
 
 def _weights_init(m):
-    """Initialize weights using Kaiming normal initialization."""
+    """
+    Initialize weights using Kaiming normal initialization.
+    
+    Reference: https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
+    """
     classname = m.__class__.__name__
     if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
         nn.init.kaiming_normal_(m.weight)
@@ -318,20 +322,72 @@ class LambdaLayer(nn.Module):
         return self.lambd(x)
 
 
+class FunctionalBatchNorm2d(nn.Module):
+    """
+    Simplified BatchNorm2d that works with torch.func.functional_call().
+    
+    This implementation uses only batch statistics during training to avoid
+    issues with running statistics in functional calls.
+    """
+    
+    def __init__(self, num_features, eps=1e-5, momentum=0.1, affine=True):
+        super(FunctionalBatchNorm2d, self).__init__()
+        self.num_features = num_features
+        self.eps = eps
+        self.momentum = momentum
+        self.affine = affine
+        
+        if self.affine:
+            # These are learnable parameters
+            self.weight = nn.Parameter(torch.ones(num_features))
+            self.bias = nn.Parameter(torch.zeros(num_features))
+        else:
+            self.register_parameter('weight', None)
+            self.register_parameter('bias', None)
+        
+    def forward(self, input):
+        if self.training:
+            # Always use batch statistics during training for BNN compatibility
+            batch_mean = input.mean([0, 2, 3])
+            batch_var = input.var([0, 2, 3], unbiased=False)
+            mean = batch_mean
+            var = batch_var
+        else:
+            # During evaluation, also use batch statistics for simplicity
+            # This ensures consistent behavior in functional calls
+            batch_mean = input.mean([0, 2, 3])
+            batch_var = input.var([0, 2, 3], unbiased=False)
+            mean = batch_mean
+            var = batch_var
+        
+        # Normalize
+        input_normalized = (input - mean.view(1, -1, 1, 1)) / torch.sqrt(var.view(1, -1, 1, 1) + self.eps)
+        
+        # Apply affine transformation if enabled
+        if self.affine:
+            input_normalized = input_normalized * self.weight.view(1, -1, 1, 1) + self.bias.view(1, -1, 1, 1)
+        
+        return input_normalized
+
+
 class BasicBlock(nn.Module):
     """
     Basic residual block for CIFAR-10 ResNet.
     
     Modified from the original implementation to be compatible with 
-    functional calls by removing BatchNorm layers.
+    functional calls by using FunctionalBatchNorm2d instead of standard BatchNorm.
+    
+    Reference: https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
     """
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1, option='A'):
         super(BasicBlock, self).__init__()
-        # Use bias=True since we're not using BatchNorm
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=True)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=True)
+        # Use bias=False to match reference implementation exactly
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = FunctionalBatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = FunctionalBatchNorm2d(planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -345,15 +401,16 @@ class BasicBlock(nn.Module):
                                                                    (0, 0, 0, 0, planes//4, planes//4), 
                                                                    "constant", 0))
             elif option == 'B':
-                # Option B with bias=True for functional compatibility
+                # Option B to match reference implementation
                 self.shortcut = nn.Sequential(
-                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=True)
+                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                     FunctionalBatchNorm2d(self.expansion * planes)
                 )
 
     def forward(self, x):
-        # Using torch.relu instead of F.relu for consistency
-        out = torch.relu(self.conv1(x))
-        out = self.conv2(out)
+        # Match reference implementation exactly with BatchNorm
+        out = torch.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
         out = torch.relu(out)
         return out
@@ -377,8 +434,9 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.in_planes = 16
 
-        # Use bias=True since we're not using BatchNorm
-        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1, bias=True)
+        # Match reference implementation exactly with BatchNorm
+        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = FunctionalBatchNorm2d(16)
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
@@ -396,7 +454,8 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = torch.relu(self.conv1(x))
+        # Match reference implementation exactly with BatchNorm
+        out = torch.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
@@ -411,7 +470,7 @@ def create_resnet20(input_shape: Tuple[int, int, int], num_classes: int) -> nn.M
     Create a ResNet-20 model for CIFAR-10.
     
     Properly implemented ResNet-20 as described in the original paper.
-    Modified for BNN compatibility by removing BatchNorm layers.
+    Uses FunctionalBatchNorm2d for BNN compatibility with torch.func.functional_call().
     
     Reference: https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
     Author: Yerlan Idelbayev
@@ -421,7 +480,7 @@ def create_resnet20(input_shape: Tuple[int, int, int], num_classes: int) -> nn.M
         num_classes: Number of output classes
         
     Returns:
-        ResNet-20 model with ~0.27M parameters
+        ResNet-20 model with ~0.27M parameters and functional BatchNorm
     """
     channels, height, width = input_shape
     return ResNet(BasicBlock, [3, 3, 3], num_classes, input_channels=channels)

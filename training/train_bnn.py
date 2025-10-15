@@ -26,6 +26,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from models.standard_bnn import StandardBNN
 from models.base_bnn import create_mlp, create_cnn, create_resnet20
 from datasets.classification import get_mnist_dataloaders, get_cifar10_dataloaders, infer_dataset_info
+from utils.training import set_random_seeds
 
 
 def create_experiment_dir(base_dir: str, experiment_name: str) -> Path:
@@ -43,18 +44,25 @@ def save_config(config: dict, save_path: Path):
 
 
 def save_model(bnn: StandardBNN, save_path: Path):
-    """Save BNN model state."""
-    model_state = {
-        'model_state_dict': bnn.model.state_dict(),
-        'posterior_samples': bnn.posterior_samples if hasattr(bnn, 'posterior_samples') else [],
-        'num_classes': bnn.num_classes,
-        'prior_std': bnn.prior_std,
-        'temperature': bnn.temperature,
-        'mcmc_method': bnn.mcmc_method,
-        'device': str(bnn.device)
-    }
-    torch.save(model_state, save_path / "model.pt")
-    print(f"Model saved to {save_path / 'model.pt'}")
+    """Save BNN model state (final save with any remaining samples)."""
+    # Trigger final save of any remaining samples
+    if hasattr(bnn, 'posterior_samples') and len(bnn.posterior_samples) > 0:
+        bnn._batch_save_samples_to_model()
+        bnn.posterior_samples = []  # Clear buffer
+    
+    # The model.pt file should already exist from incremental saves during training
+    model_path = save_path / "model.pt"
+    if model_path.exists():
+        print(f"Model with incremental samples saved at: {model_path}")
+        # Load to check sample count
+        try:
+            model_state = torch.load(model_path, map_location='cpu')
+            sample_count = len(model_state.get('posterior_samples', []))
+            print(f"Total posterior samples in model.pt: {sample_count}")
+        except:
+            print("Could not verify sample count in saved model")
+    else:
+        print(f"Warning: Expected model.pt not found at {model_path}")
 
 
 def load_model(model_path: Path, model_architecture: nn.Module) -> StandardBNN:
@@ -77,6 +85,11 @@ def load_model(model_path: Path, model_architecture: nn.Module) -> StandardBNN:
     # Load posterior samples if available
     if 'posterior_samples' in checkpoint and checkpoint['posterior_samples']:
         bnn.posterior_samples = checkpoint['posterior_samples']
+        bnn.sample_count = checkpoint.get('sample_count', len(bnn.posterior_samples))
+        bnn.model_save_path = str(model_path)  # Set path for future saves
+        print(f"Model loaded with {len(bnn.posterior_samples)} posterior samples")
+    else:
+        print("Model loaded without posterior samples")
     
     return bnn
 
@@ -121,7 +134,8 @@ def get_model_architecture(arch_name: str, input_shape: tuple, num_classes: int,
         raise ValueError(f"Unknown architecture: {arch_name}")
 
 
-def get_dataloaders(dataset_name: str, batch_size: int, num_workers: int = 0, architecture: str = "mlp"):
+def get_dataloaders(dataset_name: str, batch_size: int, num_workers: int = 0, architecture: str = "mlp", 
+                   augment: bool = True):
     """Get dataloaders for specified dataset."""
     # Use project root data directory
     project_root = Path(__file__).parent.parent
@@ -137,14 +151,15 @@ def get_dataloaders(dataset_name: str, batch_size: int, num_workers: int = 0, ar
             batch_size=batch_size,
             num_workers=num_workers,
             train_split=1.0,  # Use all training data
-            flatten=flatten_images
+            flatten=flatten_images,
         )
     elif dataset_name == "cifar10":
         return get_cifar10_dataloaders(
             data_dir=str(data_root),
             batch_size=batch_size,
             num_workers=num_workers,
-            train_split=1.0  # Use all training data
+            train_split=1.0,  # Use all training data
+            augment=augment,
         )
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
@@ -152,6 +167,9 @@ def get_dataloaders(dataset_name: str, batch_size: int, num_workers: int = 0, ar
 
 def train_bnn(config: dict, exp_dir: Path):
     """Main training function."""
+    # Set random seeds for reproducibility
+    set_random_seeds(config['seed'])
+    
     print(f"Starting BNN training with config:")
     print(json.dumps(config, indent=2))
     
@@ -160,7 +178,8 @@ def train_bnn(config: dict, exp_dir: Path):
         config['dataset'], 
         config['batch_size'], 
         config['num_workers'],
-        config['architecture']
+        config['architecture'],
+        augment=config.get('augment', True)  # Use augment from config, default True
     )
     
     # Infer dataset info
@@ -187,6 +206,9 @@ def train_bnn(config: dict, exp_dir: Path):
     
     print(f"Created {config['mcmc_method']} BNN with {sum(p.numel() for p in model.parameters())} parameters")
     print(f"Using device: {bnn.device}")
+    
+    # Set model save path for incremental saving during training
+    bnn.model_save_path = str(exp_dir / "model.pt")
     
     # Train the model 
     bnn.fit(
@@ -236,6 +258,12 @@ def main():
                        choices=["mlp", "cnn", "resnet20"], 
                        help="Model architecture")
     
+    # Data preprocessing
+    parser.add_argument("--augment", action="store_true", default=True,
+                       help="Enable data augmentation (default: True)")
+    parser.add_argument("--no-augment", dest="augment", action="store_false",
+                       help="Disable data augmentation")
+    
     # Architecture-specific parameters
     parser.add_argument("--mlp_hidden_sizes", type=int, nargs='+', default=[128, 64],
                        help="Hidden layer sizes for MLP (e.g., --mlp_hidden_sizes 256 128 64)")
@@ -282,6 +310,7 @@ def main():
     parser.add_argument("--device", type=str, default="auto", 
                        choices=["auto", "cuda", "cpu"], help="Device to use")
     parser.add_argument("--num_workers", type=int, default=0, help="Number of data loader workers")
+    parser.add_argument("--seed", type=int, default=123, help="Random seed for reproducibility")
     
     # Experiment management
     parser.add_argument("--experiment_name", type=str, default="bnn_experiment", 
@@ -325,6 +354,7 @@ def main():
         'mcmc_momenta': args.mcmc_momenta,
         'device': args.device,
         'num_workers': args.num_workers,
+        'seed': args.seed,
         'experiment_name': args.experiment_name,
         'timestamp': datetime.datetime.now().isoformat(),
         

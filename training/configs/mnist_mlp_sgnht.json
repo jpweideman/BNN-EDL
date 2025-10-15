@@ -15,6 +15,10 @@
   "device": "auto",
   "num_workers": 0,
   "experiment_name": "mnist_mlp_sgnht",
-  "mlp_hidden_sizes": [128, 64],
-  "dropout_rate": 0
+  "mlp_hidden_sizes": [
+    128,
+    64
+  ],
+  "dropout_rate": 0,
+  "seed": 42
 }

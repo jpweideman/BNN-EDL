@@ -10,5 +10,6 @@
   "mcmc_method": "sgld",
   "device": "auto",
   "num_workers": 0,
-  "experiment_name": "mnist_resnet20"
+  "experiment_name": "mnist_resnet20",
+  "seed": 42
 }

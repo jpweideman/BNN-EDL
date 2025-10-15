@@ -13,5 +13,6 @@
   "mcmc_sigma": 1.0,
   "device": "auto",
   "num_workers": 2,
-  "experiment_name": "cifar10_resnet20_sghmc"
+  "experiment_name": "cifar10_resnet20_sghmc",
+  "seed": 42
 }

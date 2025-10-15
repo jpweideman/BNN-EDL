@@ -8,6 +8,7 @@ from torch import func
 import posteriors
 from typing import Dict, Tuple, Any, Optional
 import numpy as np
+import os
 from tqdm import tqdm
 
 from .base_bnn import BaseBNN
@@ -321,8 +322,10 @@ class StandardBNN(BaseBNN):
         # Ensure state is on correct device
         self.state = self._move_state_to_device(self.state)
         
-        # Track samples after burn-in
-        self.posterior_samples = []
+        # Track samples after burn-in (batch saving approach)
+        self.posterior_samples = []  # Temporary buffer for batch saving
+        self.sample_count = 0
+        self.save_frequency = 10  # Save every N epochs to balance speed vs memory
         
         # Create epoch progress bar
         epoch_pbar = tqdm(range(num_epochs), desc="Training BNN", disable=not verbose)
@@ -346,26 +349,46 @@ class StandardBNN(BaseBNN):
                 
                 num_batches += 1
                 
-                # Collect samples after burn-in
+                # Memory cleanup every 10 batches to prevent accumulation
+                if num_batches % 10 == 0:
+                    torch.cuda.empty_cache()
+                
+                # Collect samples after burn-in (batch approach)
                 if epoch >= num_burn_in:
-                    # Sample current parameters
+                    # Sample current parameters and add to buffer
                     sample = self.sample_posterior()
                     self.posterior_samples.append(sample)
+                    self.sample_count += 1
                 
                 # Update batch progress bar
                 batch_pbar.set_postfix({
                     'Batch': f"{num_batches}/{len(train_loader)}",
-                    'Samples': len(self.posterior_samples) if epoch >= num_burn_in else 0
+                    'Samples': self.sample_count if epoch >= num_burn_in else 0
                 })
+            
+            # Batch save samples every N epochs (after burn-in)
+            if epoch >= num_burn_in and (epoch - num_burn_in + 1) % self.save_frequency == 0:
+                self._batch_save_samples_to_model()
+                if verbose:
+                    print(f"\nSaved {len(self.posterior_samples)} samples to model.pt at epoch {epoch}")
+                # Clear buffer after saving
+                self.posterior_samples = []
             
             # Update epoch progress bar
             epoch_pbar.set_postfix({
-                'Samples Collected': len(self.posterior_samples),
+                'Samples Collected': self.sample_count,
                 'Burn-in': 'Complete' if epoch >= num_burn_in else f"{epoch}/{num_burn_in}"
             })
         
+        # Final save of any remaining samples
+        if len(self.posterior_samples) > 0:
+            self._batch_save_samples_to_model()
+            if verbose:
+                print(f"\nFinal save: {len(self.posterior_samples)} remaining samples saved to model.pt")
+            self.posterior_samples = []
+        
         if verbose:
-            print(f"Training completed! Collected {len(self.posterior_samples)} posterior samples.")
+            print(f"Training completed! Collected {self.sample_count} posterior samples.")
     
     def sample_posterior(self) -> Dict[str, torch.Tensor]:
         """
@@ -429,33 +452,121 @@ class StandardBNN(BaseBNN):
         
         return mean_pred, epistemic_uncertainty
     
-    def evaluate(self, test_loader) -> Dict[str, float]:
+    def _batch_save_samples_to_model(self) -> None:
         """
-        Evaluate the BNN on test data using all collected posterior samples.
+        Save current batch of posterior samples to model.pt file.
+        This appends to existing samples in the file using atomic writes.
+        """
+        if not hasattr(self, 'model_save_path') or self.model_save_path is None:
+            # Default save path if not set
+            self.model_save_path = "model.pt"
         
-        Args:
-            test_loader: Test data loader
+        # Load existing model state if file exists
+        existing_samples = []
+        model_state = {}
+        
+        if os.path.exists(self.model_save_path):
+            try:
+                model_state = torch.load(self.model_save_path, map_location='cpu', weights_only=False)
+                existing_samples = model_state.get('posterior_samples', [])
+            except (EOFError, RuntimeError, pickle.UnpicklingError) as e:
+                print(f"Warning: Could not load existing model file ({e}). Starting fresh.")
+                existing_samples = []
+                model_state = {}
+        
+        # Add new samples (move to CPU to save memory)
+        cpu_samples = []
+        for sample in self.posterior_samples:
+            cpu_sample = {k: v.detach().cpu() for k, v in sample.items()}
+            cpu_samples.append(cpu_sample)
+        
+        existing_samples.extend(cpu_samples)
+        
+        # Update model state with samples and metadata
+        model_state.update({
+            'model_state_dict': self.model.state_dict(),
+            'posterior_samples': existing_samples,
+            'sample_count': self.sample_count,
+            'num_classes': self.num_classes,
+            'prior_std': self.prior_std,
+            'temperature': self.temperature,
+            'mcmc_method': self.mcmc_method,
+            'device': str(self.device)
+        })
+        
+        # Atomic save: write to temporary file first, then rename
+        temp_path = self.model_save_path + '.tmp'
+        
+        try:
+            torch.save(model_state, temp_path)
             
-        Returns:
-            Dictionary with evaluation metrics
-        """
-        if not hasattr(self, 'posterior_samples') or len(self.posterior_samples) == 0:
-            raise ValueError("No posterior samples available! Train the model first.")
+            # Atomic rename (works on most filesystems)
+            if os.path.exists(temp_path):
+                os.rename(temp_path, self.model_save_path)
+                
+        except Exception as e:
+            # Clean up temp file if something went wrong
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+            raise e
+        
+    
+    def _get_total_samples(self, model_path: str) -> int:
+        """Get total number of samples without loading all samples into memory."""
+        try:
+            model_state = torch.load(model_path, map_location='cpu', weights_only=False)
+            total_samples = len(model_state.get('posterior_samples', []))
+            del model_state
+            return total_samples
+        except (EOFError, RuntimeError, pickle.UnpicklingError) as e:
+            raise ValueError(f"Model file {model_path} is corrupted: {e}. Please retrain the model.")
+
+    def _stream_samples_from_disk(self, model_path: str, chunk_size: int = 50):
+        """Generator that streams sample chunks from disk with minimal memory usage."""
+        try:
+            model_state = torch.load(model_path, map_location='cpu', weights_only=False)
+            all_samples = model_state.get('posterior_samples', [])
+            total_samples = len(all_samples)
+            
+            if total_samples == 0:
+                raise ValueError("No posterior samples found in model file!")
+            
+            # Process samples in chunks
+            for start_idx in range(0, total_samples, chunk_size):
+                end_idx = min(start_idx + chunk_size, total_samples)
+                chunk = all_samples[start_idx:end_idx]
+                yield chunk, start_idx, end_idx, total_samples
+                del chunk
+                
+            del all_samples, model_state
+            
+        except (EOFError, RuntimeError, pickle.UnpicklingError) as e:
+            raise ValueError(f"Model file {model_path} is corrupted: {e}. Please retrain the model.")
+
+    def evaluate(self, test_loader) -> Dict[str, float]:
+        """Evaluate the BNN on test data using ALL posterior samples with streaming."""
+        model_path = getattr(self, 'model_save_path', 'model.pt')
+        if not os.path.exists(model_path):
+            raise ValueError("No model.pt file found! Train the model first.")
+            
+        total_samples = self._get_total_samples(model_path)
+        if total_samples == 0:
+            raise ValueError("No posterior samples found in model file!")
+            
+        sample_chunk_size = 50
         
         all_predictions = []
         all_labels = []
         all_uncertainties = []
         
-        # Sample-weighted accumulators. Results are dataset-level averages.
+        # Sample-weighted accumulators
         sum_loss = 0.0
         sum_total_u = 0.0
         sum_aleatoric_u = 0.0
         sum_epistemic_u = 0.0
         total_N = 0
         
-        num_samples = len(self.posterior_samples)
-        
-        # Progress bar over test batches.
+        # Progress bar over test batches
         eval_pbar = tqdm(test_loader, desc="Evaluating BNN", leave=False)
         
         eps = 1e-8
@@ -467,13 +578,28 @@ class StandardBNN(BaseBNN):
             images = images.to(self.device)
             B = labels.size(0)
             
-            # Predictive probabilities per posterior sample. Shape [num_samples, batch_size, num_classes]
-            probs_list = []
-            for sample_params in self.posterior_samples:
-                with torch.no_grad():
-                    logits = func.functional_call(self.model, sample_params, images)
-                    probs_list.append(torch.softmax(logits, dim=1))
-            probs = torch.stack(probs_list, dim=0)
+            # Collect predictions by streaming sample chunks
+            all_batch_probs = []
+            
+            # Stream samples from disk in chunks
+            for sample_chunk, start_idx, end_idx, total in self._stream_samples_from_disk(model_path, sample_chunk_size):
+                chunk_probs = []
+                for sample_params in sample_chunk:
+                    device_sample = {k: v.to(self.device) for k, v in sample_params.items()}
+                    with torch.no_grad():
+                        logits = func.functional_call(self.model, device_sample, images)
+                        chunk_probs.append(torch.softmax(logits, dim=1))
+                
+                if chunk_probs:
+                    chunk_probs_tensor = torch.stack(chunk_probs, dim=0)
+                    all_batch_probs.append(chunk_probs_tensor)
+                
+                del chunk_probs, device_sample
+                if str(self.device).startswith('cuda'):
+                    torch.cuda.empty_cache()
+            
+            # Combine all chunks for this batch
+            probs = torch.cat(all_batch_probs, dim=0)  # [num_samples, batch_size, num_classes]
             
             # Posterior predictive mean. E_s[p(y|x, θ_s)] with small clamp for stability.
             expected_probs = probs.mean(dim=0)
@@ -509,7 +635,7 @@ class StandardBNN(BaseBNN):
             eval_pbar.set_postfix({
                 'Batch': f"{batch_idx}/{len(test_loader)}",
                 'Samples': f"{total_N}/{len(test_loader.dataset)}",
-                'Posterior': num_samples
+                'Posterior': total_samples
             })
         
         # Concatenate and compute aggregate metrics
@@ -531,7 +657,7 @@ class StandardBNN(BaseBNN):
             'accuracy': accuracy,
             'ece': ece,
             'avg_uncertainty': avg_uncertainty,
-            'num_samples': num_samples,
+            'num_samples': total_samples,
             'test_samples': len(all_predictions),
             'loss': loss,
             'total_uncertainty': total_uncertainty,

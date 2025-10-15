@@ -11,12 +11,19 @@
   "device": "auto",
   "num_workers": 0,
   "experiment_name": "mnist_wide_cnn",
-  
-  "cnn_conv_channels": [64, 128, 256],
+  "cnn_conv_channels": [
+    64,
+    128,
+    256
+  ],
   "cnn_conv_layers_per_block": 1,
-  "cnn_fc_hidden_sizes": [1024, 512],
+  "cnn_fc_hidden_sizes": [
+    1024,
+    512
+  ],
   "cnn_kernel_size": 5,
   "cnn_pool_size": 2,
   "cnn_use_batch_norm": false,
-  "dropout_rate": 0
+  "dropout_rate": 0,
+  "seed": 42
 }
