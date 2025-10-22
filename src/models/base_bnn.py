@@ -475,11 +475,11 @@ class _ResNet(nn.Module):
     [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
         Deep Residual Learning for Image Recognition. arXiv:1512.03385
     """
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes=10, input_channels=3):
         super().__init__()
         self.in_planes = 64
 
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
+        self.conv1 = nn.Conv2d(input_channels, 64, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = FilterResponseNorm2d(64)
         self.tlu1 = TLU2d(64)
@@ -536,6 +536,7 @@ def create_resnet18(input_shape: Tuple[int, int, int], num_classes: int, **kwarg
     [2] activatedgeek/understanding-bayesian-classification
         https://github.com/activatedgeek/understanding-bayesian-classification
     """
-    return _ResNet(_BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
+    channels, height, width = input_shape
+    return _ResNet(_BasicBlock, [2, 2, 2, 2], num_classes=num_classes, input_channels=channels)
 
 
