@@ -27,10 +27,14 @@ def load_and_run_config(config_path: str):
     
     # Boolean arguments that need special handling
     bool_args = {
-        'cnn_use_batch_norm', 'quick'
+        'cnn_use_batch_norm', 'quick', 'no_periodic_eval', 'use_wandb', 'use_adaptive_burnin'
     }
     
     for key, value in config.items():
+        # Skip null values
+        if value is None:
+            continue
+            
         if key in list_args and isinstance(value, list):
             # For list arguments, add each element separately
             if value:  # Only add if list is not empty

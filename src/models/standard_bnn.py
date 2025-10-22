@@ -8,9 +8,17 @@ from torch import func
 import posteriors
 from typing import Dict, Tuple, Any, Optional
 import numpy as np
+import os
 from tqdm import tqdm
 
 from .base_bnn import BaseBNN
+
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+    wandb = None
 
 
 class StandardBNN(BaseBNN):
@@ -295,6 +303,12 @@ class StandardBNN(BaseBNN):
         lr: float = 1e-3,
         num_burn_in: int = 50,
         verbose: bool = True,
+        eval_frequency: int = 20,
+        test_loader = None,
+        use_wandb: bool = False,
+        wandb_project: str = "bnn-training",
+        wandb_run_name: Optional[str] = None,
+        wandb_config: Optional[dict] = None,
         **kwargs
     ):
         """
@@ -302,11 +316,65 @@ class StandardBNN(BaseBNN):
         
         Args:
             train_loader: Training data loader
-            num_epochs: Number of training epochs
+            num_epochs: Maximum number of training epochs
             lr: Learning rate
-            num_burn_in: Number of burn-in epochs (samples to discard)
+            num_burn_in: Number of burn-in epochs
             verbose: Whether to print training progress
+            eval_frequency: Frequency of test evaluation (every N epochs after burn-in)
+            test_loader: Test data loader for periodic evaluation during training
+            use_wandb: Whether to use Weights & Biases for experiment tracking
+            wandb_project: W&B project name
+            wandb_run_name: W&B run name
+            wandb_config: Additional config to log to W&B
         """
+        # Initialize Weights & Biases if requested
+        if use_wandb:
+            if not WANDB_AVAILABLE:
+                print("Warning: wandb not available. Install with: pip install wandb")
+                use_wandb = False
+            else:
+                # Prepare wandb config
+                config = {
+                    'num_epochs': num_epochs,
+                    'lr': lr,
+                    'num_burn_in': num_burn_in,
+                    'eval_frequency': eval_frequency,
+                    'prior_std': self.prior_std,
+                    'temperature': self.temperature,
+                    'mcmc_method': self.mcmc_method,
+                    'num_parameters': sum(p.numel() for p in self.model.parameters()),
+                    'device': str(self.device),
+                }
+                
+                # Add user-provided config
+                if wandb_config:
+                    config.update(wandb_config)
+                
+                # Auto-detect experiment directory from wandb_config
+                wandb_dir = None
+                if wandb_config and 'experiment_dir' in wandb_config:
+                    experiment_dir = wandb_config['experiment_dir']
+                    wandb_dir = os.path.join(str(experiment_dir), "wandb")
+                    os.makedirs(wandb_dir, exist_ok=True)
+                
+                # Initialize wandb
+                wandb_init_kwargs = {
+                    'project': wandb_project,
+                    'name': wandb_run_name,
+                    'config': config,
+                    'reinit': True
+                }
+                if wandb_dir:
+                    wandb_init_kwargs['dir'] = wandb_dir
+                
+                wandb.init(**wandb_init_kwargs)
+                
+                if verbose:
+                    if wandb_dir:
+                        print(f"Initialized W&B tracking: project='{wandb_project}', run='{wandb.run.name}', dir='{wandb_dir}'")
+                    else:
+                        print(f"Initialized W&B tracking: project='{wandb_project}', run='{wandb.run.name}'")
+        
         # Get dataset size for proper temperature scaling
         num_data = len(train_loader.dataset)
         
@@ -324,11 +392,18 @@ class StandardBNN(BaseBNN):
         # Track samples after burn-in
         self.posterior_samples = []
         
+        # Initialize tracking variables
+        self.log_posterior_history = []
+        self.training_loss_history = []
+        self.test_metrics_history = []
+        
         # Create epoch progress bar
         epoch_pbar = tqdm(range(num_epochs), desc="Training BNN", disable=not verbose)
         
         for epoch in epoch_pbar:
             num_batches = 0
+            epoch_log_posteriors = []
+            epoch_losses = []
             
             # Create batch progress bar
             batch_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", 
@@ -338,6 +413,19 @@ class StandardBNN(BaseBNN):
                 # Move batch to device
                 batch = self._move_batch_to_device(batch)
                 
+                # Compute log posterior for tracking (before update)
+                log_post_val, output = self.log_posterior(self.state.params if hasattr(self.state, 'params') else self.state, batch)
+                
+                # Extract training loss (negative cross-entropy part)
+                images, labels = batch
+                if self._needs_flattened_input and len(images.shape) > 2:
+                    images = images.view(images.size(0), -1)
+                train_loss = nn.functional.cross_entropy(output, labels)
+                
+                # Track metrics
+                epoch_log_posteriors.append(log_post_val.item())
+                epoch_losses.append(train_loss.item())
+                
                 # Update state
                 self.state, info = self.transform.update(self.state, batch)
                 
@@ -346,26 +434,79 @@ class StandardBNN(BaseBNN):
                 
                 num_batches += 1
                 
-                # Collect samples after burn-in
-                if epoch >= num_burn_in:
-                    # Sample current parameters
-                    sample = self.sample_posterior()
-                    self.posterior_samples.append(sample)
-                
                 # Update batch progress bar
+                is_burn_in = epoch < num_burn_in
                 batch_pbar.set_postfix({
                     'Batch': f"{num_batches}/{len(train_loader)}",
-                    'Samples': len(self.posterior_samples) if epoch >= num_burn_in else 0
+                    'LogPost': f"{log_post_val.item():.3f}",
+                    'Loss': f"{train_loss.item():.3f}",
+                    'Samples': len(self.posterior_samples) if not is_burn_in else 0
                 })
             
+            # Store epoch-level metrics
+            avg_log_posterior = np.mean(epoch_log_posteriors)
+            avg_train_loss = np.mean(epoch_losses)
+            self.log_posterior_history.append(avg_log_posterior)
+            self.training_loss_history.append(avg_train_loss)
+            
+            # Log to wandb
+            is_burn_in = epoch < num_burn_in
+            if use_wandb and WANDB_AVAILABLE:
+                wandb.log({
+                    'epoch': epoch + 1,
+                    'log_posterior': avg_log_posterior,
+                    'train_loss': avg_train_loss,
+                    'num_posterior_samples': len(self.posterior_samples),
+                    'is_burn_in': is_burn_in
+                }, step=epoch + 1)
+            
+            # Collect ONE sample per epoch after burn-in (proper BNN sampling)
+            if not is_burn_in:
+                # Sample current parameters after seeing the full dataset
+                sample = self.sample_posterior()
+                self.posterior_samples.append(sample)
+                
+                # Periodic test evaluation (only after burn-in)
+                if test_loader is not None and (epoch - num_burn_in) % eval_frequency == 0:
+                    if verbose:
+                        print(f"\nEvaluating at epoch {epoch+1}...")
+                    test_metrics = self.evaluate(test_loader)
+                    test_metrics['epoch'] = epoch + 1
+                    self.test_metrics_history.append(test_metrics)
+                    
+                    if verbose:
+                        print(f"Test Accuracy: {test_metrics['accuracy']:.4f}, "
+                              f"ECE: {test_metrics['ece']:.4f}, "
+                              f"Epistemic Unc: {test_metrics['epistemic_uncertainty']:.4f}")
+                    
+                    # Log test metrics to wandb
+                    if use_wandb and WANDB_AVAILABLE:
+                        wandb.log({
+                            'test_accuracy': test_metrics['accuracy'],
+                            'test_ece': test_metrics['ece'],
+                            'test_loss': test_metrics['loss'],
+                            'test_total_uncertainty': test_metrics['total_uncertainty'],
+                            'test_aleatoric_uncertainty': test_metrics['aleatoric_uncertainty'],
+                            'test_epistemic_uncertainty': test_metrics['epistemic_uncertainty'],
+                            'test_avg_uncertainty': test_metrics['avg_uncertainty'],
+                        }, step=epoch + 1)
+            
             # Update epoch progress bar
+            burn_in_status = 'Complete' if not is_burn_in else f"{epoch + 1}/{num_burn_in}"
             epoch_pbar.set_postfix({
-                'Samples Collected': len(self.posterior_samples),
-                'Burn-in': 'Complete' if epoch >= num_burn_in else f"{epoch}/{num_burn_in}"
+                'LogPost': f"{avg_log_posterior:.3f}",
+                'TrainLoss': f"{avg_train_loss:.3f}",
+                'Samples': len(self.posterior_samples),
+                'Burn-in': burn_in_status
             })
         
         if verbose:
-            print(f"Training completed! Collected {len(self.posterior_samples)} posterior samples.")
+            print(f"\nTraining completed!")
+            print(f"Collected {len(self.posterior_samples)} posterior samples.")
+        
+        # Finish wandb run
+        if use_wandb and WANDB_AVAILABLE:
+            wandb.finish()
     
     def sample_posterior(self) -> Dict[str, torch.Tensor]:
         """
@@ -404,6 +545,10 @@ class StandardBNN(BaseBNN):
         
         # Move batch to device
         batch = batch.to(self.device)
+        
+        # Flatten batch only if the model needs flattened input (MLP)
+        if self._needs_flattened_input and len(batch.shape) > 2:
+            batch = batch.view(batch.size(0), -1)
         
         # Use all collected samples or a random subset if num_samples is set.
         samples_to_use = self.posterior_samples
@@ -466,6 +611,10 @@ class StandardBNN(BaseBNN):
             labels = labels.to(self.device)
             images = images.to(self.device)
             B = labels.size(0)
+            
+            # Flatten images only if the model needs flattened input (MLP)
+            if self._needs_flattened_input and len(images.shape) > 2:
+                images = images.view(images.size(0), -1)
             
             # Predictive probabilities per posterior sample. Shape [num_samples, batch_size, num_classes]
             probs_list = []
@@ -531,8 +680,8 @@ class StandardBNN(BaseBNN):
             'accuracy': accuracy,
             'ece': ece,
             'avg_uncertainty': avg_uncertainty,
-            'num_samples': num_samples,
-            'test_samples': len(all_predictions),
+            'num_posterior_samples': num_samples,
+            'num_test_points': len(all_predictions),
             'loss': loss,
             'total_uncertainty': total_uncertainty,
             'aleatoric_uncertainty': aleatoric_uncertainty,

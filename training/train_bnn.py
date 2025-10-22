@@ -16,15 +16,19 @@ import json
 import argparse
 import datetime
 from pathlib import Path
+import warnings
 import torch
 import torch.nn as nn
+
+# Suppress Pydantic warnings from posteriors library
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 import numpy as np
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from models.standard_bnn import StandardBNN
-from models.base_bnn import create_mlp, create_cnn, create_resnet20
+from models.base_bnn import create_mlp, create_cnn, create_resnet20, create_resnet18
 from datasets.classification import get_mnist_dataloaders, get_cifar10_dataloaders, infer_dataset_info
 
 
@@ -89,8 +93,7 @@ def get_model_architecture(arch_name: str, input_shape: tuple, num_classes: int,
     if arch_name == "mlp":
         input_size = np.prod(input_shape)
         hidden_sizes = config.get('mlp_hidden_sizes', [128, 64])
-        dropout_rate = config.get('dropout_rate', 0.1)
-        return create_mlp(input_size, hidden_sizes, num_classes, dropout_rate)
+        return create_mlp(input_size, hidden_sizes, num_classes)
         
     elif arch_name == "cnn":
         # CNN configuration parameters
@@ -99,23 +102,22 @@ def get_model_architecture(arch_name: str, input_shape: tuple, num_classes: int,
         fc_hidden_sizes = config.get('cnn_fc_hidden_sizes', None)  # e.g., [512, 256]
         kernel_size = config.get('cnn_kernel_size', 3)
         pool_size = config.get('cnn_pool_size', 2)
-        dropout_rate = config.get('dropout_rate', 0.25)
-        use_batch_norm = config.get('cnn_use_batch_norm', False)
         
         return create_cnn(
             input_shape=input_shape,
             num_classes=num_classes,
-            dropout_rate=dropout_rate,
             conv_channels=conv_channels,
             conv_layers_per_block=conv_layers_per_block,
             fc_hidden_sizes=fc_hidden_sizes,
             kernel_size=kernel_size,
-            pool_size=pool_size,
-            use_batch_norm=use_batch_norm
+            pool_size=pool_size
         )
         
     elif arch_name == "resnet20":
         return create_resnet20(input_shape, num_classes)
+        
+    elif arch_name == "resnet18":
+        return create_resnet18(input_shape, num_classes)
         
     else:
         raise ValueError(f"Unknown architecture: {arch_name}")
@@ -195,12 +197,19 @@ def train_bnn(config: dict, exp_dir: Path):
         lr=config['learning_rate'],
         num_burn_in=config['num_burn_in'],
         verbose=True,
+        eval_frequency=config.get('eval_frequency', 20),
+        test_loader=test_loader if not config.get('no_periodic_eval', False) else None,
+        # Weights & Biases parameters
+        use_wandb=config.get('use_wandb', False),
+        wandb_project=config.get('wandb_project', 'bnn-training'),
+        wandb_run_name=config['timestamped_exp_name'],
+        wandb_config=config,  # Pass full config to wandb 
         # Pass MCMC-specific parameters
         beta=config['mcmc_beta'],
         alpha=config['mcmc_alpha'],
         sigma=config['mcmc_sigma'],
         xi=config['mcmc_xi'],
-        momenta=config['mcmc_momenta']
+        momenta=config.get('mcmc_momenta', None)
     )
     
     # Evaluate on test set
@@ -213,7 +222,12 @@ def train_bnn(config: dict, exp_dir: Path):
     results = {
         'dataset_info': dataset_info,
         'test_metrics': test_metrics,
-        'training_config': config
+        'training_config': config,
+        'training_history': {
+            'log_posterior_history': bnn.log_posterior_history,
+            'training_loss_history': bnn.training_loss_history,
+            'test_metrics_history': bnn.test_metrics_history
+        }
     }
     
     with open(exp_dir / "results.json", "w") as f:
@@ -233,7 +247,7 @@ def main():
     parser.add_argument("--dataset", type=str, default="mnist", 
                        choices=["mnist", "cifar10"], help="Dataset to use")
     parser.add_argument("--architecture", type=str, default="mlp",
-                       choices=["mlp", "cnn", "resnet20"], 
+                       choices=["mlp", "cnn", "resnet20", "resnet18"], 
                        help="Model architecture")
     
     # Architecture-specific parameters
@@ -249,16 +263,15 @@ def main():
                        help="Kernel size for CNN convolutions")
     parser.add_argument("--cnn_pool_size", type=int, default=2,
                        help="Pool size for CNN max pooling")
-    parser.add_argument("--cnn_use_batch_norm", action="store_true",
-                       help="Use batch normalization in CNN")
-    parser.add_argument("--dropout_rate", type=float, default=None,
-                       help="Dropout rate (default varies by architecture)")
     
     # Training parameters
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--learning_rate", type=float, default=1e-3, help="Learning rate")
+    # MCMC parameters
     parser.add_argument("--num_burn_in", type=int, default=50, help="Number of burn-in epochs")
+    parser.add_argument("--eval_frequency", type=int, default=20, help="Frequency of test evaluation (every N epochs after burn-in)")
+    parser.add_argument("--no_periodic_eval", action="store_true", help="Disable periodic test evaluation during training")
     
     # BNN parameters
     parser.add_argument("--prior_std", type=float, default=1.0, help="Prior standard deviation")
@@ -292,6 +305,12 @@ def main():
     parser.add_argument("--output_dir", type=str, default=str(default_exp_dir), 
                        help="Directory to save experiments")
     
+    # Weights & Biases integration
+    parser.add_argument("--use_wandb", action="store_true", 
+                       help="Use Weights & Biases for experiment tracking")
+    parser.add_argument("--wandb_project", type=str, default="bnn-training",
+                       help="W&B project name")
+    
     # Quick presets
     parser.add_argument("--quick", action="store_true", 
                        help="Quick training (fewer epochs for testing)")
@@ -307,6 +326,9 @@ def main():
     # Create experiment directory
     exp_dir = create_experiment_dir(args.output_dir, args.experiment_name)
     
+    # Get the timestamped directory name to use as W&B run name
+    timestamped_exp_name = exp_dir.name
+    
     # Create config dictionary
     config = {
         'dataset': args.dataset,
@@ -315,6 +337,8 @@ def main():
         'num_epochs': args.num_epochs,
         'learning_rate': args.learning_rate,
         'num_burn_in': args.num_burn_in,
+        'eval_frequency': args.eval_frequency,
+        'no_periodic_eval': args.no_periodic_eval,
         'prior_std': args.prior_std,
         'temperature': args.temperature,
         'mcmc_method': args.mcmc_method,
@@ -326,7 +350,10 @@ def main():
         'device': args.device,
         'num_workers': args.num_workers,
         'experiment_name': args.experiment_name,
-        'timestamp': datetime.datetime.now().isoformat(),
+        'experiment_dir': str(exp_dir),  
+        'use_wandb': args.use_wandb,
+        'wandb_project': args.wandb_project,
+        'timestamped_exp_name': timestamped_exp_name,
         
         # Architecture-specific parameters
         'mlp_hidden_sizes': args.mlp_hidden_sizes,
@@ -335,8 +362,6 @@ def main():
         'cnn_fc_hidden_sizes': args.cnn_fc_hidden_sizes,
         'cnn_kernel_size': args.cnn_kernel_size,
         'cnn_pool_size': args.cnn_pool_size,
-        'cnn_use_batch_norm': args.cnn_use_batch_norm,
-        'dropout_rate': args.dropout_rate
     }
     
     # Save config
@@ -349,7 +374,7 @@ def main():
         print(f"Results saved to: {exp_dir}")
         print(f"Test Accuracy: {results['test_metrics']['accuracy']:.4f}")
         print(f"Test ECE: {results['test_metrics']['ece']:.4f}")
-        print(f"Posterior Samples: {int(results['test_metrics']['num_samples'])}")
+        print(f"Posterior Samples: {int(results['test_metrics']['num_posterior_samples'])}")
         
     except Exception as e:
         print(f"Training failed with error: {e}")

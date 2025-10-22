@@ -5,9 +5,11 @@ Base BNN class with common functionality.
 import torch
 import torch.nn as nn
 from torch import func
-from typing import Dict, Tuple, Any, Optional, List
+from typing import Dict, Tuple, Any, Optional, List, Tuple
 import numpy as np
 from abc import ABC, abstractmethod
+
+from .normalization import FilterResponseNorm2d, TLU2d
 
 
 class BaseBNN(ABC):
@@ -190,7 +192,7 @@ class BaseBNN(ABC):
         return ece.item()
 
 
-def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_rate: float = 0.1) -> nn.Module:
+def create_mlp(input_size: int, hidden_sizes: list, num_classes: int) -> nn.Module:
     """
     Create a Multi-Layer Perceptron for classification.
     
@@ -198,7 +200,6 @@ def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_ra
         input_size: Size of input features
         hidden_sizes: List of hidden layer sizes
         num_classes: Number of output classes
-        dropout_rate: Dropout rate for regularization
         
     Returns:
         PyTorch MLP model
@@ -208,13 +209,11 @@ def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_ra
     # Input layer
     layers.append(nn.Linear(input_size, hidden_sizes[0]))
     layers.append(nn.ReLU())
-    layers.append(nn.Dropout(dropout_rate))
     
     # Hidden layers
     for i in range(len(hidden_sizes) - 1):
         layers.append(nn.Linear(hidden_sizes[i], hidden_sizes[i + 1]))
         layers.append(nn.ReLU())
-        layers.append(nn.Dropout(dropout_rate))
     
     # Output layer
     layers.append(nn.Linear(hidden_sizes[-1], num_classes))
@@ -225,27 +224,23 @@ def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_ra
 def create_cnn(
     input_shape: Tuple[int, int, int], 
     num_classes: int, 
-    dropout_rate: float = 0.25,
     conv_channels: Optional[list] = None,
     conv_layers_per_block: int = 2,
     fc_hidden_sizes: Optional[list] = None,
     kernel_size: int = 3,
-    pool_size: int = 2,
-    use_batch_norm: bool = False
+    pool_size: int = 2
 ) -> nn.Module:
     """
-    Create a configurable CNN for classification.
+    Create a configurable CNN for classification with Filter Response Normalization and Thresholded Linear Units.
     
     Args:
         input_shape: Input shape (channels, height, width)
         num_classes: Number of output classes
-        dropout_rate: Dropout rate for regularization
         conv_channels: List of channel sizes for conv blocks [32, 64, 128]. If None, uses [32, 64]
         conv_layers_per_block: Number of conv layers per block (default: 2)
         fc_hidden_sizes: List of fully connected layer sizes. If None, uses [512]
         kernel_size: Kernel size for convolutions (default: 3)
         pool_size: Pool size for max pooling (default: 2)
-        use_batch_norm: Whether to use batch normalization
         
     Returns:
         PyTorch CNN model
@@ -268,14 +263,12 @@ def create_cnn(
         for layer_idx in range(conv_layers_per_block):
             layers.append(nn.Conv2d(in_channels, out_channels, 
                                   kernel_size=kernel_size, padding=kernel_size//2))
-            if use_batch_norm:
-                layers.append(nn.BatchNorm2d(out_channels))
-            layers.append(nn.ReLU())
+            layers.append(FilterResponseNorm2d(out_channels))
+            layers.append(TLU2d(out_channels))
             in_channels = out_channels
         
-        # Add pooling and dropout after each block
+        # Add pooling after each block
         layers.append(nn.MaxPool2d(pool_size))
-        layers.append(nn.Dropout(dropout_rate))
         
         # Update spatial dimensions
         current_height //= pool_size
@@ -292,7 +285,6 @@ def create_cnn(
     for fc_size in fc_hidden_sizes:
         layers.append(nn.Linear(fc_input_size, fc_size))
         layers.append(nn.ReLU())
-        layers.append(nn.Dropout(dropout_rate * 2))  # Higher dropout in dense layers
         fc_input_size = fc_size
     
     # Output layer
@@ -322,40 +314,42 @@ class BasicBlock(nn.Module):
     """
     Basic residual block for CIFAR-10 ResNet.
     
-    Modified from the original implementation to be compatible with 
-    functional calls by removing BatchNorm layers.
+    Uses Filter Response Normalization and Thresholded Linear Units
+    instead of BatchNorm and ReLU for BNN compatibility.
     """
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1, option='A'):
         super(BasicBlock, self).__init__()
-        # Use bias=True since we're not using BatchNorm
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=True)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = FilterResponseNorm2d(planes)
+        self.tlu1 = TLU2d(planes)
+        
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn2 = FilterResponseNorm2d(planes)
+        self.tlu2 = TLU2d(planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
             if option == 'A':
                 """
                 For CIFAR10 ResNet paper uses option A.
-                Modified to work without BatchNorm for functional compatibility.
                 """
                 self.shortcut = LambdaLayer(lambda x:
                                             torch.nn.functional.pad(x[:, :, ::2, ::2], 
                                                                    (0, 0, 0, 0, planes//4, planes//4), 
                                                                    "constant", 0))
             elif option == 'B':
-                # Option B with bias=True for functional compatibility
                 self.shortcut = nn.Sequential(
-                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=True)
+                     nn.Conv2d(in_planes, self.expansion * planes, kernel_size=1, stride=stride, bias=False),
+                     FilterResponseNorm2d(self.expansion * planes)
                 )
 
     def forward(self, x):
-        # Using torch.relu instead of F.relu for consistency
-        out = torch.relu(self.conv1(x))
-        out = self.conv2(out)
+        out = self.tlu1(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
-        out = torch.relu(out)
+        out = self.tlu2(out)
         return out
 
 
@@ -366,8 +360,8 @@ class ResNet(nn.Module):
     Modified from: https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
     Author: Yerlan Idelbayev
     
-    This implementation is adapted for BNN functional calls by removing BatchNorm
-    layers and using bias=True in convolutions.
+    Uses Filter Response Normalization and Thresholded Linear Units
+    instead of BatchNorm and ReLU for BNN compatibility.
     
     Reference:
     [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
@@ -377,8 +371,10 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         self.in_planes = 16
 
-        # Use bias=True since we're not using BatchNorm
-        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1, bias=True)
+        self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = FilterResponseNorm2d(16)
+        self.tlu1 = TLU2d(16)
+        
         self.layer1 = self._make_layer(block, 16, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 32, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 64, num_blocks[2], stride=2)
@@ -396,7 +392,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = torch.relu(self.conv1(x))
+        out = self.tlu1(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
@@ -411,7 +407,8 @@ def create_resnet20(input_shape: Tuple[int, int, int], num_classes: int) -> nn.M
     Create a ResNet-20 model for CIFAR-10.
     
     Properly implemented ResNet-20 as described in the original paper.
-    Modified for BNN compatibility by removing BatchNorm layers.
+    Uses Filter Response Normalization and Thresholded Linear Units
+    instead of BatchNorm and ReLU for BNN compatibility.
     
     Reference: https://github.com/akamaster/pytorch_resnet_cifar10/blob/master/resnet.py
     Author: Yerlan Idelbayev
@@ -425,5 +422,120 @@ def create_resnet20(input_shape: Tuple[int, int, int], num_classes: int) -> nn.M
     """
     channels, height, width = input_shape
     return ResNet(BasicBlock, [3, 3, 3], num_classes, input_channels=channels)
+
+
+class _BasicBlock(nn.Module):
+    """
+    Basic residual block for ResNet18/34 with Filter Response Normalization.
+    
+    Exactly follows the reference implementation from:
+    https://github.com/activatedgeek/understanding-bayesian-classification/blob/main/src/data_aug/models/resnet_frn.py
+    
+    Reference:
+    [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+        Deep Residual Learning for Image Recognition. arXiv:1512.03385
+    """
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1):
+        super().__init__()
+        self.conv1 = nn.Conv2d(
+            in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = FilterResponseNorm2d(planes)
+        self.tlu1 = TLU2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
+                               stride=1, padding=1, bias=False)
+        self.bn2 = FilterResponseNorm2d(planes)
+        self.tlu2 = TLU2d(planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion*planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion*planes,
+                          kernel_size=1, stride=stride, bias=False),
+                FilterResponseNorm2d(self.expansion*planes)
+            )
+
+    def forward(self, x):
+        out = self.tlu1(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        out = self.tlu2(out)
+        return out
+
+
+class _ResNet(nn.Module):
+    """
+    ResNet architecture with Filter Response Normalization and Thresholded Linear Units.
+    
+    Exactly follows the reference implementation from:
+    https://github.com/activatedgeek/understanding-bayesian-classification/blob/main/src/data_aug/models/resnet_frn.py
+    
+    Reference:
+    [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+        Deep Residual Learning for Image Recognition. arXiv:1512.03385
+    """
+    def __init__(self, block, num_blocks, num_classes=10):
+        super().__init__()
+        self.in_planes = 64
+
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3,
+                               stride=1, padding=1, bias=False)
+        self.bn1 = FilterResponseNorm2d(64)
+        self.tlu1 = TLU2d(64)
+        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.linear = nn.Linear(512*block.expansion, num_classes)
+
+        # self.pool = nn.AvgPool2d(4)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, stride))
+            self.in_planes = planes * block.expansion
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        out = self.tlu1(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.pool(out)
+        out = out.view(out.size(0), -1)
+        out = self.linear(out)
+        return out
+
+
+def create_resnet18(input_shape: Tuple[int, int, int], num_classes: int, **kwargs) -> nn.Module:
+    """
+    Create a ResNet-18 model with Filter Response Normalization and Thresholded Linear Units.
+    
+    Exactly follows the reference implementation from:
+    https://github.com/activatedgeek/understanding-bayesian-classification/blob/main/src/data_aug/models/resnet_frn.py
+    
+    This architecture uses FilterResponseNorm2d for normalization and TLU2d for activation,
+    making it ideal for Bayesian Neural Networks where batch statistics should not affect inference.
+    
+    Args:
+        input_shape: Input shape (channels, height, width)
+        num_classes: Number of output classes
+        **kwargs: Additional arguments 
+        
+    Returns:
+        ResNet-18 model with ~11.2M parameters
+        
+    Reference:
+    [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+        Deep Residual Learning for Image Recognition. arXiv:1512.03385
+    [2] activatedgeek/understanding-bayesian-classification
+        https://github.com/activatedgeek/understanding-bayesian-classification
+    """
+    return _ResNet(_BasicBlock, [2, 2, 2, 2], num_classes=num_classes)
 
 

@@ -17,6 +17,5 @@
   "cnn_fc_hidden_sizes": [512],
   "cnn_kernel_size": 3,
   "cnn_pool_size": 2,
-  "cnn_use_batch_norm": false,
-  "dropout_rate": 0.25
+  "use_wandb": true
 }
