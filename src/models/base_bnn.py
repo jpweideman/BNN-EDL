@@ -192,7 +192,7 @@ class BaseBNN(ABC):
         return ece.item()
 
 
-def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_rate: float = 0.1) -> nn.Module:
+def create_mlp(input_size: int, hidden_sizes: list, num_classes: int) -> nn.Module:
     """
     Create a Multi-Layer Perceptron for classification.
     
@@ -200,7 +200,6 @@ def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_ra
         input_size: Size of input features
         hidden_sizes: List of hidden layer sizes
         num_classes: Number of output classes
-        dropout_rate: Dropout rate for regularization
         
     Returns:
         PyTorch MLP model
@@ -210,13 +209,11 @@ def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_ra
     # Input layer
     layers.append(nn.Linear(input_size, hidden_sizes[0]))
     layers.append(nn.ReLU())
-    layers.append(nn.Dropout(dropout_rate))
     
     # Hidden layers
     for i in range(len(hidden_sizes) - 1):
         layers.append(nn.Linear(hidden_sizes[i], hidden_sizes[i + 1]))
         layers.append(nn.ReLU())
-        layers.append(nn.Dropout(dropout_rate))
     
     # Output layer
     layers.append(nn.Linear(hidden_sizes[-1], num_classes))
@@ -227,29 +224,23 @@ def create_mlp(input_size: int, hidden_sizes: list, num_classes: int, dropout_ra
 def create_cnn(
     input_shape: Tuple[int, int, int], 
     num_classes: int, 
-    dropout_rate: float = 0.25,
     conv_channels: Optional[list] = None,
     conv_layers_per_block: int = 2,
     fc_hidden_sizes: Optional[list] = None,
     kernel_size: int = 3,
-    pool_size: int = 2,
-    use_group_norm: bool = True,
-    group_norm_groups: int = 8
+    pool_size: int = 2
 ) -> nn.Module:
     """
-    Create a configurable CNN for classification.
+    Create a configurable CNN for classification with Filter Response Normalization and Thresholded Linear Units.
     
     Args:
         input_shape: Input shape (channels, height, width)
         num_classes: Number of output classes
-        dropout_rate: Dropout rate for regularization
         conv_channels: List of channel sizes for conv blocks [32, 64, 128]. If None, uses [32, 64]
         conv_layers_per_block: Number of conv layers per block (default: 2)
         fc_hidden_sizes: List of fully connected layer sizes. If None, uses [512]
         kernel_size: Kernel size for convolutions (default: 3)
         pool_size: Pool size for max pooling (default: 2)
-        use_group_norm: Whether to use group normalization (compatible with functional programming)
-        group_norm_groups: Number of groups for GroupNorm (default: 8)
         
     Returns:
         PyTorch CNN model
@@ -272,18 +263,12 @@ def create_cnn(
         for layer_idx in range(conv_layers_per_block):
             layers.append(nn.Conv2d(in_channels, out_channels, 
                                   kernel_size=kernel_size, padding=kernel_size//2))
-            if use_group_norm:
-                # Ensure num_groups divides out_channels evenly
-                num_groups = min(group_norm_groups, out_channels)
-                while out_channels % num_groups != 0:
-                    num_groups -= 1
-                layers.append(nn.GroupNorm(num_groups, out_channels))
-            layers.append(nn.ReLU())
+            layers.append(FilterResponseNorm2d(out_channels))
+            layers.append(TLU2d(out_channels))
             in_channels = out_channels
         
-        # Add pooling and dropout after each block
+        # Add pooling after each block
         layers.append(nn.MaxPool2d(pool_size))
-        layers.append(nn.Dropout(dropout_rate))
         
         # Update spatial dimensions
         current_height //= pool_size
@@ -300,7 +285,6 @@ def create_cnn(
     for fc_size in fc_hidden_sizes:
         layers.append(nn.Linear(fc_input_size, fc_size))
         layers.append(nn.ReLU())
-        layers.append(nn.Dropout(dropout_rate * 2))  # Higher dropout in dense layers
         fc_input_size = fc_size
     
     # Output layer

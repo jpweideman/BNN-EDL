@@ -11,6 +11,5 @@
   "device": "auto",
   "num_workers": 4,
   "experiment_name": "cifar10_mlp_baseline",
-  "mlp_hidden_sizes": [512, 256, 128],
-  "dropout_rate": 0
+  "mlp_hidden_sizes": [512, 256, 128]
 }

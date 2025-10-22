@@ -93,8 +93,7 @@ def get_model_architecture(arch_name: str, input_shape: tuple, num_classes: int,
     if arch_name == "mlp":
         input_size = np.prod(input_shape)
         hidden_sizes = config.get('mlp_hidden_sizes', [128, 64])
-        dropout_rate = config.get('dropout_rate', 0.1)
-        return create_mlp(input_size, hidden_sizes, num_classes, dropout_rate)
+        return create_mlp(input_size, hidden_sizes, num_classes)
         
     elif arch_name == "cnn":
         # CNN configuration parameters
@@ -103,21 +102,15 @@ def get_model_architecture(arch_name: str, input_shape: tuple, num_classes: int,
         fc_hidden_sizes = config.get('cnn_fc_hidden_sizes', None)  # e.g., [512, 256]
         kernel_size = config.get('cnn_kernel_size', 3)
         pool_size = config.get('cnn_pool_size', 2)
-        dropout_rate = config.get('dropout_rate', 0.25)
-        use_group_norm = config.get('cnn_use_group_norm', True)
-        group_norm_groups = config.get('cnn_group_norm_groups', 8)
         
         return create_cnn(
             input_shape=input_shape,
             num_classes=num_classes,
-            dropout_rate=dropout_rate,
             conv_channels=conv_channels,
             conv_layers_per_block=conv_layers_per_block,
             fc_hidden_sizes=fc_hidden_sizes,
             kernel_size=kernel_size,
-            pool_size=pool_size,
-            use_group_norm=use_group_norm,
-            group_norm_groups=group_norm_groups
+            pool_size=pool_size
         )
         
     elif arch_name == "resnet20":
@@ -270,12 +263,6 @@ def main():
                        help="Kernel size for CNN convolutions")
     parser.add_argument("--cnn_pool_size", type=int, default=2,
                        help="Pool size for CNN max pooling")
-    parser.add_argument("--cnn_use_group_norm", type=lambda x: x.lower() == 'true', default=True,
-                       help="Use group normalization in CNN (true/false, compatible with functional programming)")
-    parser.add_argument("--cnn_group_norm_groups", type=int, default=8,
-                       help="Number of groups for GroupNorm in CNN (default: 8)")
-    parser.add_argument("--dropout_rate", type=float, default=None,
-                       help="Dropout rate (default varies by architecture)")
     
     # Training parameters
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
@@ -375,9 +362,6 @@ def main():
         'cnn_fc_hidden_sizes': args.cnn_fc_hidden_sizes,
         'cnn_kernel_size': args.cnn_kernel_size,
         'cnn_pool_size': args.cnn_pool_size,
-        'cnn_use_group_norm': args.cnn_use_group_norm,
-        'cnn_group_norm_groups': args.cnn_group_norm_groups,
-        'dropout_rate': args.dropout_rate
     }
     
     # Save config

@@ -16,8 +16,5 @@
   "cnn_conv_layers_per_block": 2,
   "cnn_fc_hidden_sizes": [512],
   "cnn_kernel_size": 3,
-  "cnn_pool_size": 2,
-  "cnn_use_group_norm": true,
-  "cnn_group_norm_groups": 8,
-  "dropout_rate": 0.25
+  "cnn_pool_size": 2
 }
