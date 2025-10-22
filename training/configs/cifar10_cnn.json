@@ -3,7 +3,7 @@
   "architecture": "cnn",
   "batch_size": 64,
   "num_epochs": 150,
-  "learning_rate": 0.0005,
+  "learning_rate": 0.01,
   "num_burn_in": 75,
   "prior_std": 1.0,
   "temperature": 1.0,
@@ -17,6 +17,7 @@
   "cnn_fc_hidden_sizes": [512],
   "cnn_kernel_size": 3,
   "cnn_pool_size": 2,
-  "cnn_use_batch_norm": false,
+  "cnn_use_group_norm": true,
+  "cnn_group_norm_groups": 8,
   "dropout_rate": 0.25
 }

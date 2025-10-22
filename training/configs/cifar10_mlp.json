@@ -3,14 +3,14 @@
   "architecture": "mlp",
   "batch_size": 128,
   "num_epochs": 100,
-  "learning_rate": 0.001,
-  "num_burn_in": 50,
+  "learning_rate": 0.01,
+  "num_burn_in": 40,
   "prior_std": 1.0,
   "temperature": 1.0,
   "mcmc_method": "sgld",
   "device": "auto",
-  "num_workers": 2,
+  "num_workers": 4,
   "experiment_name": "cifar10_mlp_baseline",
   "mlp_hidden_sizes": [512, 256, 128],
-  "dropout_rate": 0.2
+  "dropout_rate": 0
 }
