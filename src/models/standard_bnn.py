@@ -546,6 +546,10 @@ class StandardBNN(BaseBNN):
         # Move batch to device
         batch = batch.to(self.device)
         
+        # Flatten batch only if the model needs flattened input (MLP)
+        if self._needs_flattened_input and len(batch.shape) > 2:
+            batch = batch.view(batch.size(0), -1)
+        
         # Use all collected samples or a random subset if num_samples is set.
         samples_to_use = self.posterior_samples
         if num_samples is not None and num_samples < len(self.posterior_samples):
