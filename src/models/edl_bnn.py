@@ -1,5 +1,6 @@
 """
-Standard Bayesian Neural Network with MCMC sampling using posteriors.
+Evidential Deep Learning Bayesian Neural Network with MCMC sampling.
+Combines EDL output layers with BNN posterior sampling.
 """
 
 import torch
@@ -14,6 +15,8 @@ from tqdm import tqdm
 from .base_bnn import BaseBNN
 from utils.training import CosineLR
 
+from edl_pytorch import evidential_classification
+
 try:
     import wandb
     WANDB_AVAILABLE = True
@@ -22,12 +25,16 @@ except ImportError:
     wandb = None
 
 
-class StandardBNN(BaseBNN):
+class EDLBNN(BaseBNN):
     """
-    Standard Bayesian Neural Network using MCMC sampling with posteriors.
+    Evidential Deep Learning Bayesian Neural Network.
     
-    This implementation uses stochastic gradient MCMC methods from the posteriors
-    library to approximate the posterior distribution over network parameters.
+    This implementation combines:
+    - EDL (Evidential Deep Learning) for uncertainty quantification via Dirichlet distributions
+    - BNN posterior sampling via MCMC methods (SGLD, SGHMC, etc.)
+    
+    The model uses a Dirichlet output layer to produce evidential parameters (alpha),
+    which are then used for both training (via evidential loss) and inference (via posterior sampling).
     """
     
     def __init__(
@@ -37,27 +44,53 @@ class StandardBNN(BaseBNN):
         prior_std: float = 1.0,
         temperature: float = 1.0,
         mcmc_method: str = "sgld",
+        edl_lambda: float = 0.001,
         device: str = 'auto'
     ):
         """
-        Initialize the Standard BNN.
+        Initialize the EDL BNN.
         
         Args:
-            model: PyTorch model architecture
+            model: PyTorch model architecture (should end with Dirichlet layer)
             num_classes: Number of output classes
             prior_std: Standard deviation of the prior distribution
             temperature: Temperature for tempering the posterior
             mcmc_method: MCMC method to use ('sgld', 'sghmc', 'sgnht', 'baoa')
+            edl_lambda: Regularization coefficient for EDL loss (default: 0.001)
             device: Device to use ('auto', 'cuda', 'cpu')
         """
         super().__init__(model, num_classes, device)
         self.prior_std = prior_std
         self.temperature = temperature
         self.mcmc_method = mcmc_method
+        self.edl_lambda = edl_lambda
         self.transform = None
         
         # Determine if this model needs flattened input (MLP) or structured input (CNN)
         self._needs_flattened_input = self._check_if_needs_flattening(model)
+    
+    def get_annealed_edl_lambda(self, epoch: int) -> float:
+        """
+        Compute the annealed EDL lambda for KL regularization.
+        
+        Anneals from 0 to self.edl_lambda over edl_kl_anneal_epochs.
+        After annealing period, stays constant at self.edl_lambda.
+        
+        Args:
+            epoch: Current epoch number (0-indexed)
+            
+        Returns:
+            Annealed lambda value for this epoch
+        """
+        if not hasattr(self, 'edl_kl_anneal_epochs'):
+            # If annealing not configured, return constant lambda
+            return self.edl_lambda
+        
+        # Linear annealing: 0 → edl_lambda over first edl_kl_anneal_epochs
+        if epoch < self.edl_kl_anneal_epochs:
+            return self.edl_lambda * (epoch / self.edl_kl_anneal_epochs)
+        else:
+            return self.edl_lambda
     
     def _check_if_needs_flattening(self, model: nn.Module) -> bool:
         """
@@ -219,14 +252,14 @@ class StandardBNN(BaseBNN):
         batch: Tuple[torch.Tensor, torch.Tensor]
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Compute log posterior probability.
+        Compute log posterior probability using EDL loss.
         
         Args:
             params: Model parameters
             batch: (images, labels) batch
             
         Returns:
-            Tuple of (log_posterior_value, model_output)
+            Tuple of (log_posterior_value, alpha_output)
         """
         images, labels = batch
         
@@ -234,16 +267,24 @@ class StandardBNN(BaseBNN):
         if self._needs_flattened_input and len(images.shape) > 2:
             images = images.view(images.size(0), -1)
         
-        # Forward pass
-        output = func.functional_call(self.model, params, images)
+        # Forward pass - outputs Dirichlet alpha parameters
+        alpha = func.functional_call(self.model, params, images)
         
-        # Log posterior calculation (following posteriors library example)
+        # EDL loss (negative because we want log posterior, not loss)
+        # The EDL loss combines classification loss + KL regularization
+        # Use annealed lambda if available, otherwise use constant lambda
+        current_lambda = self.get_annealed_edl_lambda(getattr(self, '_current_epoch', 0))
+        edl_loss = evidential_classification(alpha, labels, lamb=current_lambda)
+        
+        # Log posterior calculation:
+        # - Likelihood: negative EDL loss
+        # - Prior: Gaussian prior over parameters
         log_post_val = (
-            -nn.functional.cross_entropy(output, labels)
+            -edl_loss
             + posteriors.diag_normal_log_prob(params, sd_diag=self.prior_std, normalize=False) / getattr(self, "num_data", len(images))
         )
         
-        return log_post_val, output
+        return log_post_val, alpha
     
     def _move_state_to_device(self, state):
         """
@@ -312,6 +353,7 @@ class StandardBNN(BaseBNN):
         wandb_config: Optional[dict] = None,
         use_lr_schedule: bool = True,
         lr_cycles: Optional[int] = None,
+        edl_kl_anneal_epochs: int = 10,
         **kwargs
     ):
         """
@@ -331,6 +373,7 @@ class StandardBNN(BaseBNN):
             wandb_config: Additional config to log to W&B
             use_lr_schedule: Whether to use cyclical cosine learning rate schedule (default: True)
             lr_cycles: Number of cycles for cosine schedule (default: 10, only used if use_lr_schedule=True)
+            edl_kl_anneal_epochs: Number of epochs to anneal KL term from 0 to edl_lambda (default: 10)
         """
         # Initialize Weights & Biases if requested
         if use_wandb:
@@ -380,6 +423,11 @@ class StandardBNN(BaseBNN):
                     else:
                         print(f"Initialized W&B tracking: project='{wandb_project}', run='{wandb.run.name}'")
         
+        # Store KL annealing configuration
+        self.edl_kl_anneal_epochs = edl_kl_anneal_epochs
+        if verbose:
+            print(f"EDL KL Annealing: 0 → {self.edl_lambda} over {edl_kl_anneal_epochs} epochs")
+        
         # Initialize learning rate scheduler with cyclical cosine annealing
         if use_lr_schedule:
             if lr_cycles is None:
@@ -423,6 +471,9 @@ class StandardBNN(BaseBNN):
         epoch_pbar = tqdm(range(num_epochs), desc="Training BNN", disable=not verbose)
         
         for epoch in epoch_pbar:
+            # Set current epoch for KL annealing
+            self._current_epoch = epoch
+            
             # Update learning rate using cyclical cosine scheduler
             if use_lr_schedule and lr_scheduler:
                 current_lr = lr_scheduler.get_lr(epoch)
@@ -451,13 +502,11 @@ class StandardBNN(BaseBNN):
                 batch = self._move_batch_to_device(batch)
                 
                 # Compute log posterior for tracking (before update)
-                log_post_val, output = self.log_posterior(self.state.params if hasattr(self.state, 'params') else self.state, batch)
+                log_post_val, alpha = self.log_posterior(self.state.params if hasattr(self.state, 'params') else self.state, batch)
                 
-                # Extract training loss (negative cross-entropy part)
+                # Extract training loss (EDL loss)
                 images, labels = batch
-                if self._needs_flattened_input and len(images.shape) > 2:
-                    images = images.view(images.size(0), -1)
-                train_loss = nn.functional.cross_entropy(output, labels)
+                train_loss = evidential_classification(alpha, labels, lamb=self.get_annealed_edl_lambda(epoch))
                 
                 # Track metrics
                 epoch_log_posteriors.append(log_post_val.item())
@@ -495,7 +544,8 @@ class StandardBNN(BaseBNN):
                     'train_loss': avg_train_loss,
                     'num_posterior_samples': len(self.posterior_samples),
                     'is_burn_in': is_burn_in,
-                    'learning_rate': lr_scheduler.get_lr(epoch) if lr_scheduler else lr
+                    'learning_rate': lr_scheduler.get_lr(epoch) if lr_scheduler else lr,
+                    'edl_kl_lambda': self.get_annealed_edl_lambda(epoch)
                 }
                 wandb.log(log_dict, step=epoch + 1)
             
@@ -631,8 +681,12 @@ class StandardBNN(BaseBNN):
         
         for sample_params in samples_to_use:
             with torch.no_grad():
-                output = func.functional_call(self.model, sample_params, batch)
-                predictions.append(torch.softmax(output, dim=1))
+                alpha = func.functional_call(self.model, sample_params, batch)
+                # Convert alpha (Dirichlet parameters) to probabilities
+                # Expected probability under Dirichlet: p = alpha / sum(alpha)
+                sum_alpha = alpha.sum(dim=1, keepdim=True)
+                probs = alpha / sum_alpha
+                predictions.append(probs)
         
         predictions = torch.stack(predictions)  # [num_samples, batch_size, num_classes]
         
@@ -647,7 +701,12 @@ class StandardBNN(BaseBNN):
     
     def evaluate(self, test_loader) -> Dict[str, float]:
         """
-        Evaluate the BNN on test data using all collected posterior samples.
+        Evaluate the EDL-BNN on test data using all collected posterior samples.
+        
+        Uses entropy-based uncertainty decomposition (same as StandardBNN for fair comparison):
+        - Total: H(E_s[p]) = entropy of expected probabilities
+        - Aleatoric: E_s[H(p)] = expected entropy across posterior samples
+        - Epistemic: Total - Aleatoric = uncertainty from parameter variation
         
         Args:
             test_loader: Test data loader
@@ -662,7 +721,7 @@ class StandardBNN(BaseBNN):
         all_labels = []
         all_epistemic = []
         
-        # Sample-weighted accumulators. Results are dataset-level averages.
+        # Sample-weighted accumulators
         sum_loss = 0.0
         sum_total_u = 0.0
         sum_aleatoric_u = 0.0
@@ -671,8 +730,8 @@ class StandardBNN(BaseBNN):
         
         num_samples = len(self.posterior_samples)
         
-        # Progress bar over test batches.
-        eval_pbar = tqdm(test_loader, desc="Evaluating BNN", leave=False)
+        # Progress bar over test batches
+        eval_pbar = tqdm(test_loader, desc="Evaluating EDL-BNN", leave=False)
         
         eps = 1e-8
         batch_idx = 0
@@ -687,20 +746,25 @@ class StandardBNN(BaseBNN):
             if self._needs_flattened_input and len(images.shape) > 2:
                 images = images.view(images.size(0), -1)
             
-            # Predictive probabilities per posterior sample. Shape [num_samples, batch_size, num_classes]
-            probs_list = []
+            # Collect alpha parameters from all posterior samples
+            # Shape: [num_samples, batch_size, num_classes]
+            all_alphas = []
             for sample_params in self.posterior_samples:
                 with torch.no_grad():
-                    logits = func.functional_call(self.model, sample_params, images)
-                    probs_list.append(torch.softmax(logits, dim=1))
-            probs = torch.stack(probs_list, dim=0)
+                    alpha = func.functional_call(self.model, sample_params, images)
+                    all_alphas.append(alpha)
             
-            # Posterior predictive mean. E_s[p(y|x, θ_s)] with small clamp for stability.
-            expected_probs = probs.mean(dim=0)
+            alphas = torch.stack(all_alphas, dim=0)  # [S, B, C]
+            
+            # Convert alpha to probabilities: p = alpha / sum(alpha)
+            probs = alphas / alphas.sum(dim=2, keepdim=True)  # [S, B, C]
+            
+            # Posterior predictive mean: E_s[p] - average probabilities across samples
+            expected_probs = probs.mean(dim=0)  # [B, C]
             expected_probs = torch.clamp(expected_probs, min=eps)
             expected_probs = expected_probs / expected_probs.sum(dim=1, keepdim=True)
             
-            # Mean prediction and uncertainty
+            # Mean prediction
             all_predictions.append(expected_probs)
             all_labels.append(labels)
             
@@ -720,7 +784,7 @@ class StandardBNN(BaseBNN):
             aleatoric_u = ent_per_sample.mean(dim=0)  # [B]
             
             # Epistemic uncertainty: difference (should be non-negative)
-            epistemic_u = torch.clamp(total_u - aleatoric_u, min=0)  # [B] clamp to avoid numerical issues
+            epistemic_u = torch.clamp(total_u - aleatoric_u, min=0)  # [B]
             all_epistemic.append(epistemic_u)
             
             # Accumulate metrics
