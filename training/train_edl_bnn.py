@@ -27,10 +27,11 @@ import numpy as np
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from models.standard_bnn import StandardBNN
+from models.edl_bnn import EDLBNN
 from models.base_bnn import create_mlp, create_cnn, create_resnet20, create_resnet18
 from datasets.classification import get_mnist_dataloaders, get_cifar10_dataloaders, infer_dataset_info
 
+from edl_pytorch import Dirichlet
 
 def create_experiment_dir(base_dir: str, experiment_name: str) -> Path:
     """Create experiment directory with timestamp."""
@@ -46,8 +47,8 @@ def save_config(config: dict, save_path: Path):
         json.dump(config, f, indent=2)
 
 
-def save_model(bnn: StandardBNN, save_path: Path):
-    """Save BNN model state."""
+def save_model(bnn: EDLBNN, save_path: Path):
+    """Save EDL BNN model state."""
     model_state = {
         'model_state_dict': bnn.model.state_dict(),
         'posterior_samples': bnn.posterior_samples if hasattr(bnn, 'posterior_samples') else [],
@@ -55,6 +56,7 @@ def save_model(bnn: StandardBNN, save_path: Path):
         'prior_std': bnn.prior_std,
         'temperature': bnn.temperature,
         'mcmc_method': bnn.mcmc_method,
+        'edl_lambda': bnn.edl_lambda,
         'device': str(bnn.device)
     }
     torch.save(model_state, save_path / "model.pt")
@@ -85,39 +87,61 @@ def save_model(bnn: StandardBNN, save_path: Path):
 #     return bnn
 
 
-def get_model_architecture(arch_name: str, input_shape: tuple, num_classes: int, config: dict = None) -> nn.Module:
-    """Get model architecture by name with optional configuration."""
+def get_model_architecture_with_edl(arch_name: str, input_shape: tuple, num_classes: int, config: dict = None) -> nn.Module:
+    """
+    Get model architecture with EDL Dirichlet output layer.
+    
+    The architecture is modified to output features before the final classification layer,
+    then a Dirichlet layer is added to produce evidential parameters (alpha).
+    """
     if config is None:
         config = {}
-        
+    
+    # First create the base model WITHOUT the final classification layer
+    # We'll replace it with a Dirichlet layer
+    
     if arch_name == "mlp":
         input_size = np.prod(input_shape)
         hidden_sizes = config.get('mlp_hidden_sizes', [128, 64])
-        return create_mlp(input_size, hidden_sizes, num_classes)
+        # Build MLP layers up to the last hidden layer
+        layers = []
+        prev_size = input_size
+        for hidden_size in hidden_sizes:
+            layers.append(nn.Linear(prev_size, hidden_size))
+            layers.append(nn.ReLU())
+            prev_size = hidden_size
+        # Add Dirichlet layer instead of final Linear
+        layers.append(Dirichlet(prev_size, num_classes))
+        return nn.Sequential(*layers)
         
     elif arch_name == "cnn":
-        # CNN configuration parameters
-        conv_channels = config.get('cnn_conv_channels', None)  # e.g., [32, 64, 128]
-        conv_layers_per_block = config.get('cnn_conv_layers_per_block', 2)
-        fc_hidden_sizes = config.get('cnn_fc_hidden_sizes', None)  # e.g., [512, 256]
-        kernel_size = config.get('cnn_kernel_size', 3)
-        pool_size = config.get('cnn_pool_size', 2)
-        
-        return create_cnn(
-            input_shape=input_shape,
-            num_classes=num_classes,
-            conv_channels=conv_channels,
-            conv_layers_per_block=conv_layers_per_block,
-            fc_hidden_sizes=fc_hidden_sizes,
-            kernel_size=kernel_size,
-            pool_size=pool_size
-        )
+        # For CNN, we need to build it without the final layer
+        # This requires modifying the create_cnn function or building it here
+        raise NotImplementedError("CNN with EDL not yet implemented. Use MLP, ResNet18, or ResNet20.")
         
     elif arch_name == "resnet20":
-        return create_resnet20(input_shape, num_classes)
+        # Create ResNet20 and replace final layer with Dirichlet
+        base_model = create_resnet20(input_shape, num_classes)
+        # Find the feature dimension before the final layer
+        # ResNet20 typically has a final linear layer - we need to get its input features
+        if hasattr(base_model, 'fc') or hasattr(base_model, 'linear'):
+            fc_layer = getattr(base_model, 'fc', None) or getattr(base_model, 'linear', None)
+            in_features = fc_layer.in_features
+            # Replace with Dirichlet layer
+            setattr(base_model, 'fc' if hasattr(base_model, 'fc') else 'linear', 
+                   Dirichlet(in_features, num_classes))
+        return base_model
         
     elif arch_name == "resnet18":
-        return create_resnet18(input_shape, num_classes)
+        # Create ResNet18 and replace final layer with Dirichlet
+        base_model = create_resnet18(input_shape, num_classes)
+        if hasattr(base_model, 'fc') or hasattr(base_model, 'linear'):
+            fc_layer = getattr(base_model, 'fc', None) or getattr(base_model, 'linear', None)
+            in_features = fc_layer.in_features
+            # Replace with Dirichlet layer
+            setattr(base_model, 'fc' if hasattr(base_model, 'fc') else 'linear',
+                   Dirichlet(in_features, num_classes))
+        return base_model
         
     else:
         raise ValueError(f"Unknown architecture: {arch_name}")
@@ -169,21 +193,22 @@ def train_bnn(config: dict, exp_dir: Path):
     dataset_info = infer_dataset_info(train_loader)
     print(f"Dataset info: {dataset_info}")
     
-    # Create model architecture
-    model = get_model_architecture(
+    # Create model architecture with EDL Dirichlet layer
+    model = get_model_architecture_with_edl(
         config['architecture'], 
         dataset_info['input_shape'], 
         dataset_info['num_classes'],
         config
     )
     
-    # Create BNN
-    bnn = StandardBNN(
+    # Create EDL BNN
+    bnn = EDLBNN(
         model=model,
         num_classes=dataset_info['num_classes'],
         prior_std=config['prior_std'],
         temperature=config['temperature'],
         mcmc_method=config['mcmc_method'],
+        edl_lambda=config.get('edl_lambda', 0.001),
         device=config['device']
     )
     
@@ -207,6 +232,8 @@ def train_bnn(config: dict, exp_dir: Path):
         # Cyclical cosine learning rate schedule parameters
         use_lr_schedule=config.get('use_lr_schedule', True),
         lr_cycles=config.get('lr_cycles', None),
+        # EDL annealing parameters
+        edl_kl_anneal_epochs=config.get('edl_kl_anneal_epochs', 10),
         # Pass MCMC-specific parameters
         beta=config['mcmc_beta'],
         alpha=config['mcmc_alpha'],
@@ -282,6 +309,12 @@ def main():
     parser.add_argument("--mcmc_method", type=str, default="sgld", 
                        choices=["sgld", "sghmc", "sgnht", "baoa"], help="MCMC method")
     
+    # EDL parameters
+    parser.add_argument("--edl_lambda", type=float, default=0.001, 
+                       help="Regularization coefficient for EDL loss (default: 0.001)")
+    parser.add_argument("--edl_kl_anneal_epochs", type=int, default=10, 
+                       help="Number of epochs to anneal EDL KL loss from 0 to edl_lambda (default: 10, set to 0 to disable annealing)")
+    
     # MCMC-specific parameters
     parser.add_argument("--mcmc_beta", type=float, default=0.0, 
                        help="Gradient noise coefficient for all methods")
@@ -351,6 +384,8 @@ def main():
         'prior_std': args.prior_std,
         'temperature': args.temperature,
         'mcmc_method': args.mcmc_method,
+        'edl_lambda': args.edl_lambda,
+        'edl_kl_anneal_epochs': args.edl_kl_anneal_epochs,
         'mcmc_beta': args.mcmc_beta,
         'mcmc_alpha': args.mcmc_alpha,
         'mcmc_sigma': args.mcmc_sigma,

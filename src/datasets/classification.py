@@ -97,6 +97,9 @@ def get_cifar10_dataloaders(
     """
     Get CIFAR-10 dataloaders for train, validation, and test.
     
+    Uses data augmentation transforms from:
+    https://github.com/activatedgeek/understanding-bayesian-classification/blob/main/src/data_aug/datasets.py
+    
     Args:
         data_dir: Directory to store/load data
         batch_size: Batch size for dataloaders
@@ -112,31 +115,32 @@ def get_cifar10_dataloaders(
         The test set is the official CIFAR-10 test split of 10k samples.
         train_split only affects the train/val split of the 50k training set.
     """
-    # Define transforms
-    transform_list = [transforms.ToTensor()]
-    
-    if normalize:
-        # CIFAR-10 normalization values 
-        transform_list.append(
-            transforms.Normalize(
-                (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)
-            )
-        )
-    
-    transform = transforms.Compose(transform_list)
+    # Transformations
+    # Reference: https://github.com/activatedgeek/understanding-bayesian-classification/blob/main/src/data_aug/datasets.py
+    _CIFAR_TRAIN_TRANSFORM = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    _CIFAR_TEST_TRANSFORM = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
     
     # Download/load datasets
     train_dataset = datasets.CIFAR10(
         root=data_dir, 
         train=True, 
         download=True, 
-        transform=transform
+        transform=_CIFAR_TRAIN_TRANSFORM  # Use augmented transforms for training
     )
     test_dataset = datasets.CIFAR10(
         root=data_dir, 
         train=False, 
         download=True, 
-        transform=transform
+        transform=_CIFAR_TEST_TRANSFORM  # Use basic transforms for test
     )
     
     # Split training data into train and validation

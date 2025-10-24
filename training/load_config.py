@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 
-def load_and_run_config(config_path: str):
+def load_and_run_config(config_path: str, script_name: str):
     """Load config file and run training script with those parameters."""
     
     # Load config
@@ -18,7 +18,7 @@ def load_and_run_config(config_path: str):
         config = json.load(f)
     
     # Build command line arguments
-    cmd = [sys.executable, "train_bnn.py"]
+    cmd = [sys.executable, script_name]
     
     # List arguments that need special handling
     list_args = {
@@ -27,7 +27,7 @@ def load_and_run_config(config_path: str):
     
     # Boolean arguments that need special handling
     bool_args = {
-        'cnn_use_batch_norm', 'quick', 'no_periodic_eval', 'use_wandb', 'use_adaptive_burnin'
+        'cnn_use_batch_norm', 'quick', 'no_periodic_eval', 'use_wandb', 'use_adaptive_burnin', 'use_lr_schedule'
     }
     
     for key, value in config.items():
@@ -41,15 +41,19 @@ def load_and_run_config(config_path: str):
                 cmd.append(f"--{key}")
                 cmd.extend([str(v) for v in value])
         elif key in bool_args:
-            # For boolean arguments, only add the flag if True
-            if value:
+            # For boolean arguments, add the appropriate flag
+            if key == 'use_lr_schedule':
+                # For use_lr_schedule, pass the value as true/false
+                cmd.extend([f"--{key}", str(value).lower()])
+            elif value:
+                # For other boolean args, only add the flag if True
                 cmd.append(f"--{key}")
         else:
             # For regular arguments
             cmd.extend([f"--{key}", str(value)])
     
-    print(f"Running command: {' '.join(cmd)}")
-    print(f"Config: {json.dumps(config, indent=2)}")
+    print(f"Running: {script_name}")
+    print(f"Command: {' '.join(cmd)}")
     
     # Run the training script
     result = subprocess.run(cmd, cwd=Path(__file__).parent)
@@ -59,6 +63,8 @@ def load_and_run_config(config_path: str):
 def main():
     parser = argparse.ArgumentParser(description="Run BNN training with config file")
     parser.add_argument("config", type=str, help="Path to config JSON file")
+    parser.add_argument("--script", type=str, choices=['train_bnn.py', 'train_edl_bnn.py'], 
+                       required=True, help="Which training script to use")
     
     args = parser.parse_args()
     
@@ -66,7 +72,7 @@ def main():
         print(f"Error: Config file {args.config} not found!")
         return 1
     
-    return load_and_run_config(args.config)
+    return load_and_run_config(args.config, args.script)
 
 
 if __name__ == "__main__":
