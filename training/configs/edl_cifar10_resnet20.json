@@ -1,0 +1,15 @@
+{
+  "dataset": "cifar10",
+  "architecture": "resnet20",
+  "batch_size": 128,
+  "num_epochs": 200,
+  "learning_rate": 0.1,
+  "eval_frequency": 5,
+  "no_periodic_eval": false,
+  "device": "cuda",
+  "num_workers": 1,
+  "experiment_name": "edl_cifar10_resnet20_lambda_0.001",
+  "use_wandb": true,
+  "wandb_project": "edl-baseline-comparison",
+  "edl_lambda": 0.001
+}

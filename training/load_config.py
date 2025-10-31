@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 
-def load_and_run_config(config_path: str, script_name: str):
+def load_and_run_config(config_path: str, script_name: str, resume_from: str = None):
     """Load config file and run training script with those parameters."""
     
     # Load config
@@ -52,19 +52,31 @@ def load_and_run_config(config_path: str, script_name: str):
             # For regular arguments
             cmd.extend([f"--{key}", str(value)])
     
+    # Add resume_from argument if specified
+    if resume_from:
+        # Convert to absolute path if it's relative
+        resume_path = Path(resume_from)
+        if not resume_path.is_absolute():
+            # Get project root (parent of training directory)
+            project_root = Path(__file__).parent.parent
+            resume_path = project_root / resume_path
+        cmd.extend(["--resume_from", str(resume_path)])
+    
     print(f"Running: {script_name}")
     print(f"Command: {' '.join(cmd)}")
     
-    # Run the training script
+    # Run the training script from the training directory
     result = subprocess.run(cmd, cwd=Path(__file__).parent)
     return result.returncode
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run BNN training with config file")
+    parser = argparse.ArgumentParser(description="Run training with config file")
     parser.add_argument("config", type=str, help="Path to config JSON file")
-    parser.add_argument("--script", type=str, choices=['train_bnn.py', 'train_edl_bnn.py'], 
+    parser.add_argument("--script", type=str, choices=['train_bnn.py', 'train_edl_bnn.py', 'train_baseline.py', 'train_edl.py'], 
                        required=True, help="Which training script to use")
+    parser.add_argument("--resume_from", type=str, default=None,
+                       help="Path to experiment directory to resume from (for train_baseline.py only)")
     
     args = parser.parse_args()
     
@@ -72,7 +84,7 @@ def main():
         print(f"Error: Config file {args.config} not found!")
         return 1
     
-    return load_and_run_config(args.config, args.script)
+    return load_and_run_config(args.config, args.script, resume_from=args.resume_from)
 
 
 if __name__ == "__main__":

@@ -2,14 +2,16 @@
   "dataset": "cifar10",
   "architecture": "mlp",
   "batch_size": 128,
-  "num_epochs": 100,
-  "learning_rate": 0.01,
-  "num_burn_in": 40,
+  "num_epochs": 400,
+  "learning_rate": 0.001,
+  "num_burn_in": 200,
   "prior_std": 1.0,
   "temperature": 1.0,
   "mcmc_method": "sgld",
   "device": "auto",
-  "num_workers": 4,
-  "experiment_name": "cifar10_mlp_baseline",
-  "mlp_hidden_sizes": [512, 256, 128]
+  "num_workers": 1,
+  "experiment_name": "cifar10_mlp_baseline_0.001",
+  "mlp_hidden_sizes": [512, 256, 128],
+  "use_wandb": true,
+  "wandb_project": "bnn-training"
 }

@@ -1,11 +1,11 @@
 {
   "dataset": "cifar10",
-  "architecture": "resnet18",
+  "architecture": "mlp",
   "batch_size": 128,
-  "num_epochs": 180,
-  "learning_rate": 0.0001,
-  "num_burn_in": 30,
-  "eval_frequency": 50,
+  "num_epochs": 400,
+  "learning_rate": 0.001,
+  "num_burn_in": 200,
+  "eval_frequency": 5,
   "no_periodic_eval": false,
   "prior_std": 1.0,
   "temperature": 1.0,
@@ -16,8 +16,10 @@
   "mcmc_xi": null,
   "mcmc_momenta": null,
   "device": "auto",
-  "num_workers": 4,
-  "experiment_name": "cifar10_resnet18_sgld",
+  "num_workers": 0,
+  "experiment_name": "cifar10_mlp_edl_0.001",
   "use_wandb": true,
-  "wandb_project": "bnn-training"
+  "wandb_project": "bnn-training",
+  "mlp_hidden_sizes": [512, 256, 128],
+  "edl_lambda": 0.9
 }

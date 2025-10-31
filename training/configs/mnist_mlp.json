@@ -10,12 +10,12 @@
   "prior_std": 1.0,
   "temperature": 1.0,
   "mcmc_method": "sgld",
+  "mcmc_xi": null,
+  "mcmc_momenta": null,
   "device": "auto",
   "num_workers": 0,
   "experiment_name": "mnist_mlp_lr0.1",
   "use_wandb": true,
   "wandb_project": "edl-bnn-training",
-  "mlp_hidden_sizes": [128, 64],
-  "use_lr_schedule": false,
-  "lr_cycles": 3
+  "mlp_hidden_sizes": [128, 64]
 }

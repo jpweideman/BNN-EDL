@@ -204,9 +204,6 @@ def train_bnn(config: dict, exp_dir: Path):
         wandb_project=config.get('wandb_project', 'bnn-training'),
         wandb_run_name=config['timestamped_exp_name'],
         wandb_config=config,  # Pass full config to wandb 
-        # Cyclical cosine learning rate schedule parameters
-        use_lr_schedule=config.get('use_lr_schedule', True),
-        lr_cycles=config.get('lr_cycles', None),
         # Pass MCMC-specific parameters
         beta=config['mcmc_beta'],
         alpha=config['mcmc_alpha'],
@@ -294,12 +291,6 @@ def main():
     parser.add_argument("--mcmc_momenta", type=str, default=None, 
                        help="Initial momenta for SGHMC/SGNHT/BAOA (None for random initialization)")
     
-    # Learning rate schedule parameters (for cyclical cosine learning rate)
-    parser.add_argument("--use_lr_schedule", type=lambda x: x.lower() == 'true', default=False,
-                       help="Use cyclical cosine learning rate schedule (true/false, default: false)")
-    parser.add_argument("--lr_cycles", type=int, default=None,
-                       help="Number of cycles for cosine schedule (default: 10)")
-    
     # System parameters
     parser.add_argument("--device", type=str, default="auto", 
                        choices=["auto", "cuda", "cpu"], help="Device to use")
@@ -363,10 +354,6 @@ def main():
         'use_wandb': args.use_wandb,
         'wandb_project': args.wandb_project,
         'timestamped_exp_name': timestamped_exp_name,
-        
-        # Learning rate scheduling (for cyclical cosine schedule)
-        'lr_cycles': args.lr_cycles if args.lr_cycles is not None else 10,
-        'use_lr_schedule': args.use_lr_schedule,
         
         # Architecture-specific parameters
         'mlp_hidden_sizes': args.mlp_hidden_sizes,

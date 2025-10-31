@@ -1,0 +1,16 @@
+{
+  "dataset": "mnist",
+  "architecture": "mlp",
+  "batch_size": 128,
+  "num_epochs": 200,
+  "learning_rate": 0.001,
+  "eval_frequency": 5,
+  "no_periodic_eval": false,
+  "device": "auto",
+  "num_workers": 0,
+  "experiment_name": "edl_mnist_mlp_lambda_0.01",
+  "use_wandb": true,
+  "wandb_project": "bnn-training",
+  "mlp_hidden_sizes": [256, 128],
+  "edl_lambda": 0.01
+}

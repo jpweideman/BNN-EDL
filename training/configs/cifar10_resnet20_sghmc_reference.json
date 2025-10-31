@@ -7,7 +7,7 @@
   "num_burn_in": 13,
   "eval_frequency": 20,
   "no_periodic_eval": false,
-  "prior_std": 0.1581,
+  "prior_std": 1,
   "temperature": 1.0,
   "mcmc_method": "sghmc",
   "mcmc_beta": 0.0,
