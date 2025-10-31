@@ -56,7 +56,6 @@ def save_model(bnn: EDLBNN, save_path: Path):
         'prior_std': bnn.prior_std,
         'temperature': bnn.temperature,
         'mcmc_method': bnn.mcmc_method,
-        'edl_lambda': bnn.edl_lambda,
         'device': str(bnn.device)
     }
     torch.save(model_state, save_path / "model.pt")
@@ -127,9 +126,12 @@ def get_model_architecture_with_edl(arch_name: str, input_shape: tuple, num_clas
         if hasattr(base_model, 'fc') or hasattr(base_model, 'linear'):
             fc_layer = getattr(base_model, 'fc', None) or getattr(base_model, 'linear', None)
             in_features = fc_layer.in_features
+            # Create Dirichlet layer
+            dirichlet_layer = Dirichlet(in_features, num_classes)
+            # Initialize to match ResNet's Kaiming initialization
+            nn.init.kaiming_normal_(dirichlet_layer.dense.weight)
             # Replace with Dirichlet layer
-            setattr(base_model, 'fc' if hasattr(base_model, 'fc') else 'linear', 
-                   Dirichlet(in_features, num_classes))
+            setattr(base_model, 'fc' if hasattr(base_model, 'fc') else 'linear', dirichlet_layer)
         return base_model
         
     elif arch_name == "resnet18":
@@ -138,9 +140,12 @@ def get_model_architecture_with_edl(arch_name: str, input_shape: tuple, num_clas
         if hasattr(base_model, 'fc') or hasattr(base_model, 'linear'):
             fc_layer = getattr(base_model, 'fc', None) or getattr(base_model, 'linear', None)
             in_features = fc_layer.in_features
+            # Create Dirichlet layer
+            dirichlet_layer = Dirichlet(in_features, num_classes)
+            # Initialize to match ResNet's Kaiming initialization
+            nn.init.kaiming_normal_(dirichlet_layer.dense.weight)
             # Replace with Dirichlet layer
-            setattr(base_model, 'fc' if hasattr(base_model, 'fc') else 'linear',
-                   Dirichlet(in_features, num_classes))
+            setattr(base_model, 'fc' if hasattr(base_model, 'fc') else 'linear', dirichlet_layer)
         return base_model
         
     else:
@@ -208,7 +213,6 @@ def train_bnn(config: dict, exp_dir: Path):
         prior_std=config['prior_std'],
         temperature=config['temperature'],
         mcmc_method=config['mcmc_method'],
-        edl_lambda=config.get('edl_lambda', 0.001),
         device=config['device']
     )
     
@@ -229,11 +233,6 @@ def train_bnn(config: dict, exp_dir: Path):
         wandb_project=config.get('wandb_project', 'bnn-training'),
         wandb_run_name=config['timestamped_exp_name'],
         wandb_config=config,  # Pass full config to wandb 
-        # Cyclical cosine learning rate schedule parameters
-        use_lr_schedule=config.get('use_lr_schedule', True),
-        lr_cycles=config.get('lr_cycles', None),
-        # EDL annealing parameters
-        edl_kl_anneal_epochs=config.get('edl_kl_anneal_epochs', 10),
         # Pass MCMC-specific parameters
         beta=config['mcmc_beta'],
         alpha=config['mcmc_alpha'],
@@ -309,12 +308,6 @@ def main():
     parser.add_argument("--mcmc_method", type=str, default="sgld", 
                        choices=["sgld", "sghmc", "sgnht", "baoa"], help="MCMC method")
     
-    # EDL parameters
-    parser.add_argument("--edl_lambda", type=float, default=0.001, 
-                       help="Regularization coefficient for EDL loss (default: 0.001)")
-    parser.add_argument("--edl_kl_anneal_epochs", type=int, default=10, 
-                       help="Number of epochs to anneal EDL KL loss from 0 to edl_lambda (default: 10, set to 0 to disable annealing)")
-    
     # MCMC-specific parameters
     parser.add_argument("--mcmc_beta", type=float, default=0.0, 
                        help="Gradient noise coefficient for all methods")
@@ -326,12 +319,6 @@ def main():
                        help="Initial thermostat value for SGNHT (defaults to alpha if not set)")
     parser.add_argument("--mcmc_momenta", type=str, default=None, 
                        help="Initial momenta for SGHMC/SGNHT/BAOA (None for random initialization)")
-    
-    # Learning rate schedule parameters (for cyclical cosine learning rate)
-    parser.add_argument("--use_lr_schedule", type=lambda x: x.lower() == 'true', default=False,
-                       help="Use cyclical cosine learning rate schedule (true/false, default: false)")
-    parser.add_argument("--lr_cycles", type=int, default=None,
-                       help="Number of cycles for cosine schedule (default: 10)")
     
     # System parameters
     parser.add_argument("--device", type=str, default="auto", 
@@ -384,8 +371,6 @@ def main():
         'prior_std': args.prior_std,
         'temperature': args.temperature,
         'mcmc_method': args.mcmc_method,
-        'edl_lambda': args.edl_lambda,
-        'edl_kl_anneal_epochs': args.edl_kl_anneal_epochs,
         'mcmc_beta': args.mcmc_beta,
         'mcmc_alpha': args.mcmc_alpha,
         'mcmc_sigma': args.mcmc_sigma,
@@ -398,10 +383,6 @@ def main():
         'use_wandb': args.use_wandb,
         'wandb_project': args.wandb_project,
         'timestamped_exp_name': timestamped_exp_name,
-        
-        # Learning rate scheduling (for cyclical cosine schedule)
-        'lr_cycles': args.lr_cycles if args.lr_cycles is not None else 10,
-        'use_lr_schedule': args.use_lr_schedule,
         
         # Architecture-specific parameters
         'mlp_hidden_sizes': args.mlp_hidden_sizes,

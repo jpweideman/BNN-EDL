@@ -1,8 +1,7 @@
 # Utility functions module
 
 from .training import (
-    set_random_seeds,
-    CosineLR
+    set_random_seeds
 )
 from .evaluation import (
     analyze_predictions, 
@@ -14,7 +13,6 @@ from .evaluation import (
 
 __all__ = [
     'set_random_seeds',
-    'CosineLR',
     'analyze_predictions', 
     'plot_uncertainty_analysis', 
     'plot_prediction_examples', 

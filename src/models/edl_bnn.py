@@ -13,7 +13,6 @@ import os
 from tqdm import tqdm
 
 from .base_bnn import BaseBNN
-from utils.training import CosineLR
 
 from edl_pytorch import evidential_classification
 
@@ -44,7 +43,6 @@ class EDLBNN(BaseBNN):
         prior_std: float = 1.0,
         temperature: float = 1.0,
         mcmc_method: str = "sgld",
-        edl_lambda: float = 0.001,
         device: str = 'auto'
     ):
         """
@@ -56,41 +54,16 @@ class EDLBNN(BaseBNN):
             prior_std: Standard deviation of the prior distribution
             temperature: Temperature for tempering the posterior
             mcmc_method: MCMC method to use ('sgld', 'sghmc', 'sgnht', 'baoa')
-            edl_lambda: Regularization coefficient for EDL loss (default: 0.001)
             device: Device to use ('auto', 'cuda', 'cpu')
         """
         super().__init__(model, num_classes, device)
         self.prior_std = prior_std
         self.temperature = temperature
         self.mcmc_method = mcmc_method
-        self.edl_lambda = edl_lambda
         self.transform = None
         
         # Determine if this model needs flattened input (MLP) or structured input (CNN)
         self._needs_flattened_input = self._check_if_needs_flattening(model)
-    
-    def get_annealed_edl_lambda(self, epoch: int) -> float:
-        """
-        Compute the annealed EDL lambda for KL regularization.
-        
-        Anneals from 0 to self.edl_lambda over edl_kl_anneal_epochs.
-        After annealing period, stays constant at self.edl_lambda.
-        
-        Args:
-            epoch: Current epoch number (0-indexed)
-            
-        Returns:
-            Annealed lambda value for this epoch
-        """
-        if not hasattr(self, 'edl_kl_anneal_epochs'):
-            # If annealing not configured, return constant lambda
-            return self.edl_lambda
-        
-        # Linear annealing: 0 → edl_lambda over first edl_kl_anneal_epochs
-        if epoch < self.edl_kl_anneal_epochs:
-            return self.edl_lambda * (epoch / self.edl_kl_anneal_epochs)
-        else:
-            return self.edl_lambda
     
     def _check_if_needs_flattening(self, model: nn.Module) -> bool:
         """
@@ -252,7 +225,10 @@ class EDLBNN(BaseBNN):
         batch: Tuple[torch.Tensor, torch.Tensor]
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Compute log posterior probability using EDL loss.
+        Compute log posterior probability using Dirichlet log-likelihood.
+        
+        For Bayesian inference, we compute the log-likelihood directly from the Dirichlet
+        distribution.
         
         Args:
             params: Model parameters
@@ -270,17 +246,20 @@ class EDLBNN(BaseBNN):
         # Forward pass - outputs Dirichlet alpha parameters
         alpha = func.functional_call(self.model, params, images)
         
-        # EDL loss (negative because we want log posterior, not loss)
-        # The EDL loss combines classification loss + KL regularization
-        # Use annealed lambda if available, otherwise use constant lambda
-        current_lambda = self.get_annealed_edl_lambda(getattr(self, '_current_epoch', 0))
-        edl_loss = evidential_classification(alpha, labels, lamb=current_lambda)
+        # Compute log-likelihood directly from Dirichlet distribution
+        # Expected probability: p = alpha / sum(alpha)
+        # Log-likelihood: log p(y | alpha) = log(alpha[y]) - log(sum(alpha))
+        sum_alpha = alpha.sum(dim=1, keepdim=True)
+        log_probs = torch.log(alpha + 1e-8) - torch.log(sum_alpha + 1e-8)
+        
+        # Negative log-likelihood (like cross-entropy but from Dirichlet)
+        log_likelihood = -nn.functional.nll_loss(log_probs, labels)
         
         # Log posterior calculation:
-        # - Likelihood: negative EDL loss
+        # - Likelihood: log-likelihood from Dirichlet distribution
         # - Prior: Gaussian prior over parameters
         log_post_val = (
-            -edl_loss
+            log_likelihood
             + posteriors.diag_normal_log_prob(params, sd_diag=self.prior_std, normalize=False) / getattr(self, "num_data", len(images))
         )
         
@@ -351,18 +330,15 @@ class EDLBNN(BaseBNN):
         wandb_project: str = "bnn-training",
         wandb_run_name: Optional[str] = None,
         wandb_config: Optional[dict] = None,
-        use_lr_schedule: bool = True,
-        lr_cycles: Optional[int] = None,
-        edl_kl_anneal_epochs: int = 10,
         **kwargs
     ):
         """
-        Train the BNN using MCMC sampling.
+        Train the EDL BNN using MCMC sampling.
         
         Args:
             train_loader: Training data loader
             num_epochs: Maximum number of training epochs
-            lr: Initial learning rate
+            lr: Initial learning rate (constant throughout training for MCMC stationarity)
             num_burn_in: Number of burn-in epochs
             verbose: Whether to print training progress
             eval_frequency: Frequency of test evaluation (every N epochs after burn-in)
@@ -371,9 +347,6 @@ class EDLBNN(BaseBNN):
             wandb_project: W&B project name
             wandb_run_name: W&B run name
             wandb_config: Additional config to log to W&B
-            use_lr_schedule: Whether to use cyclical cosine learning rate schedule (default: True)
-            lr_cycles: Number of cycles for cosine schedule (default: 10, only used if use_lr_schedule=True)
-            edl_kl_anneal_epochs: Number of epochs to anneal KL term from 0 to edl_lambda (default: 10)
         """
         # Initialize Weights & Biases if requested
         if use_wandb:
@@ -423,27 +396,12 @@ class EDLBNN(BaseBNN):
                     else:
                         print(f"Initialized W&B tracking: project='{wandb_project}', run='{wandb.run.name}'")
         
-        # Store KL annealing configuration
-        self.edl_kl_anneal_epochs = edl_kl_anneal_epochs
         if verbose:
-            print(f"EDL KL Annealing: 0 → {self.edl_lambda} over {edl_kl_anneal_epochs} epochs")
+            print(f"Training EDL-BNN with Dirichlet likelihood")
         
-        # Initialize learning rate scheduler with cyclical cosine annealing
-        if use_lr_schedule:
-            if lr_cycles is None:
-                lr_cycles = 10
-            
-            # Calculate number of samples to collect after burn-in
-            # Use n_samples from kwargs if provided, otherwise default to num_epochs - num_burn_in
-            n_samples = kwargs.get('n_samples', max(1, num_epochs - num_burn_in))
-            
-            lr_scheduler = CosineLR(init_lr=lr, n_cycles=lr_cycles, n_samples=n_samples, T_max=num_epochs)
-            if verbose:
-                print(f"Using Cosine LR: init={lr}, cycles={lr_cycles}, samples={n_samples}, T_max={num_epochs}")
-        else:
-            lr_scheduler = None
-            if verbose:
-                print(f"Using constant LR: {lr}")
+        # Use constant learning rate for MCMC sampling
+        if verbose:
+            print(f"Using constant LR: {lr}")
         
         # Get dataset size for proper temperature scaling
         num_data = len(train_loader.dataset)
@@ -474,20 +432,7 @@ class EDLBNN(BaseBNN):
             # Set current epoch for KL annealing
             self._current_epoch = epoch
             
-            # Update learning rate using cyclical cosine scheduler
-            if use_lr_schedule and lr_scheduler:
-                current_lr = lr_scheduler.get_lr(epoch)
-                # Rebuild transform with new learning rate
-                self.build_transform(lr=current_lr, num_data=num_data, **kwargs)
-                # Re-initialize state from current parameters
-                device_params = {name: param.to(self.device) for name, param in self.state.params.items()} if hasattr(self.state, 'params') else {name: param.to(self.device) for name, param in self.params.items()}
-                self.state = self.transform.init(device_params)
-                self.state = self._move_state_to_device(self.state)
-            else:
-                # If no LR schedule, just re-initialize state from current parameters
-                device_params = {name: param.to(self.device) for name, param in self.state.params.items()} if hasattr(self.state, 'params') else {name: param.to(self.device) for name, param in self.params.items()}
-                self.state = self.transform.init(device_params)
-                self.state = self._move_state_to_device(self.state)
+            # MCMC state persists across epochs for proper chain mixing
             
             num_batches = 0
             epoch_log_posteriors = []
@@ -504,9 +449,12 @@ class EDLBNN(BaseBNN):
                 # Compute log posterior for tracking (before update)
                 log_post_val, alpha = self.log_posterior(self.state.params if hasattr(self.state, 'params') else self.state, batch)
                 
-                # Extract training loss (EDL loss)
+                # Extract training loss (computed from Dirichlet distribution)
+                # This matches the log-likelihood computation in log_posterior
                 images, labels = batch
-                train_loss = evidential_classification(alpha, labels, lamb=self.get_annealed_edl_lambda(epoch))
+                sum_alpha = alpha.sum(dim=1, keepdim=True)
+                log_probs = torch.log(alpha + 1e-8) - torch.log(sum_alpha + 1e-8)
+                train_loss = nn.functional.nll_loss(log_probs, labels)
                 
                 # Track metrics
                 epoch_log_posteriors.append(log_post_val.item())
@@ -515,8 +463,9 @@ class EDLBNN(BaseBNN):
                 # Update state
                 self.state, info = self.transform.update(self.state, batch)
                 
-                # Ensure state remains on correct device after update
-                self.state = self._move_state_to_device(self.state)
+                # REMOVED: Do not call _move_state_to_device() every batch
+                # The state is already on the correct device from initialization
+                # Calling it every batch reconstructs the state object, which can drop SGHMC internals
                 
                 num_batches += 1
                 
@@ -544,22 +493,37 @@ class EDLBNN(BaseBNN):
                     'train_loss': avg_train_loss,
                     'num_posterior_samples': len(self.posterior_samples),
                     'is_burn_in': is_burn_in,
-                    'learning_rate': lr_scheduler.get_lr(epoch) if lr_scheduler else lr,
-                    'edl_kl_lambda': self.get_annealed_edl_lambda(epoch)
+                    'learning_rate': lr,
                 }
                 wandb.log(log_dict, step=epoch + 1)
             
+            # Periodic test evaluation during burn-in (informational only)
+            is_burn_in = epoch < num_burn_in
+            if is_burn_in and test_loader is not None and (epoch + 1) % eval_frequency == 0:
+                if verbose:
+                    print(f"\n[Burn-in] Evaluating at epoch {epoch+1}...")
+                test_metrics = self.evaluate_current_params(test_loader)
+                test_metrics['epoch'] = epoch + 1
+                test_metrics['is_burn_in'] = True
+                
+                if verbose:
+                    print(f"[Burn-in] Test Accuracy: {test_metrics['accuracy']:.4f}, "
+                          f"Loss: {test_metrics['loss']:.4f}, "
+                          f"ECE: {test_metrics['ece']:.4f}")
+                
+                # Log burn-in metrics to wandb with prefix to distinguish from posterior eval
+                if use_wandb and WANDB_AVAILABLE:
+                    wandb.log({
+                        'burn_in_test_accuracy': test_metrics['accuracy'],
+                        'burn_in_test_ece': test_metrics['ece'],
+                        'burn_in_test_loss': test_metrics['loss'],
+                    }, step=epoch + 1)
+            
             # Collect samples after burn-in
             if not is_burn_in:
-                # If using LR scheduling, use strategic sampling based on cycles
-                if use_lr_schedule and lr_scheduler:
-                    if lr_scheduler.should_sample(epoch):
-                        sample = self.sample_posterior()
-                        self.posterior_samples.append(sample)
-                else:
-                    # If not using LR scheduling, sample every epoch after burn-in
-                    sample = self.sample_posterior()
-                    self.posterior_samples.append(sample)
+                # Sample every epoch after burn-in
+                sample = self.sample_posterior()
+                self.posterior_samples.append(sample)
                 
                 # Periodic test evaluation (start after num_burn_in + eval_frequency to ensure samples are collected)
                 first_eval_epoch = num_burn_in + eval_frequency - 1
@@ -634,17 +598,22 @@ class EDLBNN(BaseBNN):
         Sample parameters from the current posterior state.
         
         Returns:
-            Dictionary of sampled parameters
+            Dictionary of sampled parameters (deep copy to preserve as snapshot)
         """
         if self.state is None:
             raise ValueError("Model must be trained first!")
         
         # For MCMC methods, the current state contains the current sample
+        # IMPORTANT: We deep copy the parameters to create a snapshot
+        # because SGHMC updates mutate tensors in-place, so we must save copies
         if hasattr(self.state, 'params'):
-            return self.state.params
+            return {k: v.clone().detach() for k, v in self.state.params.items()}
         else:
-            # Fallback: return the state itself if it's already parameters
-            return self.state
+            # Fallback: return a copy of the state if it's already parameters
+            if isinstance(self.state, dict):
+                return {k: v.clone().detach() if torch.is_tensor(v) else v for k, v in self.state.items()}
+            else:
+                return self.state
     
     def predict_batch(
         self, 
@@ -698,6 +667,67 @@ class EDLBNN(BaseBNN):
         epistemic_uncertainty = torch.var(predictions, dim=0).sum(dim=1)
         
         return mean_pred, epistemic_uncertainty
+    
+    def evaluate_current_params(self, test_loader) -> Dict[str, float]:
+        """
+        Evaluate the EDL-BNN on test data using only the current parameters (point estimate).
+        
+        This is used during burn-in when posterior samples are not yet collected.
+        It provides informational metrics only - should not be used for decision-making.
+        
+        Args:
+            test_loader: Test data loader
+            
+        Returns:
+            Dictionary with evaluation metrics (accuracy, loss, ECE)
+        """
+        # Extract current parameters from state
+        current_params = self.state.params if hasattr(self.state, 'params') else self.state
+        
+        all_predictions = []
+        all_labels = []
+        total_loss = 0.0
+        total_N = 0
+        
+        eval_pbar = tqdm(test_loader, desc="Evaluating (burn-in)", leave=False)
+        
+        for batch in eval_pbar:
+            images, labels = batch
+            labels = labels.to(self.device)
+            images = images.to(self.device)
+            B = labels.size(0)
+            
+            # Flatten images only if the model needs flattened input (MLP)
+            if self._needs_flattened_input and len(images.shape) > 2:
+                images = images.view(images.size(0), -1)
+            
+            # Get predictions with current parameters
+            with torch.no_grad():
+                alpha = func.functional_call(self.model, current_params, images)
+                probs = alpha / alpha.sum(dim=1, keepdim=True)
+            
+            all_predictions.append(probs)
+            all_labels.append(labels)
+            
+            # Loss: negative log-likelihood
+            loss_batch = torch.nn.functional.nll_loss(torch.log(torch.clamp(probs, min=1e-8)), labels, reduction='mean')
+            total_loss += float(loss_batch.item()) * B
+            total_N += B
+        
+        # Concatenate all predictions and labels
+        all_predictions = torch.cat(all_predictions, dim=0)
+        all_labels = torch.cat(all_labels, dim=0)
+        
+        # Compute metrics
+        accuracy = self.compute_accuracy(all_predictions, all_labels)
+        ece = self.compute_ece(all_predictions, all_labels)
+        avg_loss = total_loss / total_N if total_N > 0 else 0.0
+        
+        return {
+            'accuracy': accuracy,
+            'loss': avg_loss,
+            'ece': ece
+        }
     
     def evaluate(self, test_loader) -> Dict[str, float]:
         """

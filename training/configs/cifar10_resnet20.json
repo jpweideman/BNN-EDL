@@ -18,7 +18,5 @@
   "device": "auto",
   "num_workers": 4,
   "experiment_name": "cifar10_resnet20_paper",
-  "use_wandb": true,
-  "use_lr_schedule": false,
-  "lr_cycles": 10
+  "use_wandb": true
 }
