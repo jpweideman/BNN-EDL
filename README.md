@@ -54,14 +54,13 @@ bnn-edl/
 This project requires **Python 3.10** and uses Poetry for dependency management.
 
 1. **Install Python 3.10** (if not already installed):
-   ```bash
+   <!-- ```bash
    # macOS (Homebrew)
    brew install python@3.10
    
    # Ubuntu/Debian
    sudo apt install python3.10
-   
-   ```
+   ``` -->
 
 2. **Install Poetry** (if not already installed):
    ```bash
