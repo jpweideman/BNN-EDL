@@ -87,7 +87,7 @@ This project requires **Python 3.10** and uses Poetry for dependency management.
 6. **Run training**:
    ```bash
    # After activation, run commands normally
-   python training/load_config.py training/configs/mnist_mlp.json
+   python training/load_config.py --script train_bnn.py training/configs/mnist_mlp.json
    
    # Or use poetry run without activation
    poetry run python training/load_config.py training/configs/mnist_mlp.json
