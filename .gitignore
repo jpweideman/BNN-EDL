@@ -1,5 +1,8 @@
-__pycache__/
-experiments/
-data/
+__pycache__
+/data/
+outputs/
+.venv/
+
 junk
 notebooks/
+tests/

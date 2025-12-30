@@ -1,0 +1,18 @@
+name: mnist
+batch_size: 16
+num_workers: 0
+train_split: 1.0
+
+train_transforms:
+  - name: to_tensor
+  - name: normalize
+    params:
+      mean: [0.1307]
+      std: [0.3081]
+
+test_transforms:
+  - name: to_tensor
+  - name: normalize
+    params:
+      mean: [0.1307]
+      std: [0.3081]

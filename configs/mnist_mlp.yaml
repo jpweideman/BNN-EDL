@@ -1,0 +1,25 @@
+defaults:
+  - dataset: mnist
+  - _self_
+
+experiment_name: mnist_mlp
+seed: 42
+
+# Override: add flatten for MLP
+dataset:
+  train_transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.1307]
+        std: [0.3081]
+    - name: flatten
+  
+  test_transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.1307]
+        std: [0.3081]
+    - name: flatten
+

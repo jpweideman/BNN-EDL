@@ -1,6 +1,11 @@
-# BNN Models module
+"""Neural network models."""
 
-from .standard_bnn import StandardBNN
-from .base_bnn import BaseBNN, create_mlp, create_cnn, create_resnet20, create_resnet18
+# Auto-import all architecture modules to trigger registration
+import importlib
+import pkgutil
 
-__all__ = ['StandardBNN', 'BaseBNN', 'create_mlp', 'create_cnn', 'create_resnet20', 'create_resnet18']
+# Import architectures subpackage
+from . import architectures
+
+__all__ = ['architectures']
+

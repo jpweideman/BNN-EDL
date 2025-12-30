@@ -2,6 +2,14 @@
 
 This repository implements Bayesian Neural Networks (BNNs) using the [posteriors](https://github.com/normal-computing/posteriors) library for uncertainty quantification in deep learning.
 
+## Available Components
+
+To see all available transforms, models, losses, and other components:
+
+```bash
+poetry run python scripts/list_components.py
+```
+
 ## Current Implementation
 
 ### ✅ Standard BNN with MCMC Sampling

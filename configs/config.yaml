@@ -1,0 +1,9 @@
+# Base config - composes experiment configs
+defaults:
+  - experiment: mnist_mlp
+  - _self_
+
+# Global settings
+# device: auto
+# use_wandb: false
+
