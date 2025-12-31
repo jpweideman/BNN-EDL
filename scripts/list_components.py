@@ -9,6 +9,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import to trigger registrations
 import src.data.transforms
+import src.data.datasets
+import src.models
+import src.losses
+import src.metrics
+
 
 from src.registry import (
     TRANSFORM_REGISTRY,

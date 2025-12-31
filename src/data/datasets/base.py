@@ -1,7 +1,6 @@
 """Base dataset class."""
 
 import torch
-import warnings
 from torch.utils.data import DataLoader, random_split
 from pathlib import Path
 from abc import ABC, abstractmethod
@@ -10,19 +9,12 @@ from abc import ABC, abstractmethod
 class BaseDataset(ABC):
     """Base class for all datasets."""
     
-    def __init__(
-        self,
-        config,
-        data_dir,
-        train_transform=None,
-        test_transform=None
-    ):
+    def __init__(self, config, data_dir, seed):
         """
         Args:
             config: Dataset configuration object
             data_dir: Directory to store/load data
-            train_transform: Transform for training data
-            test_transform: Transform for test/val data
+            seed: Random seed for reproducible splits
         """
         self.config = config
         self.data_dir = Path(data_dir)
@@ -30,79 +22,89 @@ class BaseDataset(ABC):
         
         self.batch_size = config.batch_size
         self.num_workers = config.num_workers
-        self.train_split = getattr(config, 'train_split', 0.9)
-        self.train_transform = train_transform
-        self.test_transform = test_transform
-        
-        self._train_loader = None
-        self._val_loader = None
-        self._test_loader = None
+        self.seed = seed
     
     @abstractmethod
-    def load_train_dataset(self):
-        """Load the training dataset. Must be implemented by subclasses."""
-        pass
-    
-    @abstractmethod
-    def load_test_dataset(self):
-        """Load the test dataset. Must be implemented by subclasses."""
-        pass
-    
-    def get_loaders(self):
+    def load_source_dataset(self, source_name):
         """
-        Build and return data loaders.
+        Load a source dataset without transforms.
+        
+        Args:
+            source_name: Name of the source (dataset-specific)
         
         Returns:
-            train_loader, val_loader, test_loader
+            torch.utils.data.Dataset 
         """
-        if self._train_loader is not None:
-            return self._train_loader, self._val_loader, self._test_loader
+        pass
+    
+    def get_loaders(self, transforms_dict):
+        """
+        Build and return data loaders based on config splits.
         
-        # Load datasets (implemented by subclass)
-        train_dataset = self.load_train_dataset()
-        test_dataset = self.load_test_dataset()
+        Args:
+            transforms_dict: Dict mapping split names to transforms
         
-        # Split training into train/val
-        if self.train_split < 1.0:
-            train_size = int(self.train_split * len(train_dataset))
-            val_size = len(train_dataset) - train_size
-            train_dataset, val_dataset = random_split(
-                train_dataset,
-                [train_size, val_size],
-                generator=torch.Generator().manual_seed(42)
-            )
-        else:
-            warnings.warn(
-                "train_split=1.0: Using test set as validation set. "
-                "Consider using train_split < 1.0 for proper train/val/test splits.",
-                UserWarning
-            )
-            val_dataset = test_dataset
+        Returns:
+            dict: Dictionary mapping split names to DataLoaders
+        """
+        # Group splits by their source (e.g. train or test)
+        splits_by_source = {}
+        for split_name, split_config in self.config.splits.items():
+            source = split_config.source
+            if source not in splits_by_source:
+                splits_by_source[source] = []
+            splits_by_source[source].append((split_name, split_config))
         
-        # Create data loaders
-        self._train_loader = DataLoader(
-            train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=True
-        )
+        # Validate: fractions for each source must sum to 1
+        for source, splits in splits_by_source.items():
+            total = sum(cfg.fraction for _, cfg in splits)
+            if total != 1.0:
+                raise ValueError(f"Fractions for source '{source}' sum to {total:.4f}, must equal 1.0")
         
-        self._val_loader = DataLoader(
-            val_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True
-        )
+        loaders = {}
         
-        self._test_loader = DataLoader(
-            test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True
-        )
+        # For each source: load data, split according to fractions, create loaders
+        for source, splits in splits_by_source.items():
+            # Load raw data from this source
+            raw_data = self.load_source_dataset(source)
+            
+            # Get fractions for splitting
+            fractions = [cfg.fraction for _, cfg in splits]
+            
+            # Split data into non-overlapping subsets
+            subsets = random_split(raw_data, fractions, generator=torch.Generator().manual_seed(self.seed))
+            
+            # Create a loader for each split
+            for (split_name, split_config), subset in zip(splits, subsets):
+                # Apply transform to this split
+                transform = transforms_dict.get(split_name)
+                if transform:
+                    subset = _TransformedDataset(subset, transform)
+                
+                # Create DataLoader
+                loaders[split_name] = DataLoader(
+                    subset,
+                    batch_size=self.batch_size,
+                    shuffle=split_config.get('shuffle', False),
+                    num_workers=self.num_workers,
+                    pin_memory=True
+                )
         
-        return self._train_loader, self._val_loader, self._test_loader
+        return loaders
 
+
+class _TransformedDataset:
+    """Helper to apply transform to a dataset or subset."""
+    
+    def __init__(self, dataset, transform):
+        self.dataset = dataset
+        self.transform = transform
+    
+    def __getitem__(self, idx):
+        x, y = self.dataset[idx]
+        if self.transform:
+            x = self.transform(x)
+        return x, y
+    
+    def __len__(self):
+        return len(self.dataset)

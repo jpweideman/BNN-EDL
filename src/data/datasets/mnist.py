@@ -7,26 +7,34 @@ from .base import BaseDataset
 
 @DATASET_REGISTRY.register("mnist")
 class MNISTDataset(BaseDataset):
-    """MNIST dataset with configurable transforms."""
-    
-    def __init__(self, config, data_dir, train_transform=None, test_transform=None):
-        super().__init__(config, data_dir, train_transform, test_transform)
-    
-    def load_train_dataset(self):
-        """Load MNIST training dataset."""
-        return datasets.MNIST(
-            root=self.data_dir,
-            train=True,
-            download=True,
-            transform=self.train_transform
-        )
-    
-    def load_test_dataset(self):
-        """Load MNIST test dataset."""
-        return datasets.MNIST(
-            root=self.data_dir,
-            train=False,
-            download=True,
-            transform=self.test_transform
-        )
+    """
+    MNIST dataset.
 
+        source: train  # 60,000 images
+        source: test   # 10,000 images
+    """
+    
+    def load_source_dataset(self, source_name):
+        """
+        Load MNIST source dataset without transforms.
+        
+        Args:
+            source_name: 'train' or 'test'
+        
+        Returns:
+            torchvision.datasets.MNIST 
+        """
+        if source_name == 'train':
+            return datasets.MNIST(
+                root=self.data_dir,
+                train=True,
+                download=True,
+            )
+        elif source_name == 'test':
+            return datasets.MNIST(
+                root=self.data_dir,
+                train=False,
+                download=True,
+            )
+        else:
+            raise ValueError(f"MNIST only supports 'train' or 'test' sources, got '{source_name}'")

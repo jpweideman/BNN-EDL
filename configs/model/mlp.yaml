@@ -1,0 +1,7 @@
+name: mlp
+params:
+  input_dim: 784
+  hidden_dims: [128, 64]
+  output_dim: 10
+  dropout: 0.2
+

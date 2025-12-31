@@ -1,0 +1,55 @@
+defaults:
+  - dataset: cifar10
+  - model: mlp
+  - training: standard
+  - _self_
+
+seed: 1
+
+training:
+  wandb:
+    name: cifar10_mlp
+
+model:
+  params:
+    input_dim: 3072
+    hidden_dims: [512, 256, 128]
+    output_dim: 10
+    dropout: 0.3
+
+# Override: add flatten transform for MLP
+dataset:
+  splits:
+    train:
+      transforms:
+        - name: random_crop
+          params:
+            size: 32
+            padding: 4
+        - name: random_horizontal_flip
+          params:
+            p: 0.5
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.4914, 0.4822, 0.4465]
+            std: [0.2023, 0.1994, 0.2010]
+        - name: flatten
+    
+    val:
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.4914, 0.4822, 0.4465]
+            std: [0.2023, 0.1994, 0.2010]
+        - name: flatten
+    
+    test:
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.4914, 0.4822, 0.4465]
+            std: [0.2023, 0.1994, 0.2010]
+        - name: flatten

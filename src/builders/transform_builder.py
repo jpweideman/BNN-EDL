@@ -3,7 +3,7 @@
 from src.builders.base import BaseBuilder
 from src.registry import TRANSFORM_REGISTRY
 from torchvision import transforms
-import src.data.transforms  # noqa: F401
+import src.data.transforms  # noqa: F401 # Triggers registration
 
 
 class TransformBuilder(BaseBuilder):

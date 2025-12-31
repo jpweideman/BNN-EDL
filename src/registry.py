@@ -66,6 +66,7 @@ class Registry:
 MODEL_REGISTRY = Registry("models")
 LOSS_REGISTRY = Registry("losses")
 METRIC_REGISTRY = Registry("metrics")
+OPTIMIZER_REGISTRY = Registry("optimizers")
 SAMPLER_REGISTRY = Registry("samplers")
 DATASET_REGISTRY = Registry("datasets")
 TRANSFORM_REGISTRY = Registry("transforms")

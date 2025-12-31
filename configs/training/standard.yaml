@@ -1,0 +1,38 @@
+num_epochs: 10
+device: auto
+
+loss:
+  name: cross_entropy
+
+optimizer:
+  name: adam
+  lr: 0.001
+  weight_decay: 0.0
+
+checkpoint:
+  enabled: true
+  dataset: val
+  metric: loss
+  filename: best_model.pt
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 20
+
+evaluation:
+  train:
+    interval: 0
+    metrics:
+      - name: loss
+  val:
+    interval: 1
+    metrics:
+      - name: accuracy
+      - name: loss
+  test:
+    interval: -1
+    metrics:
+      - name: accuracy
+      - name: loss

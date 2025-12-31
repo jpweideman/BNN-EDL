@@ -1,8 +1,0 @@
-defaults:
-  - dataset: cifar10
-  - _self_
-
-experiment_name: cifar10_standard
-seed: 42
-
-# Use base CIFAR-10 config as-is (no overrides needed)
