@@ -9,7 +9,8 @@ from src.training.handlers import (
     attach_evaluator_handler,
     attach_wandb_logger_to_trainer,
     attach_wandb_logger_to_evaluator,
-    attach_checkpoint_handler_to_evaluator
+    attach_checkpoint_handler_to_evaluator,
+    attach_last_checkpoint_handler
 )
 
 
@@ -77,12 +78,24 @@ class TrainerBuilder(BaseBuilder):
             if checkpoint_split not in evaluators:
                 print(f"Warning: Checkpoint configured for '{checkpoint_split}' but evaluation is disabled for it.")
             else:
-                checkpoint_path = Path(output_dir) / self.config.checkpoint.filename
+                # Attach best checkpoint handler (validation-based)
+                best_checkpoint_path = Path(output_dir) / "best_model.pt"
                 attach_checkpoint_handler_to_evaluator(
                     evaluators[checkpoint_split],
                     model,
+                    trainer,
+                    optimizer,
                     self.config.checkpoint.metric,
-                    checkpoint_path
+                    best_checkpoint_path
                 )
+            
+            # Attach last checkpoint handler 
+            last_checkpoint_path = Path(output_dir) / "last_checkpoint.pt"
+            attach_last_checkpoint_handler(
+                trainer,
+                model,
+                optimizer,
+                last_checkpoint_path
+            )
         
         return trainer

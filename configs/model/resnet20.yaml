@@ -1,0 +1,4 @@
+name: resnet20
+params:
+  num_classes: 10
+

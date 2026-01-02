@@ -11,7 +11,7 @@ from src.builders.model_builder import ModelBuilder
 from src.builders.loss_builder import LossBuilder
 from src.builders.optimizer_builder import OptimizerBuilder
 from src.builders.trainer_builder import TrainerBuilder
-from src.utils import set_seed, setup_device
+from src.utils import set_seed, setup_device, CheckpointManager
 
 
 
@@ -22,23 +22,17 @@ def main(cfg: DictConfig):
     set_seed(cfg.seed)
     device = setup_device(cfg.training.device)
     
-    if cfg.training.wandb.enabled:
-        try:
-            import wandb
-            wandb.init(
-                project=cfg.training.wandb.project,
-                name=cfg.training.wandb.name,
-                config=OmegaConf.to_container(cfg, resolve=True),
-                dir=output_dir
-            )
-        except ImportError:
-            print("Warning: wandb not installed")
-            cfg.training.wandb.enabled = False
-    
     loaders = DataLoaderBuilder(cfg.dataset).build(seed=cfg.seed)
     model = ModelBuilder(cfg.model).build().to(device)
     criterion = LossBuilder(cfg.training.loss).build()
     optimizer = OptimizerBuilder(cfg.training.optimizer).build(model.parameters())
+    
+    # Initialize checkpoint manager and load checkpoint if exists
+    checkpoint_manager = CheckpointManager(output_dir, cfg.training.checkpoint)
+    start_epoch = checkpoint_manager.load_checkpoint(model, optimizer, device)
+    
+    # Initialize W&B (checkpoint manager handles resumption)
+    wandb_enabled = checkpoint_manager.init_wandb(cfg.training.wandb, cfg)
     
     trainer = TrainerBuilder(cfg.training).build(
         model=model,
@@ -49,11 +43,15 @@ def main(cfg: DictConfig):
         output_dir=output_dir
     )
     
-    trainer.run(loaders['train'], max_epochs=cfg.training.num_epochs)
+    # Train for remaining epochs
+    remaining_epochs = cfg.training.num_epochs - start_epoch
+    if remaining_epochs > 0:
+        trainer.run(loaders['train'], max_epochs=remaining_epochs)
+    else:
+        print(f"Training already completed ({start_epoch}/{cfg.training.num_epochs} epochs)")
     
-    torch.save(model.state_dict(), Path(output_dir) / "final_model.pt")
-    
-    if cfg.training.wandb.enabled:
+    if wandb_enabled:
+        import wandb
         wandb.finish()
 
 

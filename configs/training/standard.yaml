@@ -13,7 +13,6 @@ checkpoint:
   enabled: true
   dataset: val
   metric: loss
-  filename: best_model.pt
 
 wandb:
   enabled: true

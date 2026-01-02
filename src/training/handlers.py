@@ -95,13 +95,15 @@ def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix):
         })
 
 
-def attach_checkpoint_handler_to_evaluator(evaluator, model, metric_name, filepath):
+def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer, metric_name, filepath):
     """
     Attach checkpointing to any evaluator.
     
     Args:
         evaluator: Evaluation engine
         model: Model to save
+        trainer: Training engine (for epoch number)
+        optimizer: Optimizer to save
         metric_name: Metric to track for best model
         filepath: Path to save checkpoint
     """
@@ -118,5 +120,57 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, metric_name, filepa
         current = engine.state.metrics[metric_name]
         if current > best_metric:
             best_metric = current
-            torch.save(model.state_dict(), filepath)
+            try:
+                import wandb
+                wandb_run_id = wandb.run.id if wandb.run else None
+            except (ImportError, AttributeError):
+                wandb_run_id = None
+            
+            # Calculate absolute epoch number
+            epoch_offset = getattr(trainer.state, 'epoch_offset', 0)
+            absolute_epoch = trainer.state.epoch + epoch_offset
+            
+            checkpoint = {
+                'epoch': absolute_epoch,
+                'iteration': trainer.state.iteration,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'best_metric': best_metric,
+                'metric_name': metric_name,
+                'wandb_run_id': wandb_run_id
+            }
+            torch.save(checkpoint, filepath)
             print(f"Saved best model ({metric_name}={current:.4f}) to {filepath}")
+
+
+def attach_last_checkpoint_handler(trainer, model, optimizer, filepath):
+    """
+    Save checkpoint after every epoch to enable resuming.
+    
+    Args:
+        trainer: Training engine
+        model: Model to save
+        optimizer: Optimizer to save
+        filepath: Path to save checkpoint
+    """
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def save_last_checkpoint(engine):
+        try:
+            import wandb
+            wandb_run_id = wandb.run.id if wandb.run else None
+        except (ImportError, AttributeError):
+            wandb_run_id = None
+        
+        # Calculate absolute epoch number
+        epoch_offset = getattr(engine.state, 'epoch_offset', 0)
+        absolute_epoch = engine.state.epoch + epoch_offset
+        
+        checkpoint = {
+            'epoch': absolute_epoch,
+            'iteration': engine.state.iteration,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'wandb_run_id': wandb_run_id
+        }
+        torch.save(checkpoint, filepath)
+        print(f"Saved last checkpoint (epoch {absolute_epoch}) to {filepath}")
