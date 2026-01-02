@@ -14,6 +14,14 @@ checkpoint:
   dataset: val
   metric: loss
 
+early_stopping:
+  enabled: false
+  dataset: val
+  metric: loss
+  patience: 10
+  min_delta: 0.0
+  mode: minimize
+
 wandb:
   enabled: true
   project: bnn-edl

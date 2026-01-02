@@ -10,7 +10,8 @@ from src.training.handlers import (
     attach_wandb_logger_to_trainer,
     attach_wandb_logger_to_evaluator,
     attach_checkpoint_handler_to_evaluator,
-    attach_last_checkpoint_handler
+    attach_last_checkpoint_handler,
+    attach_early_stopping
 )
 
 
@@ -96,6 +97,17 @@ class TrainerBuilder(BaseBuilder):
                 model,
                 optimizer,
                 last_checkpoint_path
+            )
+        
+        # Attach early stopping if enabled
+        if self.config.early_stopping.enabled:
+            attach_early_stopping(
+                evaluators[self.config.early_stopping.dataset],
+                trainer,
+                self.config.early_stopping.metric,
+                self.config.early_stopping.patience,
+                self.config.early_stopping.min_delta,
+                self.config.early_stopping.mode
             )
         
         return trainer

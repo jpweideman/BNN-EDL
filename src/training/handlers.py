@@ -1,4 +1,4 @@
-"""Generic event handlers for training."""
+"""Event handlers for training."""
 
 import torch
 from pathlib import Path
@@ -126,13 +126,8 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
             except (ImportError, AttributeError):
                 wandb_run_id = None
             
-            # Calculate absolute epoch number
-            epoch_offset = getattr(trainer.state, 'epoch_offset', 0)
-            absolute_epoch = trainer.state.epoch + epoch_offset
-            
             checkpoint = {
-                'epoch': absolute_epoch,
-                'iteration': trainer.state.iteration,
+                'epoch': trainer.state.epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'best_metric': best_metric,
@@ -140,8 +135,6 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
                 'wandb_run_id': wandb_run_id
             }
             torch.save(checkpoint, filepath)
-            print(f"Saved best model ({metric_name}={current:.4f}) to {filepath}")
-
 
 def attach_last_checkpoint_handler(trainer, model, optimizer, filepath):
     """
@@ -161,16 +154,41 @@ def attach_last_checkpoint_handler(trainer, model, optimizer, filepath):
         except (ImportError, AttributeError):
             wandb_run_id = None
         
-        # Calculate absolute epoch number
-        epoch_offset = getattr(engine.state, 'epoch_offset', 0)
-        absolute_epoch = engine.state.epoch + epoch_offset
-        
         checkpoint = {
-            'epoch': absolute_epoch,
-            'iteration': engine.state.iteration,
+            'epoch': engine.state.epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'wandb_run_id': wandb_run_id
         }
         torch.save(checkpoint, filepath)
-        print(f"Saved last checkpoint (epoch {absolute_epoch}) to {filepath}")
+
+
+def attach_early_stopping(evaluator, trainer, metric_name, patience, min_delta, mode):
+    """
+    Attach early stopping to an evaluator.
+    
+    Args:
+        evaluator: Evaluation engine to monitor
+        trainer: Training engine to stop
+        metric_name: Metric to track ( eg. 'loss' or 'accuracy')
+        patience: Epochs without improvement before stopping
+        min_delta: Minimum change to count as improvement
+        mode: 'minimize' for lower is better (eg. loss), 'maximize' for higher is better (eg. accuracy)
+    """
+    from ignite.handlers import EarlyStopping
+    
+    def score_function(engine):
+        metric = engine.state.metrics[metric_name]
+        if mode == 'minimize':
+            return -metric
+        elif mode == 'maximize':
+            return metric
+    
+    handler = EarlyStopping(
+        patience=patience,
+        score_function=score_function,
+        trainer=trainer,
+        min_delta=min_delta
+    )
+    
+    evaluator.add_event_handler(Events.COMPLETED, handler)
