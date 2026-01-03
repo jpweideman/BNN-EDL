@@ -14,7 +14,7 @@ training:
     metric: accuracy
     patience: 10
     min_delta: 0.0
-    mode: min
+    mode: maximize
 
   checkpoint:
     enabled: true
@@ -23,10 +23,19 @@ training:
 
   wandb:
     name: cifar10_resnet20
+  
   num_epochs: 100
 
   optimizer:
-    lr: 0.001
+    name: sgd
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 1e-4
+
+  scheduler:
+    name: cosine_annealing
+    T_max: 100
+    eta_min: 0
 
   evaluation:
     train:
@@ -45,6 +54,8 @@ training:
         - name: loss
 
 dataset:
+  batch_size: 256
+  num_workers: 4
   splits:
     train:
       fraction: 1.0

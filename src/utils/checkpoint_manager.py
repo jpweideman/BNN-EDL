@@ -16,7 +16,7 @@ class CheckpointManager:
         self.wandb_run_id = None
         self.start_epoch = 0
     
-    def load_checkpoint(self, model, optimizer, device):
+    def load_checkpoint(self, model, optimizer, device, scheduler=None):
         """
         Load the last checkpoint if it exists in output_dir.
         
@@ -24,6 +24,7 @@ class CheckpointManager:
             model: Model to load state into
             optimizer: Optimizer to load state into
             device: Device to map checkpoint to
+            scheduler: Optional scheduler to load state into
         
         Returns:
             int: Epoch number to resume from (0 if no checkpoint loaded)
@@ -41,6 +42,9 @@ class CheckpointManager:
         
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        
+        if scheduler is not None and 'scheduler_state_dict' in checkpoint:
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         
         self.start_epoch = checkpoint['epoch']
         self.wandb_run_id = checkpoint.get('wandb_run_id', None)

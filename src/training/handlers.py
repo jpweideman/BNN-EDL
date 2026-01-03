@@ -73,7 +73,7 @@ def attach_wandb_logger_to_trainer(trainer, log_interval):
         })
 
 
-def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix):
+def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix, optimizer):
     """
     Attach W&B logging to any evaluator.
     
@@ -81,6 +81,7 @@ def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix):
         evaluator: Evaluation engine
         trainer: Training engine (for epoch number)
         prefix: Prefix for metric names (e.g., 'val', 'test')
+        optimizer: Optimizer (for learning rate)
     """
     try:
         import wandb
@@ -91,6 +92,7 @@ def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix):
     def log_eval_metrics(engine):
         wandb.log({
             **{f'{prefix}_{k}': v for k, v in engine.state.metrics.items()},
+            'learning_rate': optimizer.param_groups[0]['lr'],
             'epoch': trainer.state.epoch
         })
 
@@ -136,7 +138,7 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
             }
             torch.save(checkpoint, filepath)
 
-def attach_last_checkpoint_handler(trainer, model, optimizer, filepath):
+def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, scheduler=None):
     """
     Save checkpoint after every epoch to enable resuming.
     
@@ -145,6 +147,7 @@ def attach_last_checkpoint_handler(trainer, model, optimizer, filepath):
         model: Model to save
         optimizer: Optimizer to save
         filepath: Path to save checkpoint
+        scheduler: Optional scheduler to save
     """
     @trainer.on(Events.EPOCH_COMPLETED)
     def save_last_checkpoint(engine):
@@ -160,6 +163,10 @@ def attach_last_checkpoint_handler(trainer, model, optimizer, filepath):
             'optimizer_state_dict': optimizer.state_dict(),
             'wandb_run_id': wandb_run_id
         }
+        
+        if scheduler is not None:
+            checkpoint['scheduler_state_dict'] = scheduler.state_dict()
+        
         torch.save(checkpoint, filepath)
 
 
@@ -192,3 +199,16 @@ def attach_early_stopping(evaluator, trainer, metric_name, patience, min_delta, 
     )
     
     evaluator.add_event_handler(Events.COMPLETED, handler)
+
+
+def attach_scheduler_handler(trainer, scheduler):
+    """
+    Attach scheduler to update learning rate after each epoch.
+    
+    Args:
+        trainer: Training engine
+        scheduler: PyTorch scheduler instance
+    """
+    @trainer.on(Events.EPOCH_COMPLETED)
+    def step_scheduler(engine):
+        scheduler.step()

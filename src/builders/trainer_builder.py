@@ -11,14 +11,15 @@ from src.training.handlers import (
     attach_wandb_logger_to_evaluator,
     attach_checkpoint_handler_to_evaluator,
     attach_last_checkpoint_handler,
-    attach_early_stopping
+    attach_early_stopping,
+    attach_scheduler_handler
 )
 
 
 class TrainerBuilder(BaseBuilder):
     """Builds and configures Ignite training engine."""
     
-    def build(self, model, loaders, criterion, optimizer, device, output_dir):
+    def build(self, model, loaders, criterion, optimizer, device, output_dir, scheduler=None):
         """
         Build configured training engine with evaluators and handlers.
         
@@ -70,7 +71,7 @@ class TrainerBuilder(BaseBuilder):
             
             # Attach W&B logging if enabled
             if self.config.wandb.enabled:
-                attach_wandb_logger_to_evaluator(evaluator, trainer, split_name)
+                attach_wandb_logger_to_evaluator(evaluator, trainer, split_name, optimizer)
         
         # Attach checkpointing if enabled
         if self.config.checkpoint.enabled:
@@ -96,7 +97,8 @@ class TrainerBuilder(BaseBuilder):
                 trainer,
                 model,
                 optimizer,
-                last_checkpoint_path
+                last_checkpoint_path,
+                scheduler
             )
         
         # Attach early stopping if enabled
@@ -109,5 +111,9 @@ class TrainerBuilder(BaseBuilder):
                 self.config.early_stopping.min_delta,
                 self.config.early_stopping.mode
             )
+        
+        # Attach scheduler if provided
+        if scheduler is not None:
+            attach_scheduler_handler(trainer, scheduler)
         
         return trainer

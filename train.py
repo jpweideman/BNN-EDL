@@ -10,6 +10,7 @@ from src.builders.data_builder import DataLoaderBuilder
 from src.builders.model_builder import ModelBuilder
 from src.builders.loss_builder import LossBuilder
 from src.builders.optimizer_builder import OptimizerBuilder
+from src.builders.scheduler_builder import SchedulerBuilder
 from src.builders.trainer_builder import TrainerBuilder
 from src.utils import set_seed, setup_device, CheckpointManager
 
@@ -27,11 +28,17 @@ def main(cfg: DictConfig):
     criterion = LossBuilder(cfg.training.loss).build()
     optimizer = OptimizerBuilder(cfg.training.optimizer).build(model.parameters())
     
+    scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler is not None else None
+    
     # Initialize checkpoint manager and load checkpoint if exists
     checkpoint_manager = CheckpointManager(output_dir, cfg.training.checkpoint)
-    start_epoch = checkpoint_manager.load_checkpoint(model, optimizer, device)
+    start_epoch = checkpoint_manager.load_checkpoint(model, optimizer, device, scheduler)
     
-    # Initialize W&B (checkpoint manager handles resumption)
+    # Step scheduler to update LR for the current epoch when resuming
+    if scheduler is not None and start_epoch > 0:
+        scheduler.step()
+    
+    # Initialize W&B. Checkpoint manager handles resumption
     wandb_enabled = checkpoint_manager.init_wandb(cfg.training.wandb, cfg)
     
     trainer = TrainerBuilder(cfg.training).build(
@@ -39,6 +46,7 @@ def main(cfg: DictConfig):
         loaders=loaders,
         criterion=criterion,
         optimizer=optimizer,
+        scheduler=scheduler,
         device=device,
         output_dir=output_dir
     )
