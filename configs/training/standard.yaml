@@ -29,6 +29,17 @@ wandb:
   project: bnn-edl
   name: null
   log_interval: 20
+  summary_metrics:
+    val:
+      - name: accuracy
+        mode: maximize
+      - name: loss
+        mode: minimize
+    test:
+      - name: accuracy
+        mode: maximize
+      - name: loss
+        mode: minimize
 
 evaluation:
   train:

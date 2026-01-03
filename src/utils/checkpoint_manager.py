@@ -90,5 +90,13 @@ class CheckpointManager:
                 dir=str(self.output_dir)
             )
         
+        # Define metric summaries from config
+        if hasattr(wandb_config, 'summary_metrics'):
+            for split, metrics in wandb_config.summary_metrics.items():
+                for metric_config in metrics:
+                    metric_name = f"{split}_{metric_config.name}"
+                    summary_type = "max" if metric_config.mode == "maximize" else "min"
+                    wandb.define_metric(metric_name, summary=summary_type)
+        
         return True
 
