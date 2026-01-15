@@ -9,6 +9,6 @@ class SchedulerBuilder(BaseBuilder):
             return None
         
         scheduler_cls = SCHEDULER_REGISTRY.get(self.config.name)
-        params = {k: v for k, v in self.config.items() if k != 'name'}
+        params = {k: v for k, v in self.config.items() if k not in ['name', 'enabled']}
         return scheduler_cls(optimizer, **params).scheduler
 

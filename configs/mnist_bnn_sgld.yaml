@@ -1,0 +1,47 @@
+defaults:
+  - dataset: mnist
+  - model: mlp
+  - training: bnn_sgld
+  - _self_
+
+seed: 1
+
+training:
+  wandb:
+    name: mnist_bnn_sgld
+
+  evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
+    test:
+      interval: 1
+
+
+# Override: add flatten transform for MLP
+dataset:
+  splits:
+    train:
+      fraction: 1.0
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.1307]
+            std: [0.3081]
+        - name: flatten
+    
+    val:
+      fraction: 0.0
+
+    
+    test:
+      fraction: 1.0
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.1307]
+            std: [0.3081]
+        - name: flatten

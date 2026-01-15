@@ -1,20 +1,21 @@
 """Main training script."""
 
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from hydra.core.hydra_config import HydraConfig
-import torch
-from pathlib import Path
 
-from src.builders.data_builder import DataLoaderBuilder
+from src.setup.data_loader import DataLoaderSetup
+from src.setup.checkpoint import CheckpointSetup
+from src.setup.evaluator import EvaluatorSetup
+from src.setup.trainer import TrainerSetup
+from src.setup.weight_loader import WeightLoaderSetup
 from src.builders.model_builder import ModelBuilder
 from src.builders.loss_builder import LossBuilder
+from src.builders.likelihood_builder import LikelihoodBuilder
+from src.builders.prior_builder import PriorBuilder
 from src.builders.optimizer_builder import OptimizerBuilder
 from src.builders.scheduler_builder import SchedulerBuilder
-from src.builders.trainer_builder import TrainerBuilder
-from src.utils import set_seed, setup_device, CheckpointManager
-
-
+from src.utils import set_seed, setup_device
 
 
 @hydra.main(version_base=None, config_path="configs")
@@ -23,38 +24,72 @@ def main(cfg: DictConfig):
     set_seed(cfg.seed)
     device = setup_device(cfg.training.device)
     
-    loaders = DataLoaderBuilder(cfg.dataset).build(seed=cfg.seed)
+    # Build data loaders and model
+    loaders = DataLoaderSetup(cfg.dataset).create_loaders(seed=cfg.seed)
     model = ModelBuilder(cfg.model).build().to(device)
+    
+    # Check for pretrained model loading
+    if hasattr(cfg.training, 'pretrained_path') and cfg.training.pretrained_path:
+        WeightLoaderSetup().load_pretrained_weights(model, cfg.training.pretrained_path, device)
+    
+    # Initialize checkpoint setup
+    checkpoint_setup = CheckpointSetup(output_dir, cfg.training.checkpoint)
+    
+    # Build optimizer and other components
     criterion = LossBuilder(cfg.training.loss).build()
-    optimizer = OptimizerBuilder(cfg.training.optimizer).build(model.parameters())
-    
-    scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler is not None else None
-    
-    # Initialize checkpoint manager and load checkpoint if exists
-    checkpoint_manager = CheckpointManager(output_dir, cfg.training.checkpoint)
-    start_epoch = checkpoint_manager.load_checkpoint(model, optimizer, device, scheduler)
-    
-    # Step scheduler to update LR for the current epoch when resuming
-    if scheduler is not None and start_epoch > 0:
-        scheduler.step()
-    
-    # Initialize W&B. Checkpoint manager handles resumption
-    wandb_enabled = checkpoint_manager.init_wandb(cfg.training.wandb, cfg)
-    
-    trainer = TrainerBuilder(cfg.training).build(
+    likelihood_fn = LikelihoodBuilder(cfg.training.likelihood).build() if hasattr(cfg.training, 'likelihood') else None
+    dataset_size = len(loaders['train'].dataset)
+    prior_fn = PriorBuilder(cfg.training.prior).build(num_data=dataset_size) if hasattr(cfg.training, 'prior') else None
+    optimizer = OptimizerBuilder(cfg.training.optimizer).build(
+        model.parameters(),
         model=model,
-        loaders=loaders,
-        criterion=criterion,
-        optimizer=optimizer,
-        scheduler=scheduler,
-        device=device,
-        output_dir=output_dir
+        loss_fn=criterion,
+        likelihood_fn=likelihood_fn,
+        prior_fn=prior_fn
+    )
+    scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler.enabled else None
+    
+    # Load checkpoint (includes scheduler step when resuming)
+    start_epoch, sample_files, early_stopping_state = checkpoint_setup.load_checkpoint(
+        model, optimizer, device, scheduler
     )
     
-    # Train for remaining epochs
-    remaining_epochs = cfg.training.num_epochs - start_epoch
-    if remaining_epochs > 0:
-        trainer.run(loaders['train'], max_epochs=remaining_epochs)
+    # Initialize W&B
+    wandb_enabled = checkpoint_setup.init_wandb(cfg.training.wandb, cfg)
+    
+    # Prepare configs (train.py makes all decisions)
+    sampling_config = cfg.training.sampling if hasattr(cfg.training, 'sampling') and cfg.training.sampling.enabled else None
+    checkpoint_config = cfg.training.checkpoint if cfg.training.checkpoint.enabled else None
+    wandb_config = cfg.training.wandb if cfg.training.wandb.enabled else None
+    early_stopping_config = cfg.training.early_stopping if cfg.training.early_stopping.enabled else None
+    
+    # Build evaluators
+    evaluators = EvaluatorSetup(cfg.training.evaluation).create_evaluators(
+        model, criterion, device, loaders,
+        sample_files=sample_files
+    )
+    
+    # Build trainer
+    trainer = TrainerSetup().create_trainer(
+        model=model,
+        optimizer=optimizer,
+        criterion=criterion,
+        device=device,
+        output_dir=output_dir,
+        evaluators=evaluators,
+        scheduler=scheduler,
+        sampling_config=sampling_config,
+        checkpoint_config=checkpoint_config,
+        wandb_config=wandb_config,
+        early_stopping_config=early_stopping_config
+    )
+    
+    # Restore state from checkpoint
+    checkpoint_setup.restore_trainer_state(trainer, start_epoch, sample_files, early_stopping_state)
+    
+    # Train
+    if start_epoch < cfg.training.num_epochs:
+        trainer.run(loaders['train'], max_epochs=cfg.training.num_epochs)
     else:
         print(f"Training already completed ({start_epoch}/{cfg.training.num_epochs} epochs)")
     
@@ -65,4 +100,3 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     main()
-

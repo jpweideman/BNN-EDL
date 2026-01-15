@@ -1,17 +1,30 @@
-num_epochs: 10
+num_epochs: 150
 device: auto
 pretrained_path: null
 
 loss:
   name: cross_entropy
 
+likelihood:
+  name: categorical
+
+prior:
+  name: diagonal_normal
+  sd: 1.0
+  normalize: false
+
 optimizer:
-  name: adam
+  name: sgld
   lr: 0.001
-  weight_decay: 0.0
+  temperature: 1.0
 
 scheduler:
   enabled: false
+
+sampling:
+  enabled: true
+  start_epoch: 50
+  sample_interval: 5
 
 checkpoint:
   enabled: true
@@ -54,8 +67,17 @@ evaluation:
     metrics:
       - name: accuracy
       - name: loss
+      - name: bma_accuracy
+      - name: bma_cross_entropy
+      - name: predictive_entropy
+      - name: predictive_variance
   test:
     interval: -1
     metrics:
       - name: accuracy
       - name: loss
+      - name: bma_accuracy
+      - name: bma_cross_entropy
+      - name: predictive_entropy
+      - name: predictive_variance
+

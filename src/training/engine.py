@@ -22,8 +22,7 @@ def create_train_engine(model, optimizer, criterion, device):
         optimizer.zero_grad()
         
         x, y = batch
-        x = x.to(device)
-        y = y.to(device)
+        x, y = x.to(device), y.to(device)
         
         y_pred = model(x)
         loss = criterion(y_pred, y)
@@ -31,7 +30,7 @@ def create_train_engine(model, optimizer, criterion, device):
         loss.backward()
         optimizer.step()
         
-        return loss.item()
+        return {'loss': loss.item()}
     
     return Engine(train_step)
 
@@ -53,8 +52,7 @@ def create_eval_engine(model, criterion, device):
         
         with torch.no_grad():
             x, y = batch
-            x = x.to(device)
-            y = y.to(device)
+            x, y = x.to(device), y.to(device)
             
             y_pred = model(x)
             loss = criterion(y_pred, y)

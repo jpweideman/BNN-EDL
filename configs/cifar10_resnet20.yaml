@@ -14,7 +14,7 @@ training:
     metric: accuracy
     patience: 10
     min_delta: 0.0
-    mode: maximize
+    objective: maximize
 
   checkpoint:
     enabled: true
@@ -33,6 +33,7 @@ training:
     weight_decay: 1e-4
 
   scheduler:
+    enabled: true
     name: cosine_annealing
     T_max: 100
     eta_min: 0

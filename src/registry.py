@@ -65,6 +65,8 @@ class Registry:
 # Create global registries for each component type
 MODEL_REGISTRY = Registry("models")
 LOSS_REGISTRY = Registry("losses")
+LIKELIHOOD_REGISTRY = Registry("likelihoods")
+PRIOR_REGISTRY = Registry("priors")
 METRIC_REGISTRY = Registry("metrics")
 OPTIMIZER_REGISTRY = Registry("optimizers")
 SCHEDULER_REGISTRY = Registry("schedulers")
