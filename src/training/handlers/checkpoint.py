@@ -45,7 +45,7 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
                 'wandb_run_id': wandb_run_id,
                 'rng_state': {
                     'torch': torch.get_rng_state().cpu().to(torch.uint8),
-                    'torch_cuda': torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+                    'torch_cuda': [state.cpu().to(torch.uint8) for state in torch.cuda.get_rng_state_all()] if torch.cuda.is_available() else None,
                 }
             }
             
@@ -88,7 +88,7 @@ def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, schedule
             'wandb_run_id': wandb_run_id,
             'rng_state': {
                 'torch': torch.get_rng_state().cpu().to(torch.uint8),
-                'torch_cuda': torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+                'torch_cuda': [state.cpu().to(torch.uint8) for state in torch.cuda.get_rng_state_all()] if torch.cuda.is_available() else None,
             }
         }
         
