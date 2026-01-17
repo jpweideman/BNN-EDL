@@ -12,6 +12,9 @@ optimizer:
 
 scheduler:
   enabled: false
+  name: cosine_annealing
+  T_max: 10
+  eta_min: 0
 
 checkpoint:
   enabled: true

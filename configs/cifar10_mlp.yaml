@@ -9,6 +9,12 @@ seed: 1
 training:
   wandb:
     name: cifar10_mlp
+  
+  scheduler:
+    enabled: true
+    name: cosine_annealing
+    T_max: 10
+    eta_min: 0
 
 model:
   params:
