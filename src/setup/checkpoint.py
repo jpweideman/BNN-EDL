@@ -52,7 +52,8 @@ class CheckpointSetup:
         # Restore RNG state for reproducibility
         torch.set_rng_state(checkpoint['rng_state']['torch'].cpu())
         if checkpoint['rng_state']['torch_cuda'] is not None and torch.cuda.is_available():
-            torch.cuda.set_rng_state_all(checkpoint['rng_state']['torch_cuda'])
+            cuda_states = [state.cpu() for state in checkpoint['rng_state']['torch_cuda']]
+            torch.cuda.set_rng_state_all(cuda_states)
     
         self.start_epoch = checkpoint['epoch']
         self.wandb_run_id = checkpoint.get('wandb_run_id', None)
