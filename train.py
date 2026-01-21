@@ -28,10 +28,6 @@ def main(cfg: DictConfig):
     loaders = DataLoaderSetup(cfg.dataset).create_loaders(seed=cfg.seed)
     model = ModelBuilder(cfg.model).build().to(device)
     
-    # Check for pretrained model loading
-    if hasattr(cfg.training, 'pretrained_path') and cfg.training.pretrained_path:
-        WeightLoaderSetup().load_pretrained_weights(model, cfg.training.pretrained_path, device)
-    
     # Initialize checkpoint setup
     checkpoint_setup = CheckpointSetup(output_dir, cfg.training.checkpoint)
     
@@ -47,6 +43,8 @@ def main(cfg: DictConfig):
         likelihood_fn=likelihood_fn,
         prior_fn=prior_fn
     )
+    
+    # Build scheduler if enabled
     scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler.enabled else None
     
     # Load checkpoint (includes scheduler step when resuming)
@@ -57,11 +55,16 @@ def main(cfg: DictConfig):
     # Initialize W&B
     wandb_enabled = checkpoint_setup.init_wandb(cfg.training.wandb, cfg)
     
-    # Prepare configs (train.py makes all decisions)
+    # Prepare configs 
+    pretrained_config = cfg.training.pretrained if hasattr(cfg.training, 'pretrained') and cfg.training.pretrained.enabled else None
     sampling_config = cfg.training.sampling if hasattr(cfg.training, 'sampling') and cfg.training.sampling.enabled else None
     checkpoint_config = cfg.training.checkpoint if cfg.training.checkpoint.enabled else None
     wandb_config = cfg.training.wandb if cfg.training.wandb.enabled else None
     early_stopping_config = cfg.training.early_stopping if cfg.training.early_stopping.enabled else None
+    
+    # Load pretrained weights if enabled
+    if pretrained_config is not None:
+        WeightLoaderSetup().load_pretrained_weights(model, pretrained_config.path, device)
     
     # Build evaluators
     evaluators = EvaluatorSetup(cfg.training.evaluation).create_evaluators(

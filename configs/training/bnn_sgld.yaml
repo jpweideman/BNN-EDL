@@ -1,6 +1,9 @@
 num_epochs: 150
 device: auto
-pretrained_path: null
+
+pretrained:
+  enabled: false
+  path: null
 
 loss:
   name: cross_entropy
