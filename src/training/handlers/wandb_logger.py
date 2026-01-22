@@ -34,9 +34,13 @@ def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix, optimizer):
     """
     @evaluator.on(Events.COMPLETED)
     def log_eval_metrics(engine):
+        # Get learning rate (handle both standard and BNN optimizers)
+        lr = (optimizer.param_groups[0]['lr'] if hasattr(optimizer, 'param_groups') 
+              else optimizer.lr)
+        
         wandb.log({
             **{f'{prefix}_{k}': v for k, v in engine.state.metrics.items()},
-            'learning_rate': optimizer.param_groups[0]['lr'],
-            'epoch': trainer.state.epoch
+            'epoch': trainer.state.epoch,
+            'learning_rate': lr
         })
 

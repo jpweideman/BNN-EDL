@@ -57,7 +57,11 @@ class CheckpointSetup:
     
         self.start_epoch = checkpoint['epoch']
         self.wandb_run_id = checkpoint.get('wandb_run_id', None)
-        sample_files = checkpoint.get('sample_files', None)
+        
+        # Convert sample file strings back to Path objects
+        sample_files_raw = checkpoint.get('sample_files', None)
+        sample_files = [Path(p) for p in sample_files_raw] if sample_files_raw else None
+        
         early_stopping_state = checkpoint.get('early_stopping_state', None)
         
         # Handle scheduler restoration
@@ -85,8 +89,8 @@ class CheckpointSetup:
             trainer.state.epoch = start_epoch
             trainer.state.max_epochs = start_epoch  
         
-        if sample_files and trainer.sample_collector is not None:
-            trainer.sample_collector.sample_files = sample_files
+        if sample_files and trainer.sampling_manager is not None:
+            trainer.sampling_manager.sample_files = sample_files
         
         if early_stopping_state is not None and trainer.early_stopping_handler is not None:
             trainer.early_stopping_handler.counter = early_stopping_state['counter']

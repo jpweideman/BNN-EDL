@@ -31,7 +31,7 @@ def create_bnn_train_engine(model, optimizer, device):
     return Engine(bnn_train_step)
 
 
-def create_bnn_eval_engine(model, criterion, device, sample_files=None):
+def create_bnn_eval_engine(model, criterion, device):
     """
     Create BNN evaluation engine.
     
@@ -39,21 +39,29 @@ def create_bnn_eval_engine(model, criterion, device, sample_files=None):
         model: PyTorch model
         criterion: Loss function
         device: Device to run on
-        sample_files: Optional list of sample file paths for ensemble inference
     
     Returns:
         Ignite Engine for BNN evaluation
+        
+    Note:
+        The sampling_manager will be set on the engine by the trainer after creation.
     """
+    
     def bnn_eval_step(engine, batch):
         model.eval()
         x, y = batch
         x, y = x.to(device), y.to(device)
         
         with torch.no_grad():
-            if sample_files and len(sample_files) > 0:
+            # Get sampling_manager from engine (set by trainer)
+            sampling_manager = getattr(engine, 'sampling_manager', None)
+            current_sample_files = sampling_manager.get_sample_files() if sampling_manager else []
+            
+            # Check if samples are available
+            if current_sample_files and len(current_sample_files) > 0:
                 # Ensemble evaluation - collect predictions from all samples
                 all_preds = []
-                for sample_file in sample_files:
+                for sample_file in current_sample_files:
                     state_dict = torch.load(sample_file, map_location=device)
                     model.load_state_dict(state_dict)
                     pred = model(x)
@@ -78,5 +86,6 @@ def create_bnn_eval_engine(model, criterion, device, sample_files=None):
                 loss = criterion(y_pred, y)
                 return {'y_pred': y_pred, 'y': y, 'loss': loss}
     
-    return Engine(bnn_eval_step)
+    engine = Engine(bnn_eval_step)
+    return engine
 

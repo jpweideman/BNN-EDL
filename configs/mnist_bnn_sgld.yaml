@@ -18,9 +18,10 @@ training:
     test:
       interval: 1
 
-
 # Override: add flatten transform for MLP
 dataset:
+  batch_size: 256
+  num_workers: 0
   splits:
     train:
       fraction: 1.0

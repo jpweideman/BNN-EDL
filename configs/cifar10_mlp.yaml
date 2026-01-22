@@ -7,13 +7,16 @@ defaults:
 seed: 1
 
 training:
+
+  device: auto
+  num_epochs: 10
   wandb:
     name: cifar10_mlp
   
   pretrained:
-    enabled: true
-    path: /Users/jpweideman/Documents/bnn-edl/BNN-EDL/outputs/2026-01-17/19-47-51/best_model.pt
-
+    enabled: false
+    path: null
+  
   scheduler:
     enabled: true
     name: cosine_annealing

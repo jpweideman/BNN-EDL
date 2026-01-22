@@ -1,11 +1,11 @@
-"""Sample collection handler for BNN."""
+"""Sampling handler for BNN."""
 
 import torch
 from pathlib import Path
 from ignite.engine import Events
 
-class SampleCollector:
-    """Collects parameter samples during SGMCMC training."""
+class SamplingManager:
+    """Manages parameter samples during SGMCMC training."""
     
     def __init__(self, output_dir, config):
         self.samples_dir = Path(output_dir) / "samples"

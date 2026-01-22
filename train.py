@@ -41,7 +41,8 @@ def main(cfg: DictConfig):
         model=model,
         loss_fn=criterion,
         likelihood_fn=likelihood_fn,
-        prior_fn=prior_fn
+        prior_fn=prior_fn,
+        num_data=dataset_size
     )
     
     # Build scheduler if enabled
@@ -66,10 +67,10 @@ def main(cfg: DictConfig):
     if pretrained_config is not None:
         WeightLoaderSetup().load_pretrained_weights(model, pretrained_config.path, device)
     
-    # Build evaluators
+    # Build evaluators 
     evaluators = EvaluatorSetup(cfg.training.evaluation).create_evaluators(
         model, criterion, device, loaders,
-        sample_files=sample_files
+        optimizer=optimizer
     )
     
     # Build trainer
@@ -95,10 +96,6 @@ def main(cfg: DictConfig):
         trainer.run(loaders['train'], max_epochs=cfg.training.num_epochs)
     else:
         print(f"Training already completed ({start_epoch}/{cfg.training.num_epochs} epochs)")
-    
-    if wandb_enabled:
-        import wandb
-        wandb.finish()
 
 
 if __name__ == "__main__":

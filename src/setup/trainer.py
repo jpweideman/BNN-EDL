@@ -1,6 +1,7 @@
 """Trainer setup for orchestrating training pipeline."""
 
 from pathlib import Path
+from src.optimizers.bnn import BNNOptimizer
 from src.training.engine import create_train_engine
 from src.training.bnn_engine import create_bnn_train_engine
 from src.training.handlers import (
@@ -40,7 +41,7 @@ class TrainerSetup:
         Returns:
             Configured training engine
         """
-        is_bnn = hasattr(optimizer, 'transform')
+        is_bnn = isinstance(optimizer, BNNOptimizer)
         
         trainer = self._create_trainer_engine(model, optimizer, criterion, device, is_bnn)
         
@@ -70,13 +71,19 @@ class TrainerSetup:
     def _attach_evaluators(self, trainer, evaluators, optimizer, wandb_config):
         """Attach evaluators to trainer."""
         for split_name, eval_data in evaluators.items():
+            evaluator = eval_data['evaluator']
+            
+            # Connect BNN evaluator to sampling_manager
+            if hasattr(trainer, 'sampling_manager') and trainer.sampling_manager:
+                evaluator.sampling_manager = trainer.sampling_manager
+            
             attach_evaluator_handler(
-                trainer, eval_data['evaluator'], eval_data['loader'],
+                trainer, evaluator, eval_data['loader'],
                 split_name, eval_data['interval']
             )
             if wandb_config is not None:
                 attach_wandb_logger_to_evaluator(
-                    eval_data['evaluator'], trainer, split_name, optimizer
+                    evaluator, trainer, split_name, optimizer
                 )
     
     def _attach_training_handlers(self, trainer, scheduler, evaluators, early_stopping_config):
@@ -119,19 +126,19 @@ class TrainerSetup:
         )
         
         last_checkpoint_path = Path(output_dir) / "last_checkpoint.pt"
-        sample_collector = getattr(trainer, 'sample_collector', None) if is_bnn else None
+        sampling_manager = getattr(trainer, 'sampling_manager', None) if is_bnn else None
         attach_last_checkpoint_handler(
             trainer, model, optimizer, last_checkpoint_path, scheduler,
-            sample_collector=sample_collector, early_stopping_handler=early_stopping_handler
+            sampling_manager=sampling_manager, early_stopping_handler=early_stopping_handler
         )
     
     def _setup_bnn_sampling(self, trainer, model, output_dir, is_bnn, sampling_config):
-        """Setup BNN sample collector if enabled."""
-        sample_collector = None
+        """Setup BNN sampling manager if enabled."""
+        sampling_manager = None
         if is_bnn and sampling_config is not None:
-            from src.training.handlers.bnn import SampleCollector
-            sample_collector = SampleCollector(output_dir, sampling_config)
-            sample_collector.attach(trainer, model)
+            from src.training.handlers.bnn import SamplingManager
+            sampling_manager = SamplingManager(output_dir, sampling_config)
+            sampling_manager.attach(trainer, model)
         elif is_bnn:
             print("Warning: BNN training without sampling. No ensemble evaluation possible.")
-        trainer.sample_collector = sample_collector
+        trainer.sampling_manager = sampling_manager

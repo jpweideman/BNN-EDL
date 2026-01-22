@@ -1,5 +1,6 @@
 """Log posterior construction for Bayesian inference."""
 
+import torch
 import torch.func as func
 
 
@@ -32,7 +33,7 @@ class LogPosterior:
             batch: (x, y) tuple
             
         Returns:
-            log_posterior: Scalar tensor
+            Tuple[log_posterior, aux]: (scalar tensor, empty tensor)
         """
         x, y = batch
         device = next(iter(params.values())).device
@@ -48,5 +49,6 @@ class LogPosterior:
         self.last_log_prior = log_prior.item()
         self.last_log_posterior = log_posterior.item()
         
-        return log_posterior
+        # Return tuple (log_posterior, aux) as per posteriors library requirements
+        return log_posterior, torch.tensor([])
 

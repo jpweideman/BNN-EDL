@@ -1,8 +1,8 @@
 """BNN-specific handlers."""
 
-from src.training.handlers.bnn.sample_collector import SampleCollector
+from src.training.handlers.bnn.sampling import SamplingManager
 
 __all__ = [
-    'SampleCollector',
+    'SamplingManager',
 ]
 

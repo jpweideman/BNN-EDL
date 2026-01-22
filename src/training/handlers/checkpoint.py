@@ -52,8 +52,8 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
             if scheduler is not None:
                 checkpoint['scheduler_state_dict'] = scheduler.state_dict()
             
-            if hasattr(trainer, 'sample_collector') and trainer.sample_collector is not None:
-                checkpoint['sample_files'] = trainer.sample_collector.get_sample_files()
+            if hasattr(trainer, 'sampling_manager') and trainer.sampling_manager is not None:
+                checkpoint['sample_files'] = [str(p) for p in trainer.sampling_manager.get_sample_files()]
             
             if early_stopping_handler is not None:
                 checkpoint['early_stopping_state'] = {
@@ -64,7 +64,7 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
             torch.save(checkpoint, filepath)
 
 
-def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, scheduler=None, sample_collector=None, early_stopping_handler=None):
+def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, scheduler=None, sampling_manager=None, early_stopping_handler=None):
     """
     Save checkpoint after every epoch to enable resuming.
     
@@ -74,7 +74,7 @@ def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, schedule
         optimizer: Optimizer to save
         filepath: Path to save checkpoint
         scheduler: Optional scheduler to save
-        sample_collector: Optional sample collector for BNN training
+        sampling_manager: Optional sampling manager for BNN training
         early_stopping_handler: Optional early stopping handler to save state
     """
     @trainer.on(Events.EPOCH_COMPLETED)
@@ -95,9 +95,9 @@ def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, schedule
         if scheduler is not None:
             checkpoint['scheduler_state_dict'] = scheduler.state_dict()
         
-        # Save sample files for BNN
-        if sample_collector is not None:
-            checkpoint['sample_files'] = sample_collector.get_sample_files()
+        # Save sample files for BNN. Convert Path to str for torch.load compatibility
+        if sampling_manager is not None:
+            checkpoint['sample_files'] = [str(p) for p in sampling_manager.get_sample_files()]
         
         # Save early stopping state
         if early_stopping_handler is not None:

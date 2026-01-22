@@ -14,7 +14,14 @@ class BMACrossEntropy(Metric):
         self._count = 0
     
     def update(self, output):
-        if 'all_preds' not in output:
+        # Ignored 
+        # We override iteration_completed to access engine.state.output directly
+        pass
+    
+    def iteration_completed(self, engine):
+        """Override to access engine.state.output directly (not transformed)."""
+        output = engine.state.output
+        if not isinstance(output, dict) or 'all_preds' not in output:
             return
         
         all_preds = output['all_preds']

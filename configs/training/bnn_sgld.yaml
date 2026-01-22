@@ -1,4 +1,4 @@
-num_epochs: 150
+num_epochs: 10
 device: auto
 
 pretrained:
@@ -19,15 +19,15 @@ prior:
 optimizer:
   name: sgld
   lr: 0.001
-  temperature: 1.0
+  temperature: 1.0  # Will be scaled by 1/num_data automatically
 
 scheduler:
   enabled: false
 
 sampling:
   enabled: true
-  start_epoch: 50
-  sample_interval: 5
+  start_epoch: 1
+  sample_interval: 1
 
 checkpoint:
   enabled: true
@@ -72,8 +72,7 @@ evaluation:
       - name: loss
       - name: bma_accuracy
       - name: bma_cross_entropy
-      - name: predictive_entropy
-      - name: predictive_variance
+
   test:
     interval: -1
     metrics:
@@ -81,6 +80,5 @@ evaluation:
       - name: loss
       - name: bma_accuracy
       - name: bma_cross_entropy
-      - name: predictive_entropy
-      - name: predictive_variance
+
 

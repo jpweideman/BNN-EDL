@@ -1,5 +1,6 @@
 """Evaluator setup for creating evaluation engines with metrics."""
 
+from src.optimizers.bnn import BNNOptimizer
 from src.builders.metrics_builder import MetricsBuilder
 from src.training.engine import create_eval_engine
 from src.training.handlers import attach_progress_bar_to_engine
@@ -17,7 +18,7 @@ class EvaluatorSetup:
         """
         self.evaluation_config = evaluation_config
     
-    def create_evaluators(self, model, criterion, device, loaders, sample_files=None):
+    def create_evaluators(self, model, criterion, device, loaders, optimizer=None):
         """
         Create evaluation engines for all configured splits.
         
@@ -26,7 +27,7 @@ class EvaluatorSetup:
             criterion: Loss function
             device: Device to run on
             loaders: Dict mapping split names to DataLoaders
-            sample_files: Optional list of sample files for BNN evaluation
+            optimizer: Optimizer (used to detect if BNN training)
         
         Returns:
             Dict mapping split names to configured evaluators
@@ -37,7 +38,7 @@ class EvaluatorSetup:
                 print(f"Warning: '{split_name}' not in loaders. Skipping.")
                 continue
             
-            evaluator = self._create_evaluator(model, criterion, device, eval_config.metrics, sample_files)
+            evaluator = self._create_evaluator(model, criterion, device, eval_config.metrics, optimizer)
             evaluators[split_name] = {
                 'evaluator': evaluator,
                 'loader': loaders[split_name],
@@ -48,11 +49,14 @@ class EvaluatorSetup:
         
         return evaluators
     
-    def _create_evaluator(self, model, criterion, device, metrics_config, sample_files=None):
+    def _create_evaluator(self, model, criterion, device, metrics_config, optimizer=None):
         """Create a single evaluator with metrics."""
-        if sample_files is not None:
+        # Detect if this is BNN training 
+        is_bnn = isinstance(optimizer, BNNOptimizer)
+        
+        if is_bnn:
             from src.training.bnn_engine import create_bnn_eval_engine
-            evaluator = create_bnn_eval_engine(model, criterion, device, sample_files)
+            evaluator = create_bnn_eval_engine(model, criterion, device)
         else:
             evaluator = create_eval_engine(model, criterion, device)
         

@@ -6,5 +6,8 @@ outputs/
 junk
 notebooks/
 tests/
+to_delete/
+scripts/
+.cursor/
 
 README.md
