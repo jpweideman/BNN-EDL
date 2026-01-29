@@ -9,12 +9,13 @@ from .base import BNNOptimizer
 class SGHMCOptimizer(BNNOptimizer):
     """Stochastic Gradient Hamiltonian Monte Carlo optimizer."""
     
-    def __init__(self, lr, temperature=1.0, alpha=0.01, beta=0.0, sigma=1.0):
+    def __init__(self, lr, temperature=1.0, alpha=0.01, beta=0.0, sigma=1.0, momenta=0.0):
         self.lr = lr
         self.temperature = temperature
         self.alpha = alpha
         self.beta = beta
         self.sigma = sigma
+        self.momenta = momenta
     
     def _build_transform(self):
         """Build SGHMC transform from posteriors library."""
@@ -24,7 +25,8 @@ class SGHMCOptimizer(BNNOptimizer):
             alpha=self.alpha,
             beta=self.beta,
             sigma=self.sigma,
-            temperature=self.scaled_temperature
+            temperature=self.scaled_temperature,
+            momenta=self.momenta
         )
     
     def state_dict(self):
@@ -41,7 +43,8 @@ class SGHMCOptimizer(BNNOptimizer):
             'temperature': self.temperature,
             'alpha': self.alpha,
             'beta': self.beta,
-            'sigma': self.sigma
+            'sigma': self.sigma,
+            'momenta': self.momenta
         }
     
     def load_state_dict(self, state_dict):

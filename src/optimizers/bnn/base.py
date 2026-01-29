@@ -30,7 +30,7 @@ class BNNOptimizer(ABC):
         self.params = OrderedDict(model.named_parameters())
         self.num_data = num_data
         
-        # Scale temperature by 1/num_data (posteriors library convention)
+        # Scale temperature by 1/num_data 
         if hasattr(self, 'temperature'):
             self.scaled_temperature = self.temperature / self.num_data
         

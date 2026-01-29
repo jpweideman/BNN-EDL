@@ -20,7 +20,10 @@ class MetricsBuilder(BaseBuilder):
         for metric_config in self.config:
             name = metric_config['name']
             metric_cls = METRIC_REGISTRY.get(name)
-            metric = metric_cls()
+            
+            # Get parameters if specified in config
+            params = metric_config.get('params', {})
+            metric = metric_cls(**params)
             metrics[name] = metric
         
         return metrics

@@ -14,8 +14,7 @@ class BMACrossEntropy(Metric):
         self._count = 0
     
     def update(self, output):
-        # Ignored 
-        # We override iteration_completed to access engine.state.output directly
+        # Ignored, we override iteration_completed to access engine.state.output directly
         pass
     
     def iteration_completed(self, engine):

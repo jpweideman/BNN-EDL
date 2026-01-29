@@ -7,8 +7,18 @@ defaults:
 seed: 1
 
 training:
+  device: cpu
   wandb:
     name: mnist_bnn_sgld
+
+  optimizer:
+    name: sgld
+    lr: 1e-1       
+    temperature: 1.0 
+    # alpha: 1.0       
+    # sigma: 1.0       
+    # beta: 0.0  
+    # momenta: 0.0
 
   evaluation:
     train:

@@ -7,7 +7,7 @@ from src.registry import METRIC_REGISTRY
 @METRIC_REGISTRY.register("accuracy")
 class Accuracy:
     """
-    Accuracy metric using Ignite's implementation.
+    Accuracy metric.
     """
     
     def __init__(self):

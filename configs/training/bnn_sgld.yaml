@@ -19,7 +19,7 @@ prior:
 optimizer:
   name: sgld
   lr: 0.001
-  temperature: 1.0  # Will be scaled by 1/num_data automatically
+  temperature: 1.0  
 
 scheduler:
   enabled: false
@@ -72,6 +72,15 @@ evaluation:
       - name: loss
       - name: bma_accuracy
       - name: bma_cross_entropy
+      - name: predictive_entropy
+      - name: expected_entropy
+      - name: mutual_information
+      - name: predictive_variance
+      - name: calibration_error
+        params:
+          num_classes: 10
+          num_bins: 15
+          norm: l1
 
   test:
     interval: -1
@@ -80,5 +89,14 @@ evaluation:
       - name: loss
       - name: bma_accuracy
       - name: bma_cross_entropy
+      - name: predictive_entropy
+      - name: expected_entropy
+      - name: mutual_information
+      - name: predictive_variance
+      - name: calibration_error
+        params:
+          num_classes: 10
+          num_bins: 15
+          norm: l1
 
 

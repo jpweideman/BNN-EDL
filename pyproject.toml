@@ -15,6 +15,7 @@ pytorch-ignite = "^0.5.3"
 wandb = "^0.23.1"
 tqdm = "^4.67.1"
 posteriors = "^0.1.2"
+torchmetrics = "^1.8.2"
 
 
 [tool.poetry.group.dev.dependencies]
