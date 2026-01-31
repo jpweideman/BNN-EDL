@@ -13,7 +13,7 @@ if standard_path.exists():
     for _, module_name, _ in pkgutil.iter_modules([str(standard_path)]):
         importlib.import_module(f"{__name__}.standard.{module_name}")
 
-# Import BNN optimizers (excluding base and utils)
+# Import BNN optimizers, excluding base and utils
 bnn_path = package_path / "bnn"
 if bnn_path.exists():
     for _, module_name, _ in pkgutil.iter_modules([str(bnn_path)]):

@@ -1,45 +1,32 @@
 defaults:
   - dataset: mnist
   - model: mlp
-  - training: bnn_sgld
+  - training: standard
   - _self_
 
 seed: 1
 
+model:
+  params:
+    output_layer_config:
+      type: dirichlet
+      params:
+        num_classes: 10
+
 training:
   device: cpu
-
-  pretrained:
-    enabled: false
-    path: null
-
   wandb:
-    name: mnist_bnn_sgld
-
-  optimizer:
-    name: sgld
-    lr: 1e-1       
-    temperature: 1.0 
-    # alpha: 1.0       
-    # sigma: 1.0       
-    # beta: 0.0  
-    # momenta: 0.0
-
-  evaluation:
-    train:
-      interval: 0
-    val:
-      interval: 0
-    test:
-      interval: 1
+    name: edl_mnist_mlp
+  
+  loss:
+    name: evidential_classification
+    params:
+      lamb: 0.01
 
 # Override: add flatten transform for MLP
 dataset:
-  batch_size: 256
-  num_workers: 0
   splits:
     train:
-      fraction: 1.0
       transforms:
         - name: to_tensor
         - name: normalize
@@ -49,11 +36,15 @@ dataset:
         - name: flatten
     
     val:
-      fraction: 0.0
-
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.1307]
+            std: [0.3081]
+        - name: flatten
     
     test:
-      fraction: 1.0
       transforms:
         - name: to_tensor
         - name: normalize

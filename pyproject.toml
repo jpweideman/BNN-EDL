@@ -16,6 +16,7 @@ wandb = "^0.23.1"
 tqdm = "^4.67.1"
 posteriors = "^0.1.2"
 torchmetrics = "^1.8.2"
+edl-pytorch = "^0.0.2"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
     )
     
     # Initialize W&B
-    wandb_enabled = checkpoint_setup.init_wandb(cfg.training.wandb, cfg)
+    checkpoint_setup.init_wandb(cfg.training.wandb, cfg)
     
     # Prepare configs 
     pretrained_config = cfg.training.pretrained if hasattr(cfg.training, 'pretrained') and cfg.training.pretrained.enabled else None

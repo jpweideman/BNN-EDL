@@ -73,4 +73,5 @@ SCHEDULER_REGISTRY = Registry("schedulers")
 SAMPLER_REGISTRY = Registry("samplers")
 DATASET_REGISTRY = Registry("datasets")
 TRANSFORM_REGISTRY = Registry("transforms")
+OUTPUT_LAYER_REGISTRY = Registry("output_layers")
 

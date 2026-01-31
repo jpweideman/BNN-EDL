@@ -1,9 +1,8 @@
-"""Model architectures."""
+"""Output layers."""
 
 import importlib
 import pkgutil
 
-# Automatically import all modules in this package to trigger @register decorators
+# Auto-import all modules to trigger registration
 for _, module_name, _ in pkgutil.iter_modules(__path__):
     importlib.import_module(f"{__name__}.{module_name}")
-

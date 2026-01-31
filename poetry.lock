@@ -393,6 +393,21 @@ files = [
 ]
 
 [[package]]
+name = "edl-pytorch"
+version = "0.0.2"
+description = "Evidential Learning in Pytorch"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "edl-pytorch-0.0.2.tar.gz", hash = "sha256:8850504e7f48efdf5dba65c819545250c7d1156b6f42eb72b4de45fe91ad8fa7"},
+    {file = "edl_pytorch-0.0.2-py3-none-any.whl", hash = "sha256:fbd2cc01fb053574d30cebec3cab419d8a07a61aa1651cddea02b23eedb9887b"},
+]
+
+[package.dependencies]
+torch = "*"
+
+[[package]]
 name = "exceptiongroup"
 version = "1.3.1"
 description = "Backport of PEP 654 (exception groups)"
@@ -2759,4 +2774,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.10"
-content-hash = "4ffaebbc5267549acf056e358a88e46d34b7f172e1cc88657ed9854a52c0b767"
+content-hash = "4aa6955ea0c941bf8cc16b2d5be08b35113360531004918af2096120ec3913c6"

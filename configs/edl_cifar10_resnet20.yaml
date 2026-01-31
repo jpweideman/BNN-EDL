@@ -1,0 +1,78 @@
+defaults:
+  - dataset: cifar10
+  - model: resnet20
+  - training: standard
+  - _self_
+
+seed: 1
+
+model:
+  params:
+    output_layer_config:
+      type: dirichlet
+      params:
+        num_classes: 10
+
+training:
+  loss:
+    name: evidential_classification
+    params:
+      lamb: 0.01
+
+  early_stopping:
+    enabled: true
+    dataset: test
+    metric: accuracy
+    patience: 10
+    min_delta: 0.0
+    objective: maximize
+
+  checkpoint:
+    enabled: true
+    dataset: test
+    metric: accuracy
+
+  wandb:
+    name: edl_cifar10_resnet20
+  
+  num_epochs: 100
+
+  optimizer:
+    name: sgd
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 1e-4
+
+  scheduler:
+    enabled: true
+    name: cosine_annealing
+    T_max: 100
+    eta_min: 0
+
+  evaluation:
+    train:
+      interval: 0
+      metrics:
+        - name: loss
+    val:
+      interval: 0
+      metrics:
+        - name: accuracy
+        - name: loss
+    test:
+      interval: 1
+      metrics:
+        - name: accuracy
+        - name: loss
+
+dataset:
+  batch_size: 256
+  num_workers: 4
+  splits:
+    train:
+      fraction: 1.0
+    val:
+      fraction: 0.0
+    test:
+      fraction: 1.0
+

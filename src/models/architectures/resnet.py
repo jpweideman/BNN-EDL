@@ -5,6 +5,7 @@ Adapted from https://github.com/activatedgeek/understanding-bayesian-classificat
 
 import torch
 import torch.nn as nn
+from src.builders.output_layer_builder import OutputLayerBuilder
 from src.registry import MODEL_REGISTRY
 
 
@@ -119,7 +120,7 @@ class _ResNet(nn.Module):
         out = self.layer3(out)
         out = self.pool(out)
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
+        out = self.output_layer(out)
         return out
 
 
@@ -129,7 +130,10 @@ class ResNet20(_ResNet):
     ResNet20 for CIFAR-10 with Filter Response Normalization.
     ~273k parameters.
     """
-    def __init__(self, num_classes=10):
-         super().__init__(_BasicBlock, [3, 3, 3], num_classes)
-
-
+    def __init__(self, output_layer_config):
+         super().__init__(_BasicBlock, [3, 3, 3])
+         
+         # Build output layer 
+         self.output_layer = OutputLayerBuilder(output_layer_config).build(
+             input_dim=64
+         )

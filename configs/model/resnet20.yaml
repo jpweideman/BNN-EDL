@@ -1,4 +1,7 @@
 name: resnet20
 params:
-  num_classes: 10
+  output_layer_config:
+    type: linear
+    params:
+      num_classes: 10
 
