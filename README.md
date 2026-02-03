@@ -55,7 +55,7 @@ BNN-EDL/
 ├── src/
 │   ├── models/
 │   │   ├── architectures/       # Model backbones (MLP, ResNet20)
-│   │   └── output_layers/       # Modular output layers (Linear, Dirichlet)
+│   │   └── output_layers/       # Output layers (Linear, Dirichlet)
 │   ├── optimizers/
 │   │   ├── standard/            # Adam, AdamW, SGD
 │   │   └── bnn/                 # SGLD, SGHMC + base class
