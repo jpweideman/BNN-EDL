@@ -111,21 +111,13 @@ This project is tested to run with **Python 3.10.19** and uses Poetry for depend
 6. **Run training**:
    ```bash
    # After activation, run commands normally
-   python training/load_config.py --script train_bnn.py training/configs/mnist_mlp.json
+   python train.py --config-name mnist_mlp.json
    
    # Or use poetry run without activation
-   poetry run python training/load_config.py training/configs/mnist_mlp.json
+   poetry run python train.py --config-name mnist_mlp.json
    ```
 
 ## Usage
-
-### Training
-
-Run training with a configuration:
-
-```bash
-poetry run python train.py --config-name cifar10_resnet20
-```
 
 ### Resuming Training
 
