@@ -1,30 +1,29 @@
-"""BMA accuracy metric for BNN ensemble evaluation."""
+"""BMA accuracy metric for Dirichlet BNN ensemble."""
 
 import torch
 from ignite.metrics import Metric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("bma_accuracy")
-class BMAAccuracy(Metric):
-    """Computes accuracy using Bayesian Model Averaging (BMA) across samples."""
+@METRIC_REGISTRY.register("bma_dirichlet_accuracy")
+class BMADirichletAccuracy(Metric):
+    """Computes accuracy using BMA for Dirichlet BNN ensemble."""
     
     def reset(self):
         self._correct = 0
         self._total = 0
     
     def update(self, output):
-        # Ignored, we override iteration_completed to access engine.state.output directly
-
         pass
     
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly (not transformed)."""
+        """Override to access engine.state.output directly."""
         output = engine.state.output
         all_preds = output['all_preds']
         y = output['y']
         
-        probs = torch.softmax(all_preds, dim=2)
+        S = all_preds.sum(dim=-1, keepdim=True)
+        probs = all_preds / S
         probs_bma = probs.mean(dim=0)
         predictions = torch.argmax(probs_bma, dim=1)
         
@@ -35,4 +34,3 @@ class BMAAccuracy(Metric):
         if self._total == 0:
             return 0.0
         return self._correct / self._total
-

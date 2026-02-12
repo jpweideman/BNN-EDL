@@ -49,6 +49,7 @@ training:
       interval: 1
       metrics:
         - name: accuracy
+        - name: bma_dirichlet_accuracy
         - name: loss 
         - name: vacuity
         - name: dirichlet_strength

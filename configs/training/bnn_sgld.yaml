@@ -71,7 +71,7 @@ evaluation:
       - name: accuracy
       - name: loss
       - name: bma_accuracy
-      - name: bma_cross_entropy
+      - name: bma_nll
       - name: predictive_entropy
       - name: expected_entropy
       - name: mutual_information
@@ -90,7 +90,7 @@ evaluation:
       - name: accuracy
       - name: loss
       - name: bma_accuracy
-      - name: bma_cross_entropy
+      - name: bma_nll
       - name: predictive_entropy
       - name: expected_entropy
       - name: mutual_information
