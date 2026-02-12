@@ -1,7 +1,7 @@
 defaults:
   - dataset: mnist
   - model: mlp
-  - training: standard
+  - training: bnn_sgld
   - _self_
 
 seed: 1
@@ -15,26 +15,51 @@ model:
 
 training:
   device: cpu
+  num_epochs: 10
+
   wandb:
-    name: edl_mnist_mlp
-  
+    name: edl_mnist_bnn_sgld
+
   loss:
     name: evidential_classification
     params:
       lamb: 0.01
-  
+
+  likelihood:
+    name: dirichlet
+
+  prior:
+    name: dirichlet_strength
+    sd: 1.0
+    a: 2.0
+    b: 0.1
+    normalize: false
+
+  optimizer:
+    name: sgld
+    lr: 1e-1       
+    temperature: 1.0 
+
   evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
     test:
+      interval: 1
       metrics:
         - name: accuracy
-        - name: loss
+        - name: loss 
         - name: vacuity
         - name: dirichlet_strength
 
 # Override: add flatten transform for MLP
 dataset:
+  batch_size: 256
+  num_workers: 0
   splits:
     train:
+      fraction: 1.0
       transforms:
         - name: to_tensor
         - name: normalize
@@ -44,15 +69,11 @@ dataset:
         - name: flatten
     
     val:
-      transforms:
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.1307]
-            std: [0.3081]
-        - name: flatten
+      fraction: 0.0
+
     
     test:
+      fraction: 1.0
       transforms:
         - name: to_tensor
         - name: normalize

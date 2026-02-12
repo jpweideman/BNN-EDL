@@ -41,6 +41,12 @@ class LogPosterior:
         
         y_pred = func.functional_call(self.model, params, x)
         log_likelihood = self.likelihood_fn(y_pred, y)
+        
+        # Pass batch and model to prior if it needs them
+        if hasattr(self.prior_fn, 'model'):
+            self.prior_fn.model = self.model
+            self.prior_fn._batch = batch
+        
         log_prior = self.prior_fn(params)
         log_posterior = log_likelihood + log_prior
         
@@ -49,6 +55,5 @@ class LogPosterior:
         self.last_log_prior = log_prior.item()
         self.last_log_posterior = log_posterior.item()
         
-        # Return tuple (log_posterior, aux) as per posteriors library requirements
         return log_posterior, torch.tensor([])
 
