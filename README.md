@@ -82,33 +82,38 @@ BNN-EDL/
 
 ## Installation
 
-### Using Poetry (Recommended)
+This project was developed and tested on **Python 3.10.19**. 
 
-This project is tested to run with **Python 3.10.19** and uses Poetry for dependency management.
+### 1. Clone the Repository
 
-1. **Install Poetry** (if not already installed):
-   ```bash
-   curl -sSL https://install.python-poetry.org | python3 -
-   ```
+```bash
+git clone https://github.com/jpweideman/BNN-EDL.git
+cd BNN-EDL
+```
 
-2. **Clone the repository**:
-   ```bash
-   git clone https://github.com/jpweideman/BNN-EDL
-   cd BNN-EDL
-   ```
+### 2. Install Poetry
 
-4. **Set Python 3.10 and install all dependencies**:
-   ```bash
-   poetry env use python3.10
-   poetry install
-   ```
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
 
-5. **Activate the virtual environment**:
+### 3. Install Dependencies
+
+```bash
+# Configure Poetry to use Python 3.10 
+# (If installed. Otherwise Poetry will use your system's default Python.)
+poetry env use python3.10
+
+# Install all dependencies
+poetry install
+```
+
+### 4. **Activate the virtual environment**:
    ```bash
    source $(poetry env info --path)/bin/activate
    ```
 
-6. **Run training**:
+### 5. **Run training**:
    ```bash
    # After activation, run commands normally
    python train.py --config-name mnist_mlp.json
