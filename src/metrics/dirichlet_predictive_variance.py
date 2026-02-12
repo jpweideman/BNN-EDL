@@ -1,13 +1,13 @@
-"""Predictive variance metric for BNN uncertainty quantification."""
+"""Predictive variance metric for Dirichlet BNN uncertainty quantification."""
 
 import torch
 from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("predictive_variance")
-class PredictiveVariance(BaseMetric):
-    """Computes predictive variance from BNN ensemble.
+@METRIC_REGISTRY.register("dirichlet_predictive_variance")
+class DirichletPredictiveVariance(BaseMetric):
+    """Computes predictive variance from Dirichlet BNN ensemble.
     
     Measures the spread of predicted probabilities across samples.
     """
@@ -22,16 +22,14 @@ class PredictiveVariance(BaseMetric):
         if 'all_preds' not in output:
             return
         
-        all_preds = output['all_preds'] 
+        all_preds = output['all_preds']
         
-        # Probabilities from each sample
-        probs = torch.softmax(all_preds, dim=2) 
+        S = all_preds.sum(dim=-1, keepdim=True)
+        probs = all_preds / S
         
-        # Variance across samples for each class
-        probs_var = probs.var(dim=0)  
+        probs_var = probs.var(dim=0)
         
-        # Total variance (sum across classes)
-        total_var = probs_var.sum(dim=1)  
+        total_var = probs_var.sum(dim=1)
         
         self._sum += total_var.sum().item()
         self._count += len(total_var)

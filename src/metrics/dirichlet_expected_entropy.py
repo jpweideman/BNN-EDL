@@ -1,17 +1,13 @@
-"""Expected data entropy metric for BNN uncertainty quantification.
-
-Implementation adapted from torch-uncertainty:
-https://github.com/torch-uncertainty/torch-uncertainty/blob/main/src/torch_uncertainty/metrics/classification/mutual_information.py
-"""
+"""Expected data entropy metric for Dirichlet BNN uncertainty quantification."""
 
 import torch
 from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("expected_entropy")
-class ExpectedEntropy(BaseMetric):
-    """Computes expected data entropy (aleatoric uncertainty) from BNN ensemble.
+@METRIC_REGISTRY.register("dirichlet_expected_entropy")
+class DirichletExpectedEntropy(BaseMetric):
+    """Computes expected data entropy (aleatoric uncertainty) from Dirichlet BNN ensemble.
     
     Measures the average entropy of individual model predictions.
     """
@@ -28,9 +24,10 @@ class ExpectedEntropy(BaseMetric):
         
         all_preds = output['all_preds']
         
-        probs = torch.softmax(all_preds, dim=2)
+        S = all_preds.sum(dim=-1, keepdim=True)
+        probs = all_preds / S
         
-        mean_entropy = torch.special.entr(probs).sum(dim=-1).mean(dim=0)  
+        mean_entropy = torch.special.entr(probs).sum(dim=-1).mean(dim=0)
         
         self._sum += mean_entropy.sum().item()
         self._count += len(mean_entropy)

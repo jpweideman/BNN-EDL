@@ -5,12 +5,12 @@ https://github.com/torch-uncertainty/torch-uncertainty/blob/main/src/torch_uncer
 """
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("mutual_information")
-class MutualInformation(Metric):
+class MutualInformation(BaseMetric):
     """Computes mutual information (epistemic uncertainty) from BNN ensemble.
     
     Measures the disagreement between different models in the ensemble.
@@ -21,13 +21,12 @@ class MutualInformation(Metric):
         self._sum = 0.0
         self._count = 0
     
-    def update(self, output):
-        # Ignored, we override iteration_completed to access engine.state.output directly
-        pass
-    
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly (not transformed)."""
+        """Override to access engine.state.output directly."""
         output = engine.state.output
+        if 'all_preds' not in output:
+            return
+        
         all_preds = output['all_preds']
         
         # Convert to probabilities
@@ -47,4 +46,3 @@ class MutualInformation(Metric):
         if self._count == 0:
             return 0.0
         return self._sum / self._count
-

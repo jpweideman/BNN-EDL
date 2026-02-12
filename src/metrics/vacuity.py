@@ -1,12 +1,12 @@
 """Vacuity metric for EDL uncertainty quantification."""
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("vacuity")
-class Vacuity(Metric):
+class Vacuity(BaseMetric):
     """Computes vacuity (epistemic uncertainty) from EDL Dirichlet parameters.
     
     Vacuity measures the lack of evidence in the model's predictions.
@@ -16,9 +16,6 @@ class Vacuity(Metric):
     def reset(self):
         self._sum = 0.0
         self._count = 0
-    
-    def update(self, output):
-        pass
     
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""

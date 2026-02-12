@@ -4,13 +4,13 @@ Uses torchmetrics' MulticlassCalibrationError implementation.
 """
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from torchmetrics.classification import MulticlassCalibrationError
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("bma_calibration_error")
-class BMACalibrationError(Metric):
+class BMACalibrationError(BaseMetric):
     """Computes Expected Calibration Error (ECE) for BNN ensemble predictions.
     
     Args:
@@ -25,28 +25,29 @@ class BMACalibrationError(Metric):
             n_bins=num_bins,
             norm=norm
         )
+        self._has_data = False
         super().__init__()
     
     def reset(self):
         self.torchmetric.reset()
-    
-    def update(self, output):
-        # Ignored, we override iteration_completed
-        pass
+        self._has_data = False
     
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly (not transformed)."""
+        """Override to access engine.state.output directly."""
         output = engine.state.output
-
-        all_preds = output['all_preds']  # [S, B, C]
-        y = output['y']  # [B]
+        if 'all_preds' not in output:
+            return
         
-        # BMA probabilities (ensemble average)
-        probs = torch.softmax(all_preds, dim=2).mean(dim=0)  # [B, C]
+        all_preds = output['all_preds']
+        y = output['y']
         
-        # Update the torchmetrics metric
+        probs = torch.softmax(all_preds, dim=2).mean(dim=0)
+        
         self.torchmetric.update(probs, y)
+        self._has_data = True
     
     def compute(self):
+        if not self._has_data:
+            return 0.0
         result = self.torchmetric.compute()
         return result.item() if torch.is_tensor(result) else result

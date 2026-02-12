@@ -1,24 +1,24 @@
 """BMA negative log-likelihood metric for Dirichlet BNN ensemble."""
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("bma_dirichlet_nll")
-class BMADirichletNLL(Metric):
+class BMADirichletNLL(BaseMetric):
     """Computes negative log-likelihood using BMA for Dirichlet BNN ensemble."""
     
     def reset(self):
         self._sum = 0.0
         self._count = 0
     
-    def update(self, output):
-        pass
-    
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""
         output = engine.state.output
+        if 'all_preds' not in output:
+            return
+        
         all_preds = output['all_preds']
         y = output['y']
         

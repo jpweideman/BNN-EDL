@@ -2,25 +2,25 @@
 
 import torch
 import torch.nn.functional as F
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("bma_nll")
 @METRIC_REGISTRY.register("bma_cross_entropy")
-class BMANLL(Metric):
+class BMANLL(BaseMetric):
     """Computes negative log-likelihood using Bayesian Model Averaging across samples."""
     
     def reset(self):
         self._sum = 0.0
         self._count = 0
     
-    def update(self, output):
-        pass
-    
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""
         output = engine.state.output
+        if 'all_preds' not in output:
+            return
+        
         all_preds = output['all_preds']
         y = output['y']
         

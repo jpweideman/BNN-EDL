@@ -1,26 +1,25 @@
 """BMA accuracy metric for BNN ensemble evaluation."""
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("bma_accuracy")
-class BMAAccuracy(Metric):
+class BMAAccuracy(BaseMetric):
     """Computes accuracy using Bayesian Model Averaging (BMA) across samples."""
     
     def reset(self):
         self._correct = 0
         self._total = 0
     
-    def update(self, output):
-        # Ignored, we override iteration_completed to access engine.state.output directly
-
-        pass
     
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly (not transformed)."""
+        """Override to access engine.state.output directly."""
         output = engine.state.output
+        if 'all_preds' not in output:
+            return
+        
         all_preds = output['all_preds']
         y = output['y']
         

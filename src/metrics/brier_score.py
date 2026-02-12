@@ -1,21 +1,17 @@
 """Brier score metric for classification."""
 
-import torch
 import torch.nn.functional as F
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("brier_score")
-class BrierScore(Metric):
+class BrierScore(BaseMetric):
     """Computes Brier score for classification predictions."""
     
     def reset(self):
         self._sum = 0.0
         self._count = 0
-    
-    def update(self, output):
-        pass
     
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""

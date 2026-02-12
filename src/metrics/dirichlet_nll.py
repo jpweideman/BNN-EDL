@@ -1,20 +1,17 @@
 """Negative log-likelihood metric for Dirichlet-parameterized classification."""
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("dirichlet_nll")
-class DirichletNLL(Metric):
+class DirichletNLL(BaseMetric):
     """Computes negative log-likelihood for Dirichlet predictions."""
     
     def reset(self):
         self._sum = 0.0
         self._count = 0
-    
-    def update(self, output):
-        pass
     
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""

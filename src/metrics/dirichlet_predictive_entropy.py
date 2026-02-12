@@ -1,17 +1,13 @@
-"""Predictive entropy metric for BNN uncertainty quantification.
-
-Implementation adapted from torch-uncertainty:
-https://github.com/torch-uncertainty/torch-uncertainty/blob/main/src/torch_uncertainty/metrics/classification/mutual_information.py
-"""
+"""Predictive entropy metric for Dirichlet BNN uncertainty quantification."""
 
 import torch
 from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("predictive_entropy")
-class PredictiveEntropy(BaseMetric):
-    """Computes predictive entropy (total uncertainty) from BNN ensemble.
+@METRIC_REGISTRY.register("dirichlet_predictive_entropy")
+class DirichletPredictiveEntropy(BaseMetric):
+    """Computes predictive entropy (total uncertainty) from Dirichlet BNN ensemble.
     
     Measures the entropy of the averaged predictive distribution (ensemble probabilities).
     """
@@ -28,10 +24,9 @@ class PredictiveEntropy(BaseMetric):
         
         all_preds = output['all_preds']
         
-        # Convert to probabilities
-        probs = torch.softmax(all_preds, dim=2) 
+        S = all_preds.sum(dim=-1, keepdim=True)
+        probs = all_preds / S
         
-        # Ensemble probabilities 
         ens_probs = probs.mean(dim=0)
         
         entropy_mean = torch.special.entr(ens_probs).sum(dim=-1)

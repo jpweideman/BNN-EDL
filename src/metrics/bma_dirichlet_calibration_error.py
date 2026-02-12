@@ -1,13 +1,13 @@
 """BMA calibration error metric for Dirichlet BNN ensemble."""
 
 import torch
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from torchmetrics.classification import MulticlassCalibrationError
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("bma_dirichlet_calibration_error")
-class BMADirichletCalibrationError(Metric):
+class BMADirichletCalibrationError(BaseMetric):
     """Computes Expected Calibration Error (ECE) for Dirichlet BNN ensemble.
     
     Args:
@@ -22,17 +22,19 @@ class BMADirichletCalibrationError(Metric):
             n_bins=num_bins,
             norm=norm
         )
+        self._has_data = False
         super().__init__()
     
     def reset(self):
         self.torchmetric.reset()
-    
-    def update(self, output):
-        pass
+        self._has_data = False
     
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""
         output = engine.state.output
+        if 'all_preds' not in output:
+            return
+        
         all_preds = output['all_preds']
         y = output['y']
         
@@ -40,7 +42,10 @@ class BMADirichletCalibrationError(Metric):
         probs = (all_preds / S).mean(dim=0)
         
         self.torchmetric.update(probs, y)
+        self._has_data = True
     
     def compute(self):
+        if not self._has_data:
+            return 0.0
         result = self.torchmetric.compute()
         return result.item() if torch.is_tensor(result) else result

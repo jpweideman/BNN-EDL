@@ -62,6 +62,10 @@ training:
             num_classes: 10
             num_bins: 15
             norm: l1
+        - name: dirichlet_predictive_entropy
+        - name: dirichlet_expected_entropy
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_variance
 
 # Override: add flatten transform for MLP
 dataset:

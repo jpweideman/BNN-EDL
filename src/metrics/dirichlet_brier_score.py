@@ -1,21 +1,17 @@
 """Brier score metric for Dirichlet-parameterized classification."""
 
-import torch
 import torch.nn.functional as F
-from ignite.metrics import Metric
+from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("dirichlet_brier_score")
-class DirichletBrierScore(Metric):
+class DirichletBrierScore(BaseMetric):
     """Computes Brier score for Dirichlet predictions."""
     
     def reset(self):
         self._sum = 0.0
         self._count = 0
-    
-    def update(self, output):
-        pass
     
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""
