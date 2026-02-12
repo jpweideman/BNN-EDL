@@ -24,17 +24,25 @@ training:
       lamb: 0.01
   
   evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
     test:
+      interval: 1
       metrics:
         - name: accuracy
         - name: loss
         - name: vacuity
         - name: dirichlet_strength
+        - name: dirichlet_nll
+        - name: dirichlet_brier_score
 
 # Override: add flatten transform for MLP
 dataset:
   splits:
     train:
+      fraction: 1.0
       transforms:
         - name: to_tensor
         - name: normalize
@@ -44,6 +52,7 @@ dataset:
         - name: flatten
     
     val:
+      fraction: 0.0
       transforms:
         - name: to_tensor
         - name: normalize
@@ -53,6 +62,7 @@ dataset:
         - name: flatten
     
     test:
+      fraction: 1.0
       transforms:
         - name: to_tensor
         - name: normalize
@@ -60,3 +70,5 @@ dataset:
             mean: [0.1307]
             std: [0.3081]
         - name: flatten
+
+

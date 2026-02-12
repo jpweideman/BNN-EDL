@@ -50,22 +50,24 @@ training:
     eta_min: 0
 
   evaluation:
-    train:
-      interval: 0
-      metrics:
-        - name: loss
     val:
       interval: 0
       metrics:
         - name: accuracy
         - name: loss
         - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_nll
+        - name: dirichlet_brier_score
     test:
       interval: 1
       metrics:
         - name: accuracy
         - name: loss
         - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_nll
+        - name: dirichlet_brier_score
 
 dataset:
   batch_size: 256

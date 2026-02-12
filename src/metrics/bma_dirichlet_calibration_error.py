@@ -1,7 +1,4 @@
-"""Calibration error metric for BNN ensemble predictions.
-
-Uses torchmetrics' MulticlassCalibrationError implementation.
-"""
+"""BMA calibration error metric for Dirichlet BNN ensemble."""
 
 import torch
 from ignite.metrics import Metric
@@ -9,15 +6,12 @@ from torchmetrics.classification import MulticlassCalibrationError
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("calibration_error")
-class CalibrationError(Metric):
-    """Computes Expected Calibration Error (ECE) for BNN ensemble predictions.
-    
-    Wrapper around torchmetrics' MulticlassCalibrationError that works with
-    BNN ensemble outputs.
+@METRIC_REGISTRY.register("bma_dirichlet_calibration_error")
+class BMADirichletCalibrationError(Metric):
+    """Computes Expected Calibration Error (ECE) for Dirichlet BNN ensemble.
     
     Args:
-        num_classes: Number of classes (required)
+        num_classes: Number of classes
         num_bins: Number of bins for confidence (default: 15)
         norm: Norm to use - 'l1' (ECE), 'l2' (RMSCE), or 'max' (MCE) (default: 'l1')
     """
@@ -34,20 +28,17 @@ class CalibrationError(Metric):
         self.torchmetric.reset()
     
     def update(self, output):
-        # Ignored, we override iteration_completed
         pass
     
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly (not transformed)."""
+        """Override to access engine.state.output directly."""
         output = engine.state.output
-
-        all_preds = output['all_preds']  # [S, B, C]
-        y = output['y']  # [B]
+        all_preds = output['all_preds']
+        y = output['y']
         
-        # BMA probabilities (ensemble average)
-        probs = torch.softmax(all_preds, dim=2).mean(dim=0)  # [B, C]
+        S = all_preds.sum(dim=-1, keepdim=True)
+        probs = (all_preds / S).mean(dim=0)
         
-        # Update the torchmetrics metric
         self.torchmetric.update(probs, y)
     
     def compute(self):
