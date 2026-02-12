@@ -1,0 +1,114 @@
+num_epochs: 10
+device: auto
+
+pretrained:
+  enabled: false
+  path: null
+
+loss:
+  name: evidential_classification
+  params:
+    lamb: 0.01
+
+likelihood:
+  name: dirichlet
+
+prior:
+  name: dirichlet_strength
+  sd: 1.0
+  a: 2.0
+  b: 0.1
+  normalize: false
+
+optimizer:
+  name: sgld
+  lr: 0.001
+  temperature: 1.0
+
+scheduler:
+  enabled: false
+
+sampling:
+  enabled: true
+  start_epoch: 1
+  sample_interval: 1
+
+checkpoint:
+  enabled: true
+  dataset: val
+  metric: loss
+  objective: minimize
+
+early_stopping:
+  enabled: false
+  dataset: val
+  metric: loss
+  patience: 10
+  min_delta: 0.0
+  objective: minimize
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 20
+  summary_metrics:
+    val:
+      - name: accuracy
+        objective: maximize
+      - name: loss
+        objective: minimize
+    test:
+      - name: accuracy
+        objective: maximize
+      - name: loss
+        objective: minimize
+
+evaluation:
+  train:
+    interval: 0
+    metrics:
+      - name: loss
+  val:
+    interval: 1
+    metrics:
+      - name: accuracy
+      - name: loss
+      - name: bma_dirichlet_accuracy
+      - name: vacuity
+      - name: dirichlet_strength
+      - name: dirichlet_nll
+      - name: bma_dirichlet_nll
+      - name: dirichlet_brier_score
+      - name: bma_dirichlet_brier_score
+      - name: bma_dirichlet_calibration_error
+        params:
+          num_classes: 10
+          num_bins: 15
+          norm: l1
+      - name: dirichlet_predictive_entropy
+      - name: dirichlet_expected_entropy
+      - name: dirichlet_mutual_information
+      - name: dirichlet_predictive_variance
+
+  test:
+    interval: -1
+    metrics:
+      - name: accuracy
+      - name: loss
+      - name: bma_dirichlet_accuracy
+      - name: vacuity
+      - name: dirichlet_strength
+      - name: dirichlet_nll
+      - name: bma_dirichlet_nll
+      - name: dirichlet_brier_score
+      - name: bma_dirichlet_brier_score
+      - name: bma_dirichlet_calibration_error
+        params:
+          num_classes: 10
+          num_bins: 15
+          norm: l1
+      - name: dirichlet_predictive_entropy
+      - name: dirichlet_expected_entropy
+      - name: dirichlet_mutual_information
+      - name: dirichlet_predictive_variance

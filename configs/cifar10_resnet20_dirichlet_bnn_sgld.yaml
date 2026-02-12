@@ -1,0 +1,101 @@
+defaults:
+  - dataset: cifar10
+  - model: resnet20
+  - training: dirichlet_bnn_sgld
+  - _self_
+
+seed: 1
+
+model:
+  params:
+    output_layer_config:
+      type: dirichlet
+      params:
+        num_classes: 10
+
+training:
+  device: auto
+  num_epochs: 200
+
+  wandb:
+    name: cifar10_resnet20_dirichlet_bnn_sgld
+
+  loss:
+    name: evidential_classification
+    params:
+      lamb: 0.01
+
+  likelihood:
+    name: dirichlet
+
+  prior:
+    name: dirichlet_strength
+    sd: 1.0
+    a: 2.0
+    b: 0.1
+    normalize: false
+
+  optimizer:
+    name: sgld
+    lr: 0.01
+    temperature: 1.0
+
+  scheduler:
+    enabled: false
+
+  sampling:
+    enabled: true
+    start_epoch: 75
+    sample_interval: 1
+
+  checkpoint:
+    enabled: true
+    dataset: test
+    metric: accuracy
+    objective: maximize
+
+  early_stopping:
+    enabled: true
+    dataset: test
+    metric: accuracy
+    patience: 20
+    min_delta: 0.0
+    objective: maximize
+
+  evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
+    test:
+      interval: 1
+      metrics:
+        - name: accuracy
+        - name: bma_dirichlet_accuracy
+        - name: loss
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_nll
+        - name: bma_dirichlet_nll
+        - name: dirichlet_brier_score
+        - name: bma_dirichlet_brier_score
+        - name: bma_dirichlet_calibration_error
+          params:
+            num_classes: 10
+            num_bins: 15
+            norm: l1
+        - name: dirichlet_predictive_entropy
+        - name: dirichlet_expected_entropy
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_variance
+
+dataset:
+  batch_size: 256
+  num_workers: 4
+  splits:
+    train:
+      fraction: 1.0
+    val:
+      fraction: 0.0
+    test:
+      fraction: 1.0
