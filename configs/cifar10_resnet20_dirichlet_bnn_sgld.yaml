@@ -29,10 +29,8 @@ training:
     name: dirichlet
 
   prior:
-    name: dirichlet_strength
+    name: diagonal_normal
     sd: 1.0
-    a: 2.0
-    b: 0.1
     normalize: false
 
   optimizer:
@@ -91,7 +89,7 @@ training:
 
 dataset:
   batch_size: 256
-  num_workers: 4
+  num_workers: 0
   splits:
     train:
       fraction: 1.0

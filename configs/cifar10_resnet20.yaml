@@ -20,6 +20,7 @@ training:
     enabled: true
     dataset: test
     metric: accuracy
+    objective: maximize
 
   wandb:
     name: cifar10_resnet20
