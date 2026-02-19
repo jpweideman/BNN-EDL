@@ -109,18 +109,18 @@ poetry install
 ```
 
 ### 4. **Activate the virtual environment**:
-   ```bash
-   source $(poetry env info --path)/bin/activate
-   ```
+```bash
+source $(poetry env info --path)/bin/activate
+```
 
 ### 5. **Run training**:
-   ```bash
-   # After activation, run commands normally
-   python train.py --config-name mnist_mlp.json
-   
-   # Or use poetry run without activation
-   poetry run python train.py --config-name mnist_mlp.json
-   ```
+```bash
+# After activation, run commands normally
+python train.py --config-name mnist_mlp.json
+
+# Or use poetry run without activation
+poetry run python train.py --config-name mnist_mlp.json
+```
 
 ## Usage
 
