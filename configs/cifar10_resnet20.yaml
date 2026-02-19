@@ -8,8 +8,9 @@ seed: 1
 
 training:
 
+    
   early_stopping:
-    enabled: true
+    enabled: false
     dataset: test
     metric: accuracy
     patience: 10
@@ -25,18 +26,18 @@ training:
   wandb:
     name: cifar10_resnet20
   
-  num_epochs: 100
+  num_epochs: 200
 
   optimizer:
     name: sgd
-    lr: 0.1
+    lr: 1e-1
     momentum: 0.9
     weight_decay: 1e-4
 
   scheduler:
     enabled: true
     name: cosine_annealing
-    T_max: 100
+    T_max: 200
     eta_min: 0
 
   evaluation:

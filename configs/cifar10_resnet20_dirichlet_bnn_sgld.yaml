@@ -1,7 +1,7 @@
 defaults:
   - dataset: cifar10
   - model: resnet20
-  - training: dirichlet_bnn_sgld
+  - training: bnn_sgld
   - _self_
 
 seed: 1
@@ -15,10 +15,14 @@ model:
 
 training:
   device: auto
-  num_epochs: 200
+  num_epochs: 500
 
   wandb:
-    name: cifar10_resnet20_dirichlet_bnn_sgld
+    name: cifar10_resnet20_dirichlet_bnn_sgld_pretrained
+
+  pretrained:
+    enabled: true
+    path: /home/ra65puy/ra65puy_lrz_mount/BNN-EDL/outputs/2026-02-17/20-24-39/best_model.pt
 
   loss:
     name: evidential_classification
@@ -32,10 +36,15 @@ training:
     name: diagonal_normal
     sd: 1.0
     normalize: false
+    # name: dirichlet_strength
+    # sd: 1.0
+    # a: 2
+    # b: 0.1
+    # normalize: false
 
   optimizer:
     name: sgld
-    lr: 0.01
+    lr: 0.005
     temperature: 1.0
 
   scheduler:
@@ -43,7 +52,7 @@ training:
 
   sampling:
     enabled: true
-    start_epoch: 75
+    start_epoch: 200
     sample_interval: 1
 
   checkpoint:
@@ -53,7 +62,7 @@ training:
     objective: maximize
 
   early_stopping:
-    enabled: true
+    enabled: false
     dataset: test
     metric: accuracy
     patience: 20
@@ -89,7 +98,7 @@ training:
 
 dataset:
   batch_size: 256
-  num_workers: 0
+  num_workers: 2
   splits:
     train:
       fraction: 1.0
