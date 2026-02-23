@@ -137,7 +137,7 @@ class TrainerSetup:
         sampling_manager = None
         if is_bnn and sampling_config is not None:
             from src.training.handlers.bnn import SamplingManager
-            sampling_manager = SamplingManager(output_dir, sampling_config)
+            sampling_manager = SamplingManager(output_dir, sampling_config.start_epoch, sampling_config.sample_interval)
             sampling_manager.attach(trainer, model)
         elif is_bnn:
             print("Warning: BNN training without sampling. No ensemble evaluation possible.")
