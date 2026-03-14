@@ -19,11 +19,12 @@ training:
 
   pretrained:
     enabled: true
-    path: /home/ra65puy/ra65puy_lrz_mount/BNN-EDL/outputs/2026-02-13/16-33-55/best_model.pt
+    path: /home/ra65puy/ra65puy_lrz_mount/BNN-EDL/outputs/2026-03-09/18-45-55/best_model.pt
 
 
   wandb:
-    name: cifar10_resnet20_bnn_sgld_pretrained_0.01_temperature
+    project: bnn-edl-experiments
+    name: cifar10_resnet20_bnn_sgld_pretrained_temperature_0.1
 
   likelihood:
     name: categorical
@@ -35,8 +36,8 @@ training:
 
   optimizer:
     name: sgld
-    lr: 0.005
-    temperature: 0.01
+    lr: 0.01
+    temperature: 0.1
 
   scheduler:
     enabled: false
@@ -44,7 +45,7 @@ training:
   sampling:
     enabled: true
     start_epoch: 200
-    sample_interval: 1
+    sample_interval: 4
 
   checkpoint:
     enabled: true

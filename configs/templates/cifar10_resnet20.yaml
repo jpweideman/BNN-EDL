@@ -24,7 +24,6 @@ training:
     objective: maximize
 
   wandb:
-    project: bnn-edl-experiments
     name: cifar10_resnet20
   
   num_epochs: 300

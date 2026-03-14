@@ -18,10 +18,10 @@ training:
   num_epochs: 500
 
   wandb:
-    name: cifar10_resnet20_dirichlet_bnn_sgld_pretrained
+    name: cifar10_resnet20_dirichlet_bnn_sgld_generalized_0.01
 
   pretrained:
-    enabled: true
+    enabled: false
     path: /home/ra65puy/ra65puy_lrz_mount/BNN-EDL/outputs/2026-02-17/20-24-39/best_model.pt
 
   loss:
@@ -29,8 +29,19 @@ training:
     params:
       lamb: 0.01
 
+  # likelihood:
+  #   name: dirichlet
+
+  # likelihood:
+  #   name: evidential_dirichlet
+  #   params:
+  #     num_classes: 10
+  #     max_annealing_steps: 1000
+
   likelihood:
-    name: dirichlet
+    name: evidential_generalized
+    params:
+      lamb: 0.01
 
   prior:
     name: diagonal_normal

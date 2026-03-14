@@ -17,11 +17,33 @@ training:
   device: cpu
   wandb:
     name: edl_mnist_mlp
+
   
+  # Available EDL losses:
+  #
+  #
+  # edl_digamma (equation 4, Sensoy et al. 2018, annealed KL):
+  #   name: edl_digamma
+  #   params:
+  #     num_classes: 10
+  #     annealing_step: 10
+  #
+  # edl_mse (equation 5, Sensoy et al. 2018, annealed KL):
+  #   name: edl_mse
+  #   params:
+  #     num_classes: 10
+  #     annealing_step: 10
+  #
+  # edl_log (equation 3, Sensoy et al. 2018, annealed KL):
+  #   name: edl_log
+  #   params:
+  #     num_classes: 10
+  #     annealing_step: 10
   loss:
-    name: evidential_classification
+    name: edl_mse
     params:
-      lamb: 0.01
+      num_classes: 10
+      annealing_step: 10
   
   evaluation:
     train:
