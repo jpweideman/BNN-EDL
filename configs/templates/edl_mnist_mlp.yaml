@@ -59,6 +59,9 @@ training:
         - name: dirichlet_strength
         - name: dirichlet_nll
         - name: dirichlet_brier_score
+        - name: dirichlet_predictive_entropy
+        - name: dirichlet_expected_entropy
+        - name: dirichlet_mutual_information
 
 # Override: add flatten transform for MLP
 dataset:
