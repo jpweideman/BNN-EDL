@@ -59,17 +59,16 @@ def create_bnn_eval_engine(model, criterion, device):
             
             # Check if samples are available
             if current_sample_files and len(current_sample_files) > 0:
-                # Ensemble evaluation - collect predictions from all samples
+                current_state = model.state_dict()
+
                 all_preds = []
                 for sample_file in current_sample_files:
-                    state_dict = torch.load(sample_file, map_location=device)
-                    model.load_state_dict(state_dict)
-                    pred = model(x)
-                    all_preds.append(pred)
-                
+                    model.load_state_dict(torch.load(sample_file, map_location=device))
+                    all_preds.append(model(x))
+
                 all_preds = torch.stack(all_preds)
-                
-                # Use current model state for standard metrics
+
+                model.load_state_dict(current_state)
                 y_pred = model(x)
                 loss = criterion(y_pred, y)
                 
