@@ -59,7 +59,7 @@ def create_bnn_eval_engine(model, criterion, device):
             
             # Check if samples are available
             if current_sample_files and len(current_sample_files) > 0:
-                current_state = model.state_dict()
+                current_state = {k: v.clone() for k, v in model.state_dict().items()}
 
                 all_preds = []
                 for sample_file in current_sample_files:
