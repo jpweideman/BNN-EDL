@@ -60,6 +60,11 @@ training:
         - name: dirichlet_strength
         - name: dirichlet_nll
         - name: dirichlet_brier_score
+        - name: dirichlet_calibration_error
+          params:
+            num_classes: 10
+            num_bins: 15
+            norm: l1
         - name: dirichlet_predictive_entropy
         - name: dirichlet_expected_entropy
         - name: dirichlet_mutual_information

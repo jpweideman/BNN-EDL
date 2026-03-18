@@ -65,6 +65,11 @@ training:
         - name: dirichlet_predictive_entropy
         - name: dirichlet_expected_entropy
         - name: dirichlet_mutual_information
+        - name: dirichlet_calibration_error
+          params:
+            num_classes: 10
+            num_bins: 15
+            norm: l1
     test:
       interval: 1
       metrics:
@@ -77,7 +82,11 @@ training:
         - name: dirichlet_predictive_entropy
         - name: dirichlet_expected_entropy
         - name: dirichlet_mutual_information
-
+        - name: dirichlet_calibration_error
+          params:
+            num_classes: 10
+            num_bins: 15
+            norm: l1
 dataset:
   batch_size: 256
   num_workers: 4

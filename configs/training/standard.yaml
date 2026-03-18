@@ -60,8 +60,22 @@ evaluation:
     metrics:
       - name: accuracy
       - name: loss
+      - name: nll
+      - name: brier_score
+      - name: calibration_error
+        params:
+          num_classes: 10
+          num_bins: 15
+          norm: l1
   test:
     interval: -1
     metrics:
       - name: accuracy
       - name: loss
+      - name: nll
+      - name: brier_score
+      - name: calibration_error
+        params:
+          num_classes: 10
+          num_bins: 15
+          norm: l1
