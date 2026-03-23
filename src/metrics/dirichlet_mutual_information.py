@@ -1,8 +1,7 @@
-"""Mutual information metric for Dirichlet uncertainty quantification.
+"""Mutual information metric for Dirichlet BNN uncertainty quantification.
 
-Works for both standard EDL (single y_pred) and BNN ensembles (all_preds).
-For EDL: always 0 (single prediction, no ensemble disagreement).
-For BNN: disagreement between ensemble members (epistemic uncertainty).
+Measures epistemic uncertainty as disagreement between ensemble members.
+Requires all_preds (BNN samples); skipped when no samples are available.
 """
 
 import torch
@@ -12,10 +11,9 @@ from src.registry import METRIC_REGISTRY
 
 @METRIC_REGISTRY.register("dirichlet_mutual_information")
 class DirichletMutualInformation(BaseMetric):
-    """Computes mutual information (epistemic uncertainty) from Dirichlet output.
+    """Computes mutual information (epistemic uncertainty) from Dirichlet BNN ensemble.
 
     MI = Entropy of ensemble mean - Mean of individual entropies.
-    Uses all_preds (BNN ensemble) if available, falls back to y_pred (EDL).
     """
 
     def reset(self):
@@ -25,10 +23,9 @@ class DirichletMutualInformation(BaseMetric):
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""
         output = engine.state.output
-        if 'all_preds' in output:
-            all_preds = output['all_preds']
-        else:
-            all_preds = output['y_pred'].unsqueeze(0)
+        if 'all_preds' not in output:
+            return
+        all_preds = output['all_preds']
 
         S = all_preds.sum(dim=-1, keepdim=True)
         probs = all_preds / S

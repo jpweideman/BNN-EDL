@@ -1,0 +1,65 @@
+defaults:
+  - dataset: fashion_mnist
+  - model: mlp
+  - training: bnn_sgld
+  - _self_
+
+seed: 1
+
+training:
+  device: cpu
+
+  pretrained:
+    enabled: false
+    path: null
+
+  wandb:
+    name: fashion_mnist_bnn_sgld
+
+  optimizer:
+    name: sgld
+    lr: 1e-1
+    temperature: 1.0
+
+  evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
+    test:
+      interval: 1
+
+# Override: add flatten transform for MLP
+dataset:
+  batch_size: 256
+  num_workers: 0
+  splits:
+    train:
+      fraction: 1.0
+      transforms:
+        - name: random_crop
+          params:
+            size: 28
+            padding: 4
+        - name: random_horizontal_flip
+          params:
+            p: 0.5
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]
+        - name: flatten
+
+    val:
+      fraction: 0.0
+
+    test:
+      fraction: 1.0
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]
+        - name: flatten

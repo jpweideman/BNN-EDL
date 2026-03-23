@@ -1,4 +1,4 @@
-name: cifar10
+name: fashion_mnist
 batch_size: 16
 num_workers: 0
 
@@ -8,18 +8,11 @@ splits:
     fraction: 0.8
     shuffle: true
     transforms:
-      - name: random_crop
-        params:
-          size: 32
-          padding: 4
-      - name: random_horizontal_flip
-        params:
-          p: 0.5
       - name: to_tensor
       - name: normalize
         params:
-          mean: [0.4914, 0.4822, 0.4465]
-          std: [0.2470, 0.2434, 0.2615]
+          mean: [0.2860]
+          std: [0.3530]
   val:
     source: train
     fraction: 0.2
@@ -28,8 +21,8 @@ splits:
       - name: to_tensor
       - name: normalize
         params:
-          mean: [0.4914, 0.4822, 0.4465]
-          std: [0.2470, 0.2434, 0.2615]
+          mean: [0.2860]
+          std: [0.3530]
   test:
     source: test
     fraction: 1.0
@@ -38,5 +31,5 @@ splits:
       - name: to_tensor
       - name: normalize
         params:
-          mean: [0.4914, 0.4822, 0.4465]
-          std: [0.2470, 0.2434, 0.2615]
+          mean: [0.2860]
+          std: [0.3530]
