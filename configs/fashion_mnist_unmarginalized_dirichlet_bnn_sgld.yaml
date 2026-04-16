@@ -1,26 +1,28 @@
 defaults:
   - dataset: fashion_mnist
-  - model: mlp
-  - training: bnn_sgld
+  - model: resnet20
+  - training: dirichlet_gibbs_sgld
   - _self_
 
 seed: 1
 
+model:
+  params:
+    in_channels: 1
+    output_layer_config:
+      type: dirichlet
+      params:
+        num_classes: 10
+
 training:
-  device: cpu
-
-  pretrained:
-    enabled: false
-    path: null
-
+  device: auto
   wandb:
-    name: fashion_mnist_bnn_sgld
-
+    name: fashion_mnist_dirichlet_joint_bnn_sgld_pretrained_edl
+  pretrained:
+    enabled: true
+    path: /Users/jpweideman/BNN-EDL/outputs/2026-03-28/19-10-58/best_model.pt
   optimizer:
-    name: sgld
-    lr: 1e-1
-    temperature: 1.0
-
+    lr: 1e-2
   evaluation:
     train:
       interval: 0
@@ -29,10 +31,9 @@ training:
     test:
       interval: 1
 
-# Override: add flatten transform for MLP
 dataset:
   batch_size: 256
-  num_workers: 0
+  num_workers: 4
   splits:
     train:
       fraction: 1.0
@@ -49,11 +50,8 @@ dataset:
           params:
             mean: [0.2860]
             std: [0.3530]
-        - name: flatten
-
     val:
       fraction: 0.0
-
     test:
       fraction: 1.0
       transforms:
@@ -62,4 +60,3 @@ dataset:
           params:
             mean: [0.2860]
             std: [0.3530]
-        - name: flatten

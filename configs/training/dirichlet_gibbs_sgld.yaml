@@ -6,10 +6,13 @@ pretrained:
   path: null
 
 loss:
-  name: cross_entropy
+  name: edl_log
+  params:
+    num_classes: 10
+    annealing_step: 999999
 
 likelihood:
-  name: categorical
+  name: dirichlet_joint
 
 prior:
   name: diagonal_normal
@@ -17,9 +20,9 @@ prior:
   normalize: false
 
 optimizer:
-  name: sgld
+  name: gibbs_sgld
   lr: 0.001
-  temperature: 1.0  
+  temperature: 1.0
 
 scheduler:
   enabled: false
@@ -69,21 +72,24 @@ evaluation:
     interval: 1
     metrics:
       - name: accuracy
+      - name: bma_dirichlet_accuracy
       - name: loss
-      - name: bma_accuracy
-      - name: bma_nll
-      - name: predictive_entropy
-      - name: expected_entropy
-      - name: mutual_information
-      - name: predictive_variance
-      - name: nll
-      - name: brier_score
-      - name: calibration_error
+      - name: vacuity
+      - name: dirichlet_strength
+      - name: dirichlet_nll
+      - name: bma_dirichlet_nll
+      - name: dirichlet_brier_score
+      - name: bma_dirichlet_brier_score
+      - name: bma_dirichlet_calibration_error
         params:
           num_classes: 10
           num_bins: 15
           norm: l1
-      - name: bma_calibration_error
+      - name: dirichlet_predictive_entropy
+      - name: dirichlet_expected_entropy
+      - name: dirichlet_mutual_information
+      - name: dirichlet_predictive_variance
+      - name: dirichlet_calibration_error
         params:
           num_classes: 10
           num_bins: 15
@@ -93,21 +99,24 @@ evaluation:
     interval: -1
     metrics:
       - name: accuracy
+      - name: bma_dirichlet_accuracy
       - name: loss
-      - name: bma_accuracy
-      - name: bma_nll
-      - name: predictive_entropy
-      - name: expected_entropy
-      - name: mutual_information
-      - name: predictive_variance
-      - name: nll
-      - name: brier_score
-      - name: calibration_error
+      - name: vacuity
+      - name: dirichlet_strength
+      - name: dirichlet_nll
+      - name: bma_dirichlet_nll
+      - name: dirichlet_brier_score
+      - name: bma_dirichlet_brier_score
+      - name: bma_dirichlet_calibration_error
         params:
           num_classes: 10
           num_bins: 15
           norm: l1
-      - name: bma_calibration_error
+      - name: dirichlet_predictive_entropy
+      - name: dirichlet_expected_entropy
+      - name: dirichlet_mutual_information
+      - name: dirichlet_predictive_variance
+      - name: dirichlet_calibration_error
         params:
           num_classes: 10
           num_bins: 15

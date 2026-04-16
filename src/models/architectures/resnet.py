@@ -89,11 +89,11 @@ class _BasicBlock(nn.Module):
 
 
 class _ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes=10, in_channels=3):
         super().__init__()
         self.in_planes = 16
 
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=3,
+        self.conv1 = nn.Conv2d(in_channels, 16, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = FilterResponseNorm2d(16)
         self.tlu1 = TLU2d(16)
@@ -130,10 +130,10 @@ class ResNet20(_ResNet):
     ResNet20 for CIFAR-10 with Filter Response Normalization.
     ~273k parameters.
     """
-    def __init__(self, output_layer_config):
-         super().__init__(_BasicBlock, [3, 3, 3])
-         
-         # Build output layer 
-         self.output_layer = OutputLayerBuilder(output_layer_config).build(
-             input_dim=64
-         )
+    def __init__(self, output_layer_config, in_channels=3):
+        super().__init__(_BasicBlock, [3, 3, 3], in_channels=in_channels)
+        
+        # Build output layer
+        self.output_layer = OutputLayerBuilder(output_layer_config).build(
+            input_dim=64
+        )

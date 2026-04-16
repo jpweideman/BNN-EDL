@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from .utils.log_posterior import LogPosterior
 
 
 class BNNOptimizer(ABC):
@@ -34,8 +33,7 @@ class BNNOptimizer(ABC):
         if hasattr(self, 'temperature'):
             self.scaled_temperature = self.temperature / self.num_data
         
-        # Create log posterior combining likelihood and prior
-        self.log_posterior = LogPosterior(model, likelihood_fn, prior_fn)
+        self.log_posterior = self._build_log_posterior(model, likelihood_fn, prior_fn)
         
         # Build the transform. Implemented by subclass
         self.transform = self._build_transform()
@@ -45,6 +43,20 @@ class BNNOptimizer(ABC):
         
         return self
     
+    @abstractmethod
+    def _build_log_posterior(self, model, likelihood_fn, prior_fn):
+        """Construct the log posterior log p(θ|D) = log p(D|θ) + log p(θ) used during training.
+
+        Args:
+            model: PyTorch model
+            likelihood_fn: Returns log p(D|θ) given model output and targets
+            prior_fn: Returns log p(θ) given parameters
+
+        Returns:
+            log_posterior: Log posterior callable for the optimizer transform
+        """
+        pass
+
     @abstractmethod
     def _build_transform(self):
         """Build the posteriors transform for this optimizer.

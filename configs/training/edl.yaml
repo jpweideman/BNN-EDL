@@ -6,7 +6,10 @@ pretrained:
   path: null
 
 loss:
-  name: cross_entropy
+  name: edl_digamma
+  params:
+    num_classes: 10
+    annealing_step: 10
 
 optimizer:
   name: adam
@@ -27,11 +30,11 @@ checkpoint:
 
 early_stopping:
   enabled: false
-  dataset: val
-  metric: loss
+  dataset: test
+  metric: accuracy
   patience: 10
   min_delta: 0.0
-  objective: minimize
+  objective: maximize
 
 wandb:
   enabled: true
@@ -39,15 +42,10 @@ wandb:
   name: null
   log_interval: 20
   summary_metrics:
-    val:
-      - name: accuracy
-        objective: maximize
-      - name: loss
-        objective: minimize
     test:
       - name: accuracy
         objective: maximize
-      - name: loss
+      - name: dirichlet_nll
         objective: minimize
 
 evaluation:
@@ -56,26 +54,25 @@ evaluation:
     metrics:
       - name: loss
   val:
+    interval: 0
+    metrics:
+      - name: accuracy
+      - name: loss
+  test:
     interval: 1
     metrics:
       - name: accuracy
       - name: loss
-      - name: nll
-      - name: brier_score
-      - name: calibration_error
+      - name: vacuity
+      - name: dirichlet_strength
+      - name: dirichlet_nll
+      - name: dirichlet_brier_score
+      - name: dirichlet_calibration_error
         params:
           num_classes: 10
           num_bins: 15
           norm: l1
-  test:
-    interval: -1
-    metrics:
-      - name: accuracy
-      - name: loss
-      - name: nll
-      - name: brier_score
-      - name: calibration_error
-        params:
-          num_classes: 10
-          num_bins: 15
-          norm: l1
+      - name: dirichlet_predictive_entropy
+      - name: dirichlet_expected_entropy
+      - name: dirichlet_mutual_information
+      - name: dirichlet_predictive_variance

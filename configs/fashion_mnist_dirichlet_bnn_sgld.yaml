@@ -1,0 +1,62 @@
+defaults:
+  - dataset: fashion_mnist
+  - model: resnet20
+  - training: dirichlet_bnn_sgld
+  - _self_
+
+seed: 1
+
+model:
+  params:
+    in_channels: 1
+    output_layer_config:
+      type: dirichlet
+      params:
+        num_classes: 10
+
+training:
+  pretrained:
+    enabled: true
+    path: /Users/jpweideman/BNN-EDL/outputs/2026-03-28/19-10-58/best_model.pt
+
+  wandb:
+    name: fashion_mnist_dirichlet_bnn_sgld_pretrained_edl
+  optimizer:
+    lr: 1e-1
+  evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
+    test:
+      interval: 1
+
+dataset:
+  batch_size: 256
+  num_workers: 4
+  splits:
+    train:
+      fraction: 1.0
+      transforms:
+        - name: random_crop
+          params:
+            size: 28
+            padding: 4
+        - name: random_horizontal_flip
+          params:
+            p: 0.5
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]
+    val:
+      fraction: 0.0
+    test:
+      fraction: 1.0
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]

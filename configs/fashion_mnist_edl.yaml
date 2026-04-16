@@ -1,0 +1,52 @@
+defaults:
+  - dataset: fashion_mnist
+  - model: resnet20
+  - training: edl
+  - _self_
+
+seed: 1
+
+model:
+  params:
+    in_channels: 1
+    output_layer_config:
+      type: dirichlet
+      params:
+        num_classes: 10
+
+training:
+  wandb:
+    name: fashion_mnist_edl
+  optimizer:
+    name: sgd
+    lr: 1e-2
+
+dataset:
+  batch_size: 256
+  num_workers: 4
+  splits:
+    train:
+      fraction: 1.0
+      transforms:
+        - name: random_crop
+          params:
+            size: 28
+            padding: 4
+        - name: random_horizontal_flip
+          params:
+            p: 0.5
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]
+    val:
+      fraction: 0.0
+    test:
+      fraction: 1.0
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]

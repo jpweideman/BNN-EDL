@@ -6,18 +6,17 @@ pretrained:
   path: null
 
 loss:
-  name: evidential_classification
+  name: edl_log
   params:
-    lamb: 0.01
+    num_classes: 10
+    annealing_step: 999999
 
 likelihood:
   name: dirichlet
 
 prior:
-  name: dirichlet_strength
+  name: diagonal_normal
   sd: 1.0
-  a: 2.0
-  b: 0.1
   normalize: false
 
 optimizer:
@@ -35,9 +34,9 @@ sampling:
 
 checkpoint:
   enabled: true
-  dataset: val
-  metric: loss
-  objective: minimize
+  dataset: test
+  metric: accuracy
+  objective: maximize
 
 early_stopping:
   enabled: false

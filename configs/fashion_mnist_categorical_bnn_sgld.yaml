@@ -1,0 +1,60 @@
+defaults:
+  - dataset: fashion_mnist
+  - model: resnet20
+  - training: bnn_sgld
+  - _self_
+
+seed: 1
+
+model:
+  params:
+    in_channels: 1
+
+training:
+  pretrained:
+    enabled: true
+    path: /Users/jpweideman/BNN-EDL/outputs/2026-03-29/13-35-16/best_model.pt
+
+  wandb:
+    name: fashion_mnist_categorical_bnn_sgld_temperature_0.01
+  optimizer:
+    name: sgld
+    lr: 1e-1
+    temperature: 0.01
+  evaluation:
+    train:
+      interval: 0
+    val:
+      interval: 0
+    test:
+      interval: 1
+
+dataset:
+  batch_size: 256
+  num_workers: 4
+  splits:
+    train:
+      fraction: 1.0
+      transforms:
+        - name: random_crop
+          params:
+            size: 28
+            padding: 4
+        - name: random_horizontal_flip
+          params:
+            p: 0.5
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]
+    val:
+      fraction: 0.0
+    test:
+      fraction: 1.0
+      transforms:
+        - name: to_tensor
+        - name: normalize
+          params:
+            mean: [0.2860]
+            std: [0.3530]
