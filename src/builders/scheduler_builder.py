@@ -12,6 +12,6 @@ class SchedulerBuilder(BaseBuilder):
         unwrapped_optimizer = optimizer.optimizer if hasattr(optimizer, 'optimizer') else optimizer
         
         scheduler_cls = SCHEDULER_REGISTRY.get(self.config.name)
-        params = {k: v for k, v in self.config.items() if k not in ['name', 'enabled']}
+        params = self.config.get('params', {}) or {}
         return scheduler_cls(unwrapped_optimizer, **params).scheduler
 

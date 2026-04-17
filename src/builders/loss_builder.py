@@ -16,7 +16,7 @@ class LossBuilder(BaseBuilder):
             Loss function instance
         """
         loss_cls = LOSS_REGISTRY.get(self.config.name)
-        params = getattr(self.config, 'params', {})
+        params = self.config.get('params', {}) or {}
         loss_fn = loss_cls(**params)
         return loss_fn
 

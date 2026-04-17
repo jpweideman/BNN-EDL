@@ -33,8 +33,9 @@ training:
           objective: minimize
   optimizer:
     name: sgld
-    lr: 0.01
-    temperature: 1.0
+    params:
+      lr: 0.01
+      temperature: 1.0
   scheduler:
     enabled: false
   sampling:

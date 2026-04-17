@@ -25,12 +25,9 @@ class OptimizerBuilder(BaseBuilder):
             Optimizer instance
         """
         optimizer_cls = OPTIMIZER_REGISTRY.get(self.config.name)
-        params = {k: v for k, v in self.config.items() if k != 'name'}
-        
-        # Check if BNN optimizer using type checking
-        is_bnn_optimizer = issubclass(optimizer_cls, BNNOptimizer)
-        
-        if is_bnn_optimizer:
+        params = self.config.get('params', {}) or {}
+
+        if issubclass(optimizer_cls, BNNOptimizer):
             # BNN optimizers
             return optimizer_cls(**params)(
                 model_parameters,

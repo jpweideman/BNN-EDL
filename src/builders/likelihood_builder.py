@@ -16,7 +16,7 @@ class LikelihoodBuilder(BaseBuilder):
             Likelihood function instance 
         """
         likelihood_cls = LIKELIHOOD_REGISTRY.get(self.config.name)
-        params = getattr(self.config, 'params', {})
+        params = self.config.get('params', {}) or {}
         likelihood_fn = likelihood_cls(**params)
         return likelihood_fn
 

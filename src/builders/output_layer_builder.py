@@ -18,5 +18,5 @@ class OutputLayerBuilder(BaseBuilder):
             Output layer module
         """
         layer_cls = OUTPUT_LAYER_REGISTRY.get(self.config.type)
-        params = self.config.get('params', {})
+        params = self.config.get('params', {}) or {}
         return layer_cls(input_dim=input_dim, **params)

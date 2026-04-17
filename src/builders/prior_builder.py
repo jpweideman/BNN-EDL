@@ -19,7 +19,7 @@ class PriorBuilder(BaseBuilder):
             Prior function instance 
         """
         prior_cls = PRIOR_REGISTRY.get(self.config.name)
-        params = {k: v for k, v in self.config.items() if k != 'name'}
+        params = self.config.get('params', {}) or {}
         prior_fn = prior_cls(num_data=num_data, **params)
         return prior_fn
 

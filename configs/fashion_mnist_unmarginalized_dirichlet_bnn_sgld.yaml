@@ -31,7 +31,8 @@ training:
         - name: dirichlet_nll
           objective: minimize
   optimizer:
-    lr: 1e-2
+    params:
+      lr: 1e-2
   evaluation:
     fashion_mnist_test:
       interval: 1

@@ -50,14 +50,16 @@ training:
   num_epochs: 300
   optimizer:
     name: sgd
-    lr: 1e-1
-    momentum: 0.9
-    weight_decay: 1e-4
+    params:
+      lr: 1e-1
+      momentum: 0.9
+      weight_decay: 1e-4
   scheduler:
     enabled: true
     name: cosine_annealing
-    T_max: 300
-    eta_min: 0
+    params:
+      T_max: 300
+      eta_min: 0
   evaluation:
     cifar10_test:
       interval: 1

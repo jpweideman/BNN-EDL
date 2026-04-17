@@ -23,7 +23,7 @@ class MLP(nn.Module):
         """
         super().__init__()
         
-        # Build backbone 
+        # backbone 
         layers = []
         dims = [input_dim] + hidden_dims
         
@@ -35,7 +35,7 @@ class MLP(nn.Module):
         
         self.backbone = nn.Sequential(*layers)
         
-        # Build output layer 
+        # output layer 
         self.output_layer = OutputLayerBuilder(output_layer_config).build(
             input_dim=hidden_dims[-1]
         )

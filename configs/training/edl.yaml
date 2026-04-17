@@ -13,14 +13,16 @@ loss:
 
 optimizer:
   name: adam
-  lr: 0.001
-  weight_decay: 0.0
+  params:
+    lr: 0.001
+    weight_decay: 0.0
 
 scheduler:
   enabled: false
   name: cosine_annealing
-  T_max: 10
-  eta_min: 0
+  params:
+    T_max: 10
+    eta_min: 0
 
 checkpoint:
   enabled: true

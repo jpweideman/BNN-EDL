@@ -22,7 +22,7 @@ class MetricsBuilder(BaseBuilder):
             metric_cls = METRIC_REGISTRY.get(name)
             
             # Get parameters if specified in config
-            params = metric_config.get('params', {})
+            params = metric_config.get('params', {}) or {}
             metric = metric_cls(**params)
             metrics[name] = metric
         

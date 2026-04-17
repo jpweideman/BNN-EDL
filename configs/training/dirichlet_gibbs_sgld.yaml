@@ -16,13 +16,15 @@ likelihood:
 
 prior:
   name: diagonal_normal
-  sd: 1.0
-  normalize: false
+  params:
+    sd: 1.0
+    normalize: false
 
 optimizer:
   name: gibbs_sgld
-  lr: 0.001
-  temperature: 1.0
+  params:
+    lr: 0.001
+    temperature: 1.0
 
 scheduler:
   enabled: false

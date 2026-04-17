@@ -35,12 +35,14 @@ training:
     name: categorical
   prior:
     name: diagonal_normal
-    sd: 1.0
-    normalize: false
+    params:
+      sd: 1.0
+      normalize: false
   optimizer:
     name: sgld
-    lr: 0.01
-    temperature: 0.001
+    params:
+      lr: 0.01
+      temperature: 0.001
   scheduler:
     enabled: false
   sampling:

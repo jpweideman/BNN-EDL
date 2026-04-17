@@ -34,7 +34,7 @@ class TransformBuilder(BaseBuilder):
             transform_cls = TRANSFORM_REGISTRY.get(name)
             
             # Get parameters (if any)
-            params = transform_config.get('params', {})
+            params = transform_config.get('params', {}) or {}
             
             # Create transform instance
             transform = transform_cls(**params)

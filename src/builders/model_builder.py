@@ -16,7 +16,7 @@ class ModelBuilder(BaseBuilder):
             torch.nn.Module: Instantiated model
         """
         model_cls = MODEL_REGISTRY.get(self.config.name)
-        params = self.config.params
+        params = self.config.get('params', {}) or {}
         model = model_cls(**params)
         return model
 
