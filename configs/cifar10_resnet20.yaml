@@ -1,5 +1,5 @@
 defaults:
-  - dataset: cifar10
+  - datasets: cifar10
   - model: resnet20
   - training: standard
   - _self_
@@ -7,51 +7,38 @@ defaults:
 seed: 1
 
 training:
-
-    
+  dataset: cifar10_train
+  checkpoint:
+    dataset: cifar10_test
   early_stopping:
     enabled: false
-    dataset: test
+    dataset: cifar10_test
     metric: accuracy
     patience: 10
     min_delta: 0.0
     objective: maximize
-
-  checkpoint:
-    enabled: true
-    dataset: test
-    metric: accuracy
-    objective: maximize
-
   wandb:
-    project: bnn-edl-experiments
+    project: bnn-edl
     name: cifar10_resnet20
-  
+    summary_metrics:
+      cifar10_test:
+        - name: accuracy
+          objective: maximize
+        - name: loss
+          objective: minimize
   num_epochs: 300
-
   optimizer:
     name: sgd
     lr: 1e-1
     momentum: 0.9
     weight_decay: 1e-4
-
   scheduler:
     enabled: true
     name: cosine_annealing
     T_max: 300
     eta_min: 0
-
   evaluation:
-    train:
-      interval: 0
-      metrics:
-        - name: loss
-    val:
-      interval: 0
-      metrics:
-        - name: accuracy
-        - name: loss
-    test:
+    cifar10_test:
       interval: 1
       metrics:
         - name: accuracy
@@ -63,15 +50,3 @@ training:
             num_classes: 10
             num_bins: 15
             norm: l1
-
-dataset:
-  batch_size: 256
-  num_workers: 4
-  splits:
-    train:
-      fraction: 1.0
-    val:
-      fraction: 0.0
-    test:
-      fraction: 1.0
-

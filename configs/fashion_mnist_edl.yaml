@@ -1,5 +1,5 @@
 defaults:
-  - dataset: fashion_mnist
+  - datasets: fashion_mnist
   - model: resnet20
   - training: edl
   - _self_
@@ -15,38 +15,49 @@ model:
         num_classes: 10
 
 training:
+  dataset: fashion_mnist_train
+  checkpoint:
+    dataset: fashion_mnist_test
   wandb:
     name: fashion_mnist_edl
+    summary_metrics:
+      fashion_mnist_test:
+        - name: accuracy
+          objective: maximize
+        - name: dirichlet_nll
+          objective: minimize
   optimizer:
     name: sgd
     lr: 1e-2
-
-dataset:
-  batch_size: 256
-  num_workers: 4
-  splits:
-    train:
-      fraction: 1.0
-      transforms:
-        - name: random_crop
+  evaluation:
+    fashion_mnist_test:
+      interval: 1
+      metrics:
+        - name: accuracy
+        - name: loss
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_nll
+        - name: dirichlet_brier_score
+        - name: dirichlet_calibration_error
           params:
-            size: 28
-            padding: 4
-        - name: random_horizontal_flip
-          params:
-            p: 0.5
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
-    val:
-      fraction: 0.0
-    test:
-      fraction: 1.0
-      transforms:
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
+            num_classes: 10
+            num_bins: 15
+            norm: l1
+        - name: dirichlet_predictive_entropy
+        - name: dirichlet_expected_entropy
+        - name: dirichlet_mutual_information
+    mnist_ood:
+      interval: 1
+      metrics:
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_entropy
+    random_noise_ood:
+      interval: 1
+      metrics:
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_entropy

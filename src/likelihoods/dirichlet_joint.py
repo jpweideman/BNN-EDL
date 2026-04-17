@@ -33,7 +33,6 @@ class DirichletJointLikelihood:
     Evaluates the Dirichlet log-density at a Gibbs sample of f, treating
     f as fixed observed data. Provides a gradient signal for the total
     concentration alpha_0 that the marginalized likelihood lacks.
-    Compatible with any gradient-based optimizer, not specific to SGLD.
     """
 
     def __call__(self, alpha, f_samples):

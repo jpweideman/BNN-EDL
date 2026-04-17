@@ -1,0 +1,32 @@
+cifar10_train:
+  name: cifar10
+  source: train
+  shuffle: true
+  batch_size: 256
+  num_workers: 4
+  transforms:
+    - name: random_crop
+      params:
+        size: 32
+        padding: 4
+    - name: random_horizontal_flip
+      params:
+        p: 0.5
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]
+
+cifar10_test:
+  name: cifar10
+  source: test
+  shuffle: false
+  batch_size: 256
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]

@@ -1,5 +1,5 @@
 defaults:
-  - dataset: fashion_mnist
+  - datasets: fashion_mnist
   - model: resnet20
   - training: dirichlet_bnn_sgld
   - _self_
@@ -15,48 +15,60 @@ model:
         num_classes: 10
 
 training:
+  dataset: fashion_mnist_train
+  checkpoint:
+    dataset: fashion_mnist_test
   pretrained:
     enabled: true
     path: /Users/jpweideman/BNN-EDL/outputs/2026-03-28/19-10-58/best_model.pt
-
   wandb:
     name: fashion_mnist_dirichlet_bnn_sgld_pretrained_edl
+    summary_metrics:
+      fashion_mnist_test:
+        - name: accuracy
+          objective: maximize
+        - name: dirichlet_nll
+          objective: minimize
   optimizer:
     lr: 1e-1
   evaluation:
-    train:
-      interval: 0
-    val:
-      interval: 0
-    test:
+    fashion_mnist_test:
       interval: 1
-
-dataset:
-  batch_size: 256
-  num_workers: 4
-  splits:
-    train:
-      fraction: 1.0
-      transforms:
-        - name: random_crop
+      metrics:
+        - name: accuracy
+        - name: loss
+        - name: bma_dirichlet_accuracy
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_nll
+        - name: bma_dirichlet_nll
+        - name: dirichlet_brier_score
+        - name: dirichlet_calibration_error
           params:
-            size: 28
-            padding: 4
-        - name: random_horizontal_flip
+            num_classes: 10
+            num_bins: 15
+            norm: l1
+        - name: bma_dirichlet_brier_score
+        - name: bma_dirichlet_calibration_error
           params:
-            p: 0.5
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
-    val:
-      fraction: 0.0
-    test:
-      fraction: 1.0
-      transforms:
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
+            num_classes: 10
+            num_bins: 15
+            norm: l1
+        - name: dirichlet_predictive_entropy
+        - name: dirichlet_expected_entropy
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_variance
+    mnist_ood:
+      interval: 1
+      metrics:
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_entropy
+    random_noise_ood:
+      interval: 1
+      metrics:
+        - name: vacuity
+        - name: dirichlet_strength
+        - name: dirichlet_mutual_information
+        - name: dirichlet_predictive_entropy

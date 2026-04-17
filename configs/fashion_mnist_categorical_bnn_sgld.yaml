@@ -1,5 +1,5 @@
 defaults:
-  - dataset: fashion_mnist
+  - datasets: fashion_mnist
   - model: resnet20
   - training: bnn_sgld
   - _self_
@@ -11,50 +11,57 @@ model:
     in_channels: 1
 
 training:
+  dataset: fashion_mnist_train
+  checkpoint:
+    dataset: fashion_mnist_test
   pretrained:
     enabled: true
     path: /Users/jpweideman/BNN-EDL/outputs/2026-03-29/13-35-16/best_model.pt
-
   wandb:
     name: fashion_mnist_categorical_bnn_sgld_temperature_0.01
+    summary_metrics:
+      fashion_mnist_test:
+        - name: accuracy
+          objective: maximize
+        - name: loss
+          objective: minimize
   optimizer:
     name: sgld
     lr: 1e-1
     temperature: 0.01
   evaluation:
-    train:
-      interval: 0
-    val:
-      interval: 0
-    test:
+    fashion_mnist_test:
       interval: 1
-
-dataset:
-  batch_size: 256
-  num_workers: 4
-  splits:
-    train:
-      fraction: 1.0
-      transforms:
-        - name: random_crop
+      metrics:
+        - name: accuracy
+        - name: loss
+        - name: bma_accuracy
+        - name: bma_nll
+        - name: nll
+        - name: brier_score
+        - name: calibration_error
           params:
-            size: 28
-            padding: 4
-        - name: random_horizontal_flip
+            num_classes: 10
+            num_bins: 15
+            norm: l1
+        - name: bma_calibration_error
           params:
-            p: 0.5
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
-    val:
-      fraction: 0.0
-    test:
-      fraction: 1.0
-      transforms:
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
+            num_classes: 10
+            num_bins: 15
+            norm: l1
+        - name: predictive_entropy
+        - name: expected_entropy
+        - name: mutual_information
+        - name: predictive_variance
+    mnist_ood:
+      interval: 1
+      metrics:
+        - name: predictive_entropy
+        - name: mutual_information
+        - name: bma_nll
+    random_noise_ood:
+      interval: 1
+      metrics:
+        - name: predictive_entropy
+        - name: mutual_information
+        - name: bma_nll

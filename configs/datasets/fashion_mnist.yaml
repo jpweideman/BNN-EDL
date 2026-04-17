@@ -1,0 +1,57 @@
+fashion_mnist_train:
+  name: fashion_mnist
+  source: train
+  shuffle: true
+  batch_size: 256
+  num_workers: 4
+  transforms:
+    - name: random_crop
+      params:
+        size: 28
+        padding: 4
+    - name: random_horizontal_flip
+      params:
+        p: 0.5
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.2860]
+        std: [0.3530]
+
+fashion_mnist_test:
+  name: fashion_mnist
+  source: test
+  shuffle: false
+  batch_size: 256
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.2860]
+        std: [0.3530]
+
+mnist_ood:
+  name: mnist
+  source: test
+  shuffle: false
+  batch_size: 256
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.2860]
+        std: [0.3530]
+
+random_noise_ood:
+  name: random_noise
+  source: test
+  shuffle: false
+  batch_size: 256
+  num_workers: 0
+  params:
+    shape: [1, 28, 28]
+    size: 10000
+    num_classes: 10
+    seed: 0

@@ -25,7 +25,7 @@ def main(cfg: DictConfig):
     device = setup_device(cfg.training.device)
 
     # Data
-    loaders = create_loaders(cfg.dataset, seed=cfg.seed)
+    loaders = create_loaders(cfg.datasets)
 
     # Model
     model = ModelBuilder(cfg.model).build().to(device)
@@ -33,7 +33,7 @@ def main(cfg: DictConfig):
     # Loss, likelihood, prior, optimizer
     criterion = LossBuilder(cfg.training.loss).build()
     likelihood_fn = LikelihoodBuilder(cfg.training.likelihood).build() if hasattr(cfg.training, 'likelihood') else None
-    dataset_size = len(loaders['train'].dataset)
+    dataset_size = len(loaders[cfg.training.dataset].dataset)
     prior_fn = PriorBuilder(cfg.training.prior).build(num_data=dataset_size) if hasattr(cfg.training, 'prior') else None
     optimizer = OptimizerBuilder(cfg.training.optimizer).build(
         model.parameters(),
@@ -92,7 +92,7 @@ def main(cfg: DictConfig):
 
     # Train
     if start_epoch < cfg.training.num_epochs:
-        trainer.run(loaders['train'], max_epochs=cfg.training.num_epochs)
+        trainer.run(loaders[cfg.training.dataset], max_epochs=cfg.training.num_epochs)
     else:
         print(f"Training already completed ({start_epoch}/{cfg.training.num_epochs} epochs)")
 

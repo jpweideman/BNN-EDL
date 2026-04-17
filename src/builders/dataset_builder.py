@@ -19,5 +19,6 @@ class DatasetBuilder(BaseBuilder):
             Dataset instance
         """
         dataset_cls = DATASET_REGISTRY.get(self.config.name)
-        return dataset_cls(data_dir)
+        params = self.config.get('params', {}) or {}
+        return dataset_cls(data_dir, **params)
 

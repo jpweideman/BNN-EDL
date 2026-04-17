@@ -1,5 +1,5 @@
 defaults:
-  - dataset: fashion_mnist
+  - datasets: fashion_mnist
   - model: resnet20
   - training: standard
   - _self_
@@ -11,48 +11,33 @@ model:
     in_channels: 1
 
 training:
+  dataset: fashion_mnist_train
+  checkpoint:
+    dataset: fashion_mnist_test
   wandb:
     name: fashion_mnist_resnet20_sgd
+    summary_metrics:
+      fashion_mnist_test:
+        - name: accuracy
+          objective: maximize
+        - name: loss
+          objective: minimize
   optimizer:
     name: sgd
     lr: 1e-2
     momentum: 0.9
     weight_decay: 1e-4
   evaluation:
-    train:
-      interval: 0
-    val:
-      fraction: 0
-      interval: 0
-    test:
+    fashion_mnist_test:
       interval: 1
+      metrics:
+        - name: accuracy
+        - name: loss
+        - name: nll
+        - name: brier_score
+        - name: calibration_error
+          params:
+            num_classes: 10
+            num_bins: 15
+            norm: l1
 
-dataset:
-  batch_size: 256
-  num_workers: 4
-  splits:
-    train:
-      fraction: 1.0
-      transforms:
-        - name: random_crop
-          params:
-            size: 28
-            padding: 4
-        - name: random_horizontal_flip
-          params:
-            p: 0.5
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
-    val:
-      fraction: 0.0
-    test:
-      fraction: 1.0
-      transforms:
-        - name: to_tensor
-        - name: normalize
-          params:
-            mean: [0.2860]
-            std: [0.3530]
