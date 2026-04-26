@@ -2,7 +2,28 @@
 
 import torch
 import torch.func as func
-from src.likelihoods.dirichlet_joint import gibbs_sample_f
+from torch.distributions import Gamma
+
+
+def gibbs_sample_f(alpha: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+    """Sample the exact Gibbs conditional p(f | w, y) via Dir-Cat conjugacy.
+
+    Adds 1 to the true class concentration and samples from the resulting
+    Dirichlet. Must be called inside torch.no_grad() with detached alpha.
+
+    Args:
+        alpha:   concentration parameters [B, C], alpha_c >= 1, detached
+        y_true:  class labels [B], dtype long
+
+    Returns:
+        f_samples: shape [B, C], each row sums to 1
+    """
+    device = alpha.device
+    alpha_posterior = alpha.cpu().clone()
+    alpha_posterior[torch.arange(len(y_true)), y_true.cpu()] += 1.0
+    g = Gamma(alpha_posterior, torch.ones_like(alpha_posterior)).sample()
+    f = g / g.sum(dim=-1, keepdim=True)
+    return f.to(device)
 
 
 class GibbsLogPosterior:

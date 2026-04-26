@@ -20,7 +20,7 @@ training:
     dataset: fashion_mnist_test
   device: auto
   pretrained:
-    enabled: true
+    enabled: false
     path: /Users/jpweideman/BNN-EDL/outputs/2026-03-28/19-10-58/best_model.pt
   wandb:
     name: fashion_mnist_dirichlet_joint_bnn_sgld_pretrained_edl
