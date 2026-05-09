@@ -90,11 +90,14 @@ class BNNOptimizer(ABC):
         Returns:
             dict: Dictionary with log_likelihood, log_prior, log_posterior
         """
-        return {
+        metrics = {
             'log_likelihood': self.log_posterior.last_log_likelihood,
             'log_prior': self.log_posterior.last_log_prior,
             'log_posterior': self.log_posterior.last_log_posterior,
         }
+        if hasattr(self.log_posterior, 'last_log_prior_fs') and self.log_posterior.last_log_prior_fs is not None:
+            metrics['log_prior_fs'] = self.log_posterior.last_log_prior_fs
+        return metrics
     
     @abstractmethod
     def state_dict(self):
