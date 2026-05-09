@@ -15,8 +15,8 @@ class SGLDOptimizer(BNNOptimizer):
         self.temperature = temperature
         self.beta = beta
     
-    def _build_log_posterior(self, model, likelihood_fn, prior_fn):
-        return LogPosterior(model, likelihood_fn, prior_fn)
+    def _build_log_posterior(self, model, likelihood_fn, prior_fn, prior_fs_fn=None):
+        return LogPosterior(model, likelihood_fn, prior_fn, prior_fs_fn)
 
     def _build_transform(self):
         """Build SGLD transform from posteriors library."""

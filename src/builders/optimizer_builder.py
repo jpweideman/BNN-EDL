@@ -9,18 +9,19 @@ import src.optimizers  # noqa: F401 # Triggers registration
 class OptimizerBuilder(BaseBuilder):
     """Builds optimizers from configuration."""
     
-    def build(self, model_parameters, model=None, loss_fn=None, likelihood_fn=None, prior_fn=None, num_data=None):
+    def build(self, model_parameters, model=None, loss_fn=None, likelihood_fn=None, prior_fn=None, num_data=None, prior_fs_fn=None):
         """
         Build optimizer from configuration.
-        
+
         Args:
             model_parameters: Model parameters to optimize
-            model: Full model (needed for BNN optimizers)
-            loss_fn: Loss function (needed for standard optimizers)
-            likelihood_fn: Likelihood function (needed for BNN optimizers)
-            prior_fn: Prior function (needed for BNN optimizers)
-            num_data: Number of training data points (needed for BNN optimizers)
-        
+            model:            Full model (needed for BNN optimizers)
+            loss_fn:          Loss function (needed for standard optimizers)
+            likelihood_fn:    Likelihood function (needed for BNN optimizers)
+            prior_fn:         Prior function (needed for BNN optimizers)
+            num_data:         Number of training data points (needed for BNN optimizers)
+            prior_fs_fn:      Optional function-space prior (needed for BNN optimizers)
+
         Returns:
             Optimizer instance
         """
@@ -28,13 +29,13 @@ class OptimizerBuilder(BaseBuilder):
         params = self.config.get('params', {}) or {}
 
         if issubclass(optimizer_cls, BNNOptimizer):
-            # BNN optimizers
             return optimizer_cls(**params)(
                 model_parameters,
                 model=model,
                 likelihood_fn=likelihood_fn,
                 prior_fn=prior_fn,
-                num_data=num_data
+                num_data=num_data,
+                prior_fs_fn=prior_fs_fn,
             )
         else:
             # Standard optimizers

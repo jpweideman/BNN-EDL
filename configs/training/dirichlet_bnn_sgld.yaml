@@ -20,6 +20,12 @@ prior:
     sd: 1.0
     normalize: false
 
+prior_fs:
+  name: gamma_alpha0
+  params:
+    concentration: 2.0
+    rate: 0.1
+
 optimizer:
   name: sgld
   params:

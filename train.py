@@ -13,6 +13,7 @@ from src.builders.model_builder import ModelBuilder
 from src.builders.loss_builder import LossBuilder
 from src.builders.likelihood_builder import LikelihoodBuilder
 from src.builders.prior_builder import PriorBuilder
+from src.builders.prior_fs_builder import PriorFSBuilder
 from src.builders.optimizer_builder import OptimizerBuilder
 from src.builders.scheduler_builder import SchedulerBuilder
 from src.utils import set_seed, setup_device
@@ -35,13 +36,15 @@ def main(cfg: DictConfig):
     likelihood_fn = LikelihoodBuilder(cfg.training.likelihood).build() if hasattr(cfg.training, 'likelihood') else None
     dataset_size = len(loaders[cfg.training.dataset].dataset)
     prior_fn = PriorBuilder(cfg.training.prior).build(num_data=dataset_size) if hasattr(cfg.training, 'prior') else None
+    prior_fs_fn = PriorFSBuilder(cfg.training.prior_fs).build() if hasattr(cfg.training, 'prior_fs') else None
     optimizer = OptimizerBuilder(cfg.training.optimizer).build(
         model.parameters(),
         model=model,
         loss_fn=criterion,
         likelihood_fn=likelihood_fn,
         prior_fn=prior_fn,
-        num_data=dataset_size
+        num_data=dataset_size,
+        prior_fs_fn=prior_fs_fn,
     )
 
     # Scheduler

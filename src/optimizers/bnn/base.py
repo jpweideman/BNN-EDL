@@ -11,17 +11,18 @@ class BNNOptimizer(ABC):
     the required interface and can be detected via isinstance checks.
     """
     
-    def __call__(self, model_parameters, model=None, likelihood_fn=None, prior_fn=None, num_data=None, **kwargs):
+    def __call__(self, model_parameters, model=None, likelihood_fn=None, prior_fn=None, num_data=None, prior_fs_fn=None, **kwargs):
         """Initialize the BNN optimizer with model and inference functions.
-        
+
         Args:
             model_parameters: Model parameters to optimize (not used directly, kept for compatibility)
-            model: PyTorch model
-            likelihood_fn: Likelihood function that computes log p(D|θ)
-            prior_fn: Prior function that computes log p(θ)
-            num_data: Number of training data points (for temperature scaling)
-            **kwargs: Additional arguments 
-            
+            model:            PyTorch model
+            likelihood_fn:    Likelihood function that computes log p(D|θ)
+            prior_fn:         Prior function that computes log p(θ)
+            num_data:         Number of training data points (for temperature scaling)
+            prior_fs_fn:      Optional function-space prior evaluated on model outputs
+            **kwargs:         Additional arguments
+
         Returns:
             self: The initialized optimizer instance
         """
@@ -32,8 +33,8 @@ class BNNOptimizer(ABC):
         # Scale temperature by 1/num_data 
         if hasattr(self, 'temperature'):
             self.scaled_temperature = self.temperature / self.num_data
-        
-        self.log_posterior = self._build_log_posterior(model, likelihood_fn, prior_fn)
+
+        self.log_posterior = self._build_log_posterior(model, likelihood_fn, prior_fn, prior_fs_fn)
         
         # Build the transform. Implemented by subclass
         self.transform = self._build_transform()
@@ -44,13 +45,14 @@ class BNNOptimizer(ABC):
         return self
     
     @abstractmethod
-    def _build_log_posterior(self, model, likelihood_fn, prior_fn):
-        """Construct the log posterior log p(θ|D) = log p(D|θ) + log p(θ) used during training.
+    def _build_log_posterior(self, model, likelihood_fn, prior_fn, prior_fs_fn=None):
+        """Construct the log posterior used during training.
 
         Args:
-            model: PyTorch model
+            model:         PyTorch model
             likelihood_fn: Returns log p(D|θ) given model output and targets
-            prior_fn: Returns log p(θ) given parameters
+            prior_fn:      Returns log p(θ) given parameters
+            prior_fs_fn:   Optional function-space prior on model outputs
 
         Returns:
             log_posterior: Log posterior callable for the optimizer transform
