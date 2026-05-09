@@ -33,10 +33,11 @@ training:
     name: gamma_alpha0
     params:
       concentration: 2.0
-      rate: 0.1
+      rate: 0.1     
   optimizer:
     params:
       lr: 1e-1
+  num_epochs: 30
   evaluation:
     fashion_mnist_test:
       interval: 1
