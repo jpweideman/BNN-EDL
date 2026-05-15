@@ -2,12 +2,12 @@
 
 import torch
 from torch.distributions import Gamma
-from src.registry import PRIOR_FS_REGISTRY
+from src.registry import PRIORS_FS_REGISTRY
 
 
-@PRIOR_FS_REGISTRY.register("gamma_alpha0")
+@PRIORS_FS_REGISTRY.register("gamma_alpha0")
 class GammaAlpha0Prior:
-    """Gamma function-space prior on α₀ = Σ αc.
+    """Gamma function-space prior on the total concentration alpha_0(sum over all class concentrations).
 
     Args:
         concentration: Shape parameter (> 1). Prior mode at (a-1)/rate.
