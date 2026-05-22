@@ -95,25 +95,40 @@ cd BNN-EDL
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
+# or
+wget -qO- https://install.python-poetry.org | python3 -
 ```
 
-### 3. Install Dependencies
+### 3. Ensure Poetry is on PATH
+
+If `poetry --version` fails with `command not found` after installation, add Poetry's bin directory to your shell `PATH`, then reload your shell configuration and run:
 
 ```bash
-# Configure Poetry to use Python 3.10 
-# (If installed. Otherwise Poetry will use your system's default Python.)
-poetry env use python3.10
+poetry --version
+```
 
-# Install all dependencies
+### 4. Install Python 3.10 with pyenv
+
+Install pyenv for your OS first, then run:
+
+```bash
+pyenv install 3.10.19
+pyenv local 3.10.19
+poetry env use "$(pyenv which python)"
+```
+
+### 5. Install Dependencies
+
+```bash
 poetry install
 ```
 
-### 4. **Activate the virtual environment**:
+### 6. **Activate the virtual environment**:
 ```bash
 source $(poetry env info --path)/bin/activate
 ```
 
-### 5. **Run training**:
+### 7. **Run training**:
 ```bash
 # After activation, run commands normally
 python train.py --config-name mnist_mlp
