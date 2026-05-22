@@ -13,7 +13,7 @@ from src.builders.model_builder import ModelBuilder
 from src.builders.loss_builder import LossBuilder
 from src.builders.likelihood_builder import LikelihoodBuilder
 from src.builders.prior_builder import PriorBuilder
-from src.builders.prior_fs_builder import PriorFSBuilder
+from src.builders.priors_fs_builder import PriorsFSBuilder
 from src.builders.optimizer_builder import OptimizerBuilder
 from src.builders.scheduler_builder import SchedulerBuilder
 from src.utils import set_seed, setup_device
