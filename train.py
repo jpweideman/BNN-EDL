@@ -36,7 +36,7 @@ def main(cfg: DictConfig):
     likelihood_fn = LikelihoodBuilder(cfg.training.likelihood).build() if hasattr(cfg.training, 'likelihood') else None
     dataset_size = len(loaders[cfg.training.dataset].dataset)
     prior_fn = PriorBuilder(cfg.training.prior).build(num_data=dataset_size) if hasattr(cfg.training, 'prior') else None
-    prior_fs_fn = PriorFSBuilder(cfg.training.prior_fs).build() if hasattr(cfg.training, 'prior_fs') and cfg.training.prior_fs is not None else None
+    prior_fs_fn = PriorsFSBuilder(cfg.training.prior_fs).build() if hasattr(cfg.training, 'prior_fs') else None
     optimizer = OptimizerBuilder(cfg.training.optimizer).build(
         model.parameters(),
         model=model,

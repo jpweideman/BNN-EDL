@@ -23,9 +23,14 @@ training:
     enabled: true
    # path: /home/ra65puy/ra65puy_lrz_mount/BNN-EDL/outputs/2026-05-15/14-10-04/best_model.pt
     path: /home/ra65puy/BNN-EDL/outputs/2026-05-15/14-10-04/best_model.pt
+  prior_fs:
+    name: gamma_alpha0
+    params:
+      concentration: 400.0
+      rate: 2.0 
   wandb:
     project: bnn-edl
-    name: cifar10_resnet20_dirichlet_bnn_sgld_pretained_with_edl_digamma_temperature_0.01
+    name: cifar10_resnet20_dirichlet_bnn_sgld_gamma_priorfs_concentration_400.0_rate_2.0_lr_0.0001
     summary_metrics:
       cifar10_test:
         - name: accuracy
@@ -35,8 +40,8 @@ training:
   optimizer:
     name: sgld
     params:
-      lr: 0.01
-      temperature: 0.01
+      lr: 0.0001
+      temperature: 1.0
   scheduler:
     enabled: false
   sampling:

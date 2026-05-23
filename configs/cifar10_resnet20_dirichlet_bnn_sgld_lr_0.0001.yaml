@@ -25,7 +25,7 @@ training:
     path: /home/ra65puy/BNN-EDL/outputs/2026-05-15/14-10-04/best_model.pt
   wandb:
     project: bnn-edl
-    name: cifar10_resnet20_dirichlet_bnn_sgld_pretained_with_edl_digamma_temperature_0.01
+    name: cifar10_resnet20_dirichlet_bnn_sgld_pretained_with_edl_digamma_lr_0.0001
     summary_metrics:
       cifar10_test:
         - name: accuracy
@@ -35,8 +35,8 @@ training:
   optimizer:
     name: sgld
     params:
-      lr: 0.01
-      temperature: 0.01
+      lr: 0.0001
+      temperature: 1.0
   scheduler:
     enabled: false
   sampling:
