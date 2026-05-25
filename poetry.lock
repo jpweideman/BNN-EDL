@@ -1639,10 +1639,8 @@ description = "Uncertainty quantification with PyTorch"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-files = [
-    {file = "posteriors-0.1.2-py3-none-any.whl", hash = "sha256:de715a4fe8cb66e9ecfecd5c31a85703d6a2172034bc5fbba8e9682011727e9a"},
-    {file = "posteriors-0.1.2.tar.gz", hash = "sha256:c1f4a1a8348ab1284221398819be12b6519254172ef3406781d7d2eb9b6079a7"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 optree = ">=0.17.0"
@@ -1653,6 +1651,12 @@ torchopt = ">=0.7.3"
 [package.extras]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings[python]"]
 test = ["pre-commit", "pytest-cov", "pytest-xdist", "ruff"]
+
+[package.source]
+type = "git"
+url = "https://github.com/jpweideman/posteriors.git"
+reference = "fix-sglrw-tree-params"
+resolved_reference = "5ca99e8dc6110dfdc23194bdd8eaf0924403de26"
 
 [[package]]
 name = "prompt-toolkit"
@@ -2774,4 +2778,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.10"
-content-hash = "4aa6955ea0c941bf8cc16b2d5be08b35113360531004918af2096120ec3913c6"
+content-hash = "da786f7102e9e2e565a7dabc1a690b8d29601cc95b353b723026249ba13adda5"

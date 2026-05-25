@@ -2,7 +2,7 @@
 
 from src.builders.base import BaseBuilder
 from src.registry import OPTIMIZER_REGISTRY
-from src.optimizers.bnn import BNNOptimizer
+from src.optimizers.bnn.base import BNNOptimizer
 import src.optimizers  # noqa: F401 # Triggers registration
 
 

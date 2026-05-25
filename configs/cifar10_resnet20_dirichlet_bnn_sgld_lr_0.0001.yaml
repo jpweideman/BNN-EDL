@@ -41,8 +41,8 @@ training:
     enabled: false
   sampling:
     enabled: true
-    start_epoch: 200
-    sample_interval: 4
+    start_epoch: 100
+    sample_interval: 20
   early_stopping:
     enabled: false
     dataset: cifar10_test

@@ -14,7 +14,7 @@ hydra-core = "^1.3.2"
 pytorch-ignite = "^0.5.3"
 wandb = "^0.23.1"
 tqdm = "^4.67.1"
-posteriors = "^0.1.2"
+posteriors = {git = "https://github.com/jpweideman/posteriors.git", branch = "fix-sglrw-tree-params"}
 torchmetrics = "^1.8.2"
 edl-pytorch = "^0.0.2"
 

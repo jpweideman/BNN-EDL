@@ -1,0 +1,57 @@
+num_epochs: 10
+device: auto
+
+pretrained:
+  enabled: false
+  path: null
+
+loss:
+  name: edl_log
+  params:
+    num_classes: 10
+    annealing_step: 999999
+
+likelihood:
+  name: dirichlet
+
+prior:
+  name: diagonal_normal
+  params:
+    sd: 1.0
+    normalize: false
+
+prior_fs: null
+
+optimizer:
+  name: sglrw
+  params:
+    lr: 0.001
+    temperature: 1.0
+
+scheduler:
+  enabled: false
+
+sampling:
+  enabled: true
+  start_epoch: 1
+  sample_interval: 1
+
+checkpoint:
+  enabled: true
+  metric: accuracy
+  objective: maximize
+
+early_stopping:
+  enabled: false
+  metric: loss
+  patience: 10
+  min_delta: 0.0
+  objective: minimize
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 20
+
+evaluation: {}

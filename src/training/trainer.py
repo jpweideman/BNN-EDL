@@ -1,7 +1,7 @@
 """Trainer creation — wires engines, handlers, and evaluators."""
 
 from pathlib import Path
-from src.optimizers.bnn import BNNOptimizer
+from src.optimizers.bnn.base import BNNOptimizer
 from src.training.engine import create_train_engine
 from src.training.bnn_engine import create_bnn_train_engine
 from src.training.handlers import (

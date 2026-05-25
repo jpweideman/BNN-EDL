@@ -1,6 +1,6 @@
 """Evaluator creation with metrics."""
 
-from src.optimizers.bnn import BNNOptimizer
+from src.optimizers.bnn.base import BNNOptimizer
 from src.builders.metrics_builder import MetricsBuilder
 from src.training.engine import create_eval_engine
 from src.training.handlers import attach_progress_bar_to_engine
