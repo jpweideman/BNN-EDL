@@ -15,6 +15,7 @@ from src.builders.likelihood_builder import LikelihoodBuilder
 from src.builders.prior_builder import PriorBuilder
 from src.builders.priors_fs_builder import PriorsFSBuilder
 from src.builders.optimizer_builder import OptimizerBuilder
+from src.builders.sampler_builder import SamplerBuilder
 from src.builders.scheduler_builder import SchedulerBuilder
 from src.utils import set_seed, setup_device
 
@@ -31,21 +32,36 @@ def main(cfg: DictConfig):
     # Model
     model = ModelBuilder(cfg.model).build().to(device)
 
-    # Loss, likelihood, prior, optimizer
+    # Loss, likelihood, prior
     criterion = LossBuilder(cfg.training.loss).build()
     likelihood_fn = LikelihoodBuilder(cfg.training.likelihood).build() if hasattr(cfg.training, 'likelihood') else None
     dataset_size = len(loaders[cfg.training.dataset].dataset)
     prior_fn = PriorBuilder(cfg.training.prior).build(num_data=dataset_size) if hasattr(cfg.training, 'prior') else None
     prior_fs_fn = PriorsFSBuilder(cfg.training.prior_fs).build() if hasattr(cfg.training, 'prior_fs') and cfg.training.prior_fs is not None else None
-    optimizer = OptimizerBuilder(cfg.training.optimizer).build(
-        model.parameters(),
-        model=model,
-        loss_fn=criterion,
-        likelihood_fn=likelihood_fn,
-        prior_fn=prior_fn,
-        num_data=dataset_size,
-        prior_fs_fn=prior_fs_fn,
-    )
+
+    # Sampler or optimizer
+    has_sampler = hasattr(cfg.training, 'sampler')
+    has_optimizer = hasattr(cfg.training, 'optimizer')
+    if has_sampler and has_optimizer:
+        raise ValueError("Config must define either 'sampler' or 'optimizer', not both.")
+    if has_sampler:
+        optimizer = SamplerBuilder(cfg.training.sampler).build(
+            model.parameters(),
+            model=model,
+            likelihood_fn=likelihood_fn,
+            prior_fn=prior_fn,
+            num_data=dataset_size,
+            prior_fs_fn=prior_fs_fn,
+        )
+    else:
+        optimizer = OptimizerBuilder(cfg.training.optimizer).build(
+            model.parameters(),
+            model=model,
+            loss_fn=criterion,
+            likelihood_fn=likelihood_fn,
+            prior_fn=prior_fn,
+            num_data=dataset_size,
+        )
 
     # Scheduler
     scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler.enabled else None

@@ -35,7 +35,7 @@ training:
     b: 0.1
     normalize: false
 
-  optimizer:
+  sampler:
     name: sgld
     lr: 1e-1       
     temperature: 1.0 

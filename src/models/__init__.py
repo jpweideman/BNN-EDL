@@ -1,11 +1,7 @@
 """Neural network models."""
 
-# Auto-import all architecture modules to trigger registration
-import importlib
 import pkgutil
+import importlib
 
-# Import architectures subpackage
-from . import architectures
-
-__all__ = ['architectures']
-
+for _, module_name, _ in pkgutil.iter_modules(__path__):
+    importlib.import_module(f'{__name__}.{module_name}')

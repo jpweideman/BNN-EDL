@@ -22,7 +22,7 @@ prior:
 
 prior_fs: null
 
-optimizer:
+sampler:
   name: sglrw
   params:
     lr: 0.001

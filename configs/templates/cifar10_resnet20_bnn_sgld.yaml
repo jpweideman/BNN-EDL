@@ -33,7 +33,7 @@ training:
     sd: 1.0
     normalize: false
 
-  optimizer:
+  sampler:
     name: sgld
     lr: 0.00005
     temperature: 0.01

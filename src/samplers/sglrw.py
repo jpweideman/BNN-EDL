@@ -1,29 +1,27 @@
-"""Gibbs-SGLD optimizer for block-coordinate inference in the EDL-BNN model."""
+"""SGLRW optimizer using posteriors library."""
 
-from posteriors.sgmcmc import sgld
-from src.registry import OPTIMIZER_REGISTRY
+from posteriors.sgmcmc import sglrw
+from src.registry import SAMPLER_REGISTRY
 from .base import BNNOptimizer
-from .log_posteriors.gibbs_log_posterior import GibbsLogPosterior
+from .log_posteriors.log_posterior import LogPosterior
 
 
-@OPTIMIZER_REGISTRY.register("gibbs_sgld")
-class GibbsSGLDOptimizer(BNNOptimizer):
-    """Block-coordinate SGLD with Gibbs sampling of the latent simplex."""
+@SAMPLER_REGISTRY.register("sglrw")
+class SGLRWOptimizer(BNNOptimizer):
+    """Stochastic Gradient Lattice Random Walk optimizer."""
 
-    def __init__(self, lr, temperature=1.0, beta=0.0):
+    def __init__(self, lr, temperature=1.0):
         self.lr = lr
         self.temperature = temperature
-        self.beta = beta
 
     def _build_log_posterior(self, model, likelihood_fn, prior_fn, prior_fs_fn=None):
-        return GibbsLogPosterior(model, likelihood_fn, prior_fn)
+        return LogPosterior(model, likelihood_fn, prior_fn, prior_fs_fn)
 
     def _build_transform(self):
-        return sgld.build(
+        return sglrw.build(
             log_posterior=self.log_posterior,
             lr=self.lr,
-            beta=self.beta,
-            temperature=self.scaled_temperature
+            temperature=self.scaled_temperature,
         )
 
     def state_dict(self):
@@ -36,16 +34,15 @@ class GibbsSGLDOptimizer(BNNOptimizer):
             },
             'lr': self.lr,
             'temperature': self.temperature,
-            'beta': self.beta,
         }
 
     def load_state_dict(self, state_dict):
         from collections import OrderedDict
-        from posteriors.sgmcmc.sgld import SGLDState
+        from posteriors.sgmcmc.sglrw import SGLRWState
         for name, param_value in state_dict['posteriors_state']['params'].items():
             self.model.state_dict()[name].copy_(param_value)
         self.params = OrderedDict(self.model.named_parameters())
-        self.state = SGLDState(
+        self.state = SGLRWState(
             params=self.params,
             log_posterior=state_dict['posteriors_state']['log_posterior'],
             step=state_dict['posteriors_state']['step'],

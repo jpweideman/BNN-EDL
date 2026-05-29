@@ -30,7 +30,7 @@ training:
           objective: maximize
         - name: dirichlet_nll
           objective: minimize
-  optimizer:
+  sampler:
     params:
       lr: 1e-2
   evaluation:

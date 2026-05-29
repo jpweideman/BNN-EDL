@@ -25,7 +25,7 @@ training:
           objective: maximize
         - name: loss
           objective: minimize
-  optimizer:
+  sampler:
     name: sgld
     params:
       lr: 1e-1

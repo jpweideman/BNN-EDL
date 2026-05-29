@@ -2,49 +2,20 @@
 
 from src.builders.base import BaseBuilder
 from src.registry import OPTIMIZER_REGISTRY
-from src.optimizers.bnn.base import BNNOptimizer
-import src.optimizers  # noqa: F401 # Triggers registration
+import src.optimizers  # noqa: F401
 
 
 class OptimizerBuilder(BaseBuilder):
-    """Builds optimizers from configuration."""
-    
-    def build(self, model_parameters, model=None, loss_fn=None, likelihood_fn=None, prior_fn=None, num_data=None, prior_fs_fn=None):
-        """
-        Build optimizer from configuration.
+    """Builds standard optimizers from configuration."""
 
-        Args:
-            model_parameters: Model parameters to optimize
-            model:            Full model (needed for BNN optimizers)
-            loss_fn:          Loss function (needed for standard optimizers)
-            likelihood_fn:    Likelihood function (needed for BNN optimizers)
-            prior_fn:         Prior function (needed for BNN optimizers)
-            num_data:         Number of training data points (needed for BNN optimizers)
-            prior_fs_fn:      Optional function-space prior (needed for BNN optimizers)
-
-        Returns:
-            Optimizer instance
-        """
+    def build(self, model_parameters, model=None, loss_fn=None, likelihood_fn=None, prior_fn=None, **kwargs):
         optimizer_cls = OPTIMIZER_REGISTRY.get(self.config.name)
         params = self.config.get('params', {}) or {}
-
-        if issubclass(optimizer_cls, BNNOptimizer):
-            return optimizer_cls(**params)(
-                model_parameters,
-                model=model,
-                likelihood_fn=likelihood_fn,
-                prior_fn=prior_fn,
-                num_data=num_data,
-                prior_fs_fn=prior_fs_fn,
-            )
-        else:
-            # Standard optimizers
-            return optimizer_cls(
-                model_parameters,
-                model=model,
-                loss_fn=loss_fn,
-                likelihood_fn=likelihood_fn,
-                prior_fn=prior_fn,
-                **params
-            )
-
+        return optimizer_cls(
+            model_parameters,
+            model=model,
+            loss_fn=loss_fn,
+            likelihood_fn=likelihood_fn,
+            prior_fn=prior_fn,
+            **params
+        )

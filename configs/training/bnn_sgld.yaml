@@ -17,7 +17,7 @@ prior:
     sd: 1.0
     normalize: false
 
-optimizer:
+sampler:
   name: sgld
   params:
     lr: 0.001

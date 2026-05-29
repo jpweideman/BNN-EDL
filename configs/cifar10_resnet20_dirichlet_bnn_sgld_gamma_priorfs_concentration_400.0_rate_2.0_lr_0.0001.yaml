@@ -37,7 +37,7 @@ training:
           objective: maximize
         - name: dirichlet_nll
           objective: minimize
-  optimizer:
+  sampler:
     name: sgld
     params:
       lr: 0.0001

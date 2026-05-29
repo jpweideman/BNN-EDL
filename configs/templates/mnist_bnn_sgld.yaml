@@ -16,7 +16,7 @@ training:
   wandb:
     name: mnist_bnn_sgld
 
-  optimizer:
+  sampler:
     name: sgld
     lr: 1e-1       
     temperature: 1.0 
