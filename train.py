@@ -103,7 +103,8 @@ def main(cfg: DictConfig):
         sampling_config=sampling_config,
         checkpoint_config=checkpoint_config,
         wandb_config=wandb_config,
-        early_stopping_config=early_stopping_config
+        early_stopping_config=early_stopping_config,
+        prior_fs_fn=prior_fs_fn,
     )
 
     # Restore checkpoint state

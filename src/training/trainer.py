@@ -19,7 +19,7 @@ from src.training.handlers import (
 
 def create_trainer(model, optimizer, criterion, device, output_dir, evaluators,
                    scheduler=None, sampling_config=None, checkpoint_config=None,
-                   wandb_config=None, early_stopping_config=None):
+                   wandb_config=None, early_stopping_config=None, prior_fs_fn=None):
     """
     Create and configure training engine.
 
@@ -72,6 +72,8 @@ def create_trainer(model, optimizer, criterion, device, output_dir, evaluators,
         attach_scheduler_handler(trainer, scheduler)
     if hasattr(criterion, 'current_epoch'):
         attach_annealing_handler(trainer, criterion)
+    if prior_fs_fn is not None and hasattr(prior_fs_fn, 'current_epoch'):
+        attach_annealing_handler(trainer, prior_fs_fn)
 
     # Early stopping
     early_stopping_handler = None
