@@ -7,7 +7,6 @@ from src.registry import METRIC_REGISTRY
 
 
 @METRIC_REGISTRY.register("bma_nll")
-@METRIC_REGISTRY.register("bma_cross_entropy")
 class BMANLL(BaseMetric):
     """Computes negative log-likelihood using Bayesian Model Averaging across samples."""
     

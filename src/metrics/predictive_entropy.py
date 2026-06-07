@@ -21,14 +21,15 @@ class PredictiveEntropy(BaseMetric):
         self._count = 0
     
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly."""
+        """Override to access engine.state.output directly.
+        
+            Uses all_preds (BNN ensemble) if available, falls back to y_pred (single forward pass).
+        """
         output = engine.state.output
-        if 'all_preds' not in output:
-            return
-        
-        all_preds = output['all_preds']
-        
-        # Convert to probabilities
+        if 'all_preds' in output:
+            all_preds = output['all_preds']
+        else:
+            all_preds = output['y_pred'].unsqueeze(0)
         probs = torch.softmax(all_preds, dim=2) 
         
         # Ensemble probabilities 

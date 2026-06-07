@@ -12,8 +12,8 @@ from src.registry import METRIC_REGISTRY
 @METRIC_REGISTRY.register("expected_entropy")
 class ExpectedEntropy(BaseMetric):
     """Computes expected data entropy (aleatoric uncertainty) from BNN ensemble.
-    
-    Measures the average entropy of individual model predictions.
+
+    Uses all_preds (BNN ensemble) if available, falls back to y_pred (single forward pass).
     """
     
     def reset(self):
@@ -23,11 +23,10 @@ class ExpectedEntropy(BaseMetric):
     def iteration_completed(self, engine):
         """Override to access engine.state.output directly."""
         output = engine.state.output
-        if 'all_preds' not in output:
-            return
-        
-        all_preds = output['all_preds']
-        
+        if 'all_preds' in output:
+            all_preds = output['all_preds']
+        else:
+            all_preds = output['y_pred'].unsqueeze(0)
         probs = torch.softmax(all_preds, dim=2)
         
         mean_entropy = torch.special.entr(probs).sum(dim=-1).mean(dim=0)  
