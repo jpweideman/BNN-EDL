@@ -64,9 +64,10 @@ def main(cfg: DictConfig):
         )
 
     # Scheduler
-    if has_sampler and cfg.training.scheduler.enabled:
-        raise ValueError("Scheduler is not supported with sampler-based training.")
-    scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler.enabled else None
+    scheduler_on = hasattr(cfg.training, 'scheduler') and cfg.training.scheduler.enabled
+    if has_sampler and scheduler_on:
+        print("Warning: scheduler enabled but ignored for sampler-based training.")
+    scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if scheduler_on and not has_sampler else None
 
     # Checkpoint
     checkpoint_setup = CheckpointSetup(output_dir, cfg.training.checkpoint)
