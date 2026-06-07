@@ -2,6 +2,7 @@ defaults:
   - datasets: fashion_mnist
   - model: resnet20
   - training: bnn_sgld
+  - evaluation: bnn_fashion_mnist
   - _self_
 
 seed: 1
@@ -30,39 +31,4 @@ training:
     params:
       lr: 1e-1
       temperature: 0.01
-  evaluation:
-    fashion_mnist_test:
-      interval: 1
-      metrics:
-        - name: accuracy
-        - name: loss
-        - name: bma_accuracy
-        - name: bma_nll
-        - name: nll
-        - name: brier_score
-        - name: calibration_error
-          params:
-            num_classes: 10
-            num_bins: 15
-            norm: l1
-        - name: bma_calibration_error
-          params:
-            num_classes: 10
-            num_bins: 15
-            norm: l1
-        - name: bma_predictive_entropy
-        - name: bma_expected_entropy
-        - name: bma_mutual_information
-        - name: bma_predictive_variance
-    mnist_ood:
-      interval: 1
-      metrics:
-        - name: bma_predictive_entropy
-        - name: bma_mutual_information
-        - name: bma_nll
-    random_noise_ood:
-      interval: 1
-      metrics:
-        - name: bma_predictive_entropy
-        - name: bma_mutual_information
-        - name: bma_nll
+

@@ -2,6 +2,7 @@ defaults:
   - datasets: fashion_mnist
   - model: resnet20
   - training: edl
+  - evaluation: edl_fashion_mnist
   - _self_
 
 seed: 1
@@ -30,36 +31,4 @@ training:
     name: sgd
     params:
       lr: 1e-2
-  evaluation:
-    fashion_mnist_test:
-      interval: 1
-      metrics:
-        - name: accuracy
-        - name: loss
-        - name: vacuity
-        - name: dirichlet_strength
-        - name: dirichlet_nll
-        - name: dirichlet_brier_score
-        - name: dirichlet_calibration_error
-          params:
-            num_classes: 10
-            num_bins: 15
-            norm: l1
-        - name: analytical_dirichlet_total_uncertainty
-        - name: analytical_dirichlet_aleatoric_uncertainty
-        - name: analytical_dirichlet_distributional_uncertainty
-    mnist_ood:
-      interval: 1
-      metrics:
-        - name: vacuity
-        - name: dirichlet_strength
-        - name: bma_dirichlet_mutual_information
-        - name: bma_dirichlet_predictive_entropy
-    random_noise_ood:
-      interval: 1
-      metrics:
-        - name: vacuity
-        - name: dirichlet_strength
-        - name: bma_dirichlet_mutual_information
-        - name: bma_dirichlet_predictive_entropy
 

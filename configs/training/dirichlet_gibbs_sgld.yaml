@@ -26,9 +26,6 @@ sampler:
     lr: 0.001
     temperature: 1.0
 
-scheduler:
-  enabled: false
-
 sampling:
   enabled: true
   start_epoch: 1
@@ -51,5 +48,3 @@ wandb:
   project: bnn-edl
   name: null
   log_interval: 20
-
-evaluation: {}

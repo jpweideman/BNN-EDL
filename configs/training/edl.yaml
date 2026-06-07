@@ -41,5 +41,3 @@ wandb:
   project: bnn-edl
   name: null
   log_interval: 20
-
-evaluation: {}

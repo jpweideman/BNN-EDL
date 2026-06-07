@@ -64,6 +64,8 @@ def main(cfg: DictConfig):
         )
 
     # Scheduler
+    if has_sampler and cfg.training.scheduler.enabled:
+        raise ValueError("Scheduler is not supported with sampler-based training.")
     scheduler = SchedulerBuilder(cfg.training.scheduler).build(optimizer) if cfg.training.scheduler.enabled else None
 
     # Checkpoint
@@ -82,7 +84,7 @@ def main(cfg: DictConfig):
 
     # Evaluators
     evaluators = create_evaluators(
-        model, criterion, device, loaders, cfg.training.evaluation,
+        model, criterion, device, loaders, cfg.evaluation,
         optimizer=optimizer
     )
 

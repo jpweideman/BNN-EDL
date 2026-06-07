@@ -1,0 +1,32 @@
+cifar10_test:
+  interval: 1
+  metrics:
+    - name: accuracy
+    - name: bma_dirichlet_accuracy
+    - name: vacuity
+    - name: dirichlet_strength
+    - name: dirichlet_nll
+    - name: dirichlet_digamma_nll
+    - name: bma_dirichlet_nll
+    - name: bma_dirichlet_digamma_nll
+    - name: dirichlet_brier_score
+    - name: dirichlet_expected_brier
+    - name: bma_dirichlet_brier_score
+    - name: bma_dirichlet_expected_brier
+    - name: bma_dirichlet_calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: bma_dirichlet_predictive_entropy
+    - name: bma_dirichlet_expected_entropy
+    - name: bma_dirichlet_mutual_information
+    - name: bma_dirichlet_predictive_variance
+    - name: dirichlet_calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: analytical_dirichlet_total_uncertainty
+    - name: analytical_dirichlet_aleatoric_uncertainty
+    - name: analytical_dirichlet_distributional_uncertainty

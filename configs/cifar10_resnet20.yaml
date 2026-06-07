@@ -2,6 +2,7 @@ defaults:
   - datasets: cifar10
   - model: resnet20
   - training: standard
+  - evaluation: standard_cifar10_test
   - _self_
 
 seed: 1
@@ -39,16 +40,3 @@ training:
     params:
       T_max: 300
       eta_min: 0
-  evaluation:
-    cifar10_test:
-      interval: 1
-      metrics:
-        - name: accuracy
-        - name: loss
-        - name: nll
-        - name: brier_score
-        - name: calibration_error
-          params:
-            num_classes: 10
-            num_bins: 15
-            norm: l1
