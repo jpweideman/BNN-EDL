@@ -5,8 +5,8 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("predictive_variance")
-class PredictiveVariance(BaseMetric):
+@METRIC_REGISTRY.register("bma_predictive_variance")
+class BMAPredictiveVariance(BaseMetric):
     """Computes predictive variance from BNN ensemble.
     
     Measures the spread of predicted probabilities across samples.

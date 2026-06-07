@@ -5,8 +5,8 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("dirichlet_predictive_variance")
-class DirichletPredictiveVariance(BaseMetric):
+@METRIC_REGISTRY.register("bma_dirichlet_predictive_variance")
+class BMADirichletPredictiveVariance(BaseMetric):
     """Computes predictive variance from Dirichlet BNN ensemble.
     
     Measures the spread of predicted probabilities across samples.

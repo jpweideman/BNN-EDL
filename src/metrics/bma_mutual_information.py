@@ -9,12 +9,11 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("mutual_information")
-class MutualInformation(BaseMetric):
+@METRIC_REGISTRY.register("bma_mutual_information")
+class BMAMutualInformation(BaseMetric):
     """Computes mutual information (epistemic uncertainty) from BNN ensemble.
-    
-    Measures the disagreement between different models in the ensemble.
-    Computed as: MI = Entropy of Ensemble - Mean of Entropies
+
+    Disagreement between posterior sample predictions (MI = Entropy of ensemble mean - Mean of individual entropies.).
     """
     
     def reset(self):

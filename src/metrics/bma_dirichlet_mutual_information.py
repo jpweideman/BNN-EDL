@@ -9,11 +9,11 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("dirichlet_mutual_information")
-class DirichletMutualInformation(BaseMetric):
+@METRIC_REGISTRY.register("bma_dirichlet_mutual_information")
+class BMADirichletMutualInformation(BaseMetric):
     """Computes mutual information (epistemic uncertainty) from Dirichlet BNN ensemble.
 
-    MI = Entropy of ensemble mean - Mean of individual entropies.
+    Disagreement between posterior sample predictions (MI = Entropy of ensemble mean - Mean of individual entropies.).
     """
 
     def reset(self):

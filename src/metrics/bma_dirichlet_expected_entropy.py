@@ -10,11 +10,11 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("dirichlet_expected_entropy")
-class DirichletExpectedEntropy(BaseMetric):
-    """Computes expected data entropy (aleatoric uncertainty) from Dirichlet output.
+@METRIC_REGISTRY.register("bma_dirichlet_expected_entropy")
+class BMADirichletExpectedEntropy(BaseMetric):
+    """Computes expected data entropy from Dirichlet output, mean over posterior samples.
 
-    Uses all_preds (BNN ensemble) if available, falls back to y_pred (EDL).
+    Equals analytical total uncertainty (aleatoric + distributional).
     """
 
     def reset(self):

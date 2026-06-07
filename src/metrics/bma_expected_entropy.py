@@ -9,11 +9,11 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("expected_entropy")
-class ExpectedEntropy(BaseMetric):
+@METRIC_REGISTRY.register("bma_expected_entropy")
+class BMAExpectedEntropy(BaseMetric):
     """Computes expected data entropy (aleatoric uncertainty) from BNN ensemble.
 
-    Uses all_preds (BNN ensemble) if available, falls back to y_pred (single forward pass).
+    Mean entropy of individual posterior sample predictions.
     """
     
     def reset(self):

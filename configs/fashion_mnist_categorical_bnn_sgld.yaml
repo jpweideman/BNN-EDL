@@ -50,26 +50,19 @@ training:
             num_classes: 10
             num_bins: 15
             norm: l1
-        - name: predictive_entropy
-        - name: expected_entropy
-        - name: mutual_information
-        - name: predictive_variance
+        - name: bma_predictive_entropy
+        - name: bma_expected_entropy
+        - name: bma_mutual_information
+        - name: bma_predictive_variance
     mnist_ood:
       interval: 1
       metrics:
-        - name: predictive_entropy
-        - name: mutual_information
+        - name: bma_predictive_entropy
+        - name: bma_mutual_information
         - name: bma_nll
     random_noise_ood:
       interval: 1
       metrics:
-        - name: predictive_entropy
-        - name: mutual_information
+        - name: bma_predictive_entropy
+        - name: bma_mutual_information
         - name: bma_nll
-
-
-
-  sampling:
-    enabled: true
-    start_epoch: 3
-    sample_interval: 1

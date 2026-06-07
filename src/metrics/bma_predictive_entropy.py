@@ -9,8 +9,8 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("predictive_entropy")
-class PredictiveEntropy(BaseMetric):
+@METRIC_REGISTRY.register("bma_predictive_entropy")
+class BMAPredictiveEntropy(BaseMetric):
     """Computes predictive entropy (total uncertainty) from BNN ensemble.
     
     Measures the entropy of the averaged predictive distribution (ensemble probabilities).
@@ -21,10 +21,7 @@ class PredictiveEntropy(BaseMetric):
         self._count = 0
     
     def iteration_completed(self, engine):
-        """Override to access engine.state.output directly.
-        
-            Uses all_preds (BNN ensemble) if available, falls back to y_pred (single forward pass).
-        """
+        """Override to access engine.state.output directly."""
         output = engine.state.output
         if 'all_preds' in output:
             all_preds = output['all_preds']

@@ -56,21 +56,21 @@ training:
             num_classes: 10
             num_bins: 15
             norm: l1
-        - name: dirichlet_predictive_entropy
-        - name: dirichlet_expected_entropy
-        - name: dirichlet_mutual_information
-        - name: dirichlet_predictive_variance
+        - name: bma_dirichlet_predictive_entropy
+        - name: bma_dirichlet_expected_entropy
+        - name: bma_dirichlet_mutual_information
+        - name: bma_dirichlet_predictive_variance
     mnist_ood:
       interval: 1
       metrics:
         - name: vacuity
         - name: dirichlet_strength
-        - name: dirichlet_mutual_information
-        - name: dirichlet_predictive_entropy
+        - name: bma_dirichlet_mutual_information
+        - name: bma_dirichlet_predictive_entropy
     random_noise_ood:
       interval: 1
       metrics:
         - name: vacuity
         - name: dirichlet_strength
-        - name: dirichlet_mutual_information
-        - name: dirichlet_predictive_entropy
+        - name: bma_dirichlet_mutual_information
+        - name: bma_dirichlet_predictive_entropy

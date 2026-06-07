@@ -10,11 +10,11 @@ from src.metrics.base import BaseMetric
 from src.registry import METRIC_REGISTRY
 
 
-@METRIC_REGISTRY.register("dirichlet_predictive_entropy")
-class DirichletPredictiveEntropy(BaseMetric):
+@METRIC_REGISTRY.register("bma_dirichlet_predictive_entropy")
+class BMADirichletPredictiveEntropy(BaseMetric):
     """Computes predictive entropy (total uncertainty) from Dirichlet output.
 
-    Uses all_preds (BNN ensemble) if available, falls back to y_pred (EDL).
+    Entropy of the averaged Dirichlet mean prediction across posterior samples.
     """
 
     def reset(self):

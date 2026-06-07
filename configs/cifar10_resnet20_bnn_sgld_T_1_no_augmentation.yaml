@@ -90,7 +90,7 @@ training:
             num_classes: 10
             num_bins: 15
             norm: l1
-        - name: predictive_entropy
-        - name: expected_entropy
-        - name: mutual_information
-        - name: predictive_variance
+        - name: bma_predictive_entropy
+        - name: bma_expected_entropy
+        - name: bma_mutual_information
+        - name: bma_predictive_variance
