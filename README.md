@@ -1,6 +1,6 @@
 # Bayesian Neural Networks for Classification
 
-Bayesian Neural Networks (BNNs) via [posteriors](https://github.com/normal-computing/posteriors) and Evidential Deep Learning (EDL) via [edl-pytorch](https://github.com/teddykoker/evidential-learning-pytorch) for uncertainty quantification in classification.
+This repository implements Bayesian Neural Networks (BNNs) using the [posteriors](https://github.com/normal-computing/posteriors) library and Evidential Deep Learning (EDL) using [edl-pytorch](https://github.com/teddykoker/evidential-learning-pytorch) for uncertainty quantification.
 
 ## Features
 
@@ -105,42 +105,72 @@ BNN-EDL/
 
 ## Installation
 
-Developed on **Python 3.10**.
+This project was developed and tested on **Python 3.10.19**. 
+
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/jpweideman/BNN-EDL.git
 cd BNN-EDL
+```
+
+### 2. Install Poetry
+
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+# or
+wget -qO- https://install.python-poetry.org | python3 -
+```
+
+### 3. Ensure Poetry is on PATH
+
+If `poetry --version` fails with `command not found` after installation, add Poetry's bin directory to your shell `PATH`, then reload your shell configuration and run:
+
+```bash
+poetry --version
+```
+
+### 4. Install Python 3.10 with pyenv
+
+Install pyenv for your OS first, then run:
+
+```bash
+pyenv install 3.10.19
+pyenv local 3.10.19
+poetry env use "$(pyenv which python)"
+```
+
+### 5. Install Dependencies
+
+```bash
 poetry install
+```
+
+### 6. **Activate the virtual environment**:
+```bash
 source $(poetry env info --path)/bin/activate
 ```
 
-See [Poetry](https://python-poetry.org/docs/#installation) and [pyenv](https://github.com/pyenv/pyenv) docs if needed. Pin Python with `poetry env use 3.10`.
+### 7. **Run training**:
+```bash
+# After activation, run commands normally
+python train.py --config-name mnist_mlp
+
+# Or use poetry run without activation
+poetry run python train.py --config-name mnist_mlp
+```
 
 ## Usage
 
-```bash
-# Deterministic CIFAR-10 baseline
-python train.py --config-name cifar10_resnet20
+### Resuming Training
 
-# Categorical BNN (SGLD temperature sweep)
-python train.py --config-name cifar10_resnet20_bnn_sgld_T_0.01
-
-# EDL
-python train.py --config-name edl_cifar10_resnet20_digamma_loss
-
-# Dirichlet BNN with function-space prior
-python train.py --config-name fashion_mnist_dirichlet_bnn_sgld
-
-# Multirun (e.g. temperature grid)
-python train.py --config-name cifar10_resnet20_bnn_sgld_T_0.01 --multirun \
-  training.sampler.params.temperature=0.001,0.01,0.1,1.0
-```
-
-### Resuming training
-
-Checkpoints are saved each epoch. Resume in the same output directory:
+Training automatically saves checkpoints every epoch. To resume an interrupted training run:
 
 ```bash
-python train.py --config-name cifar10_resnet20 \
+# Find the output directory of your interrupted run
+# Example: outputs/2026-01-01/12-00-00/
+
+# Resume training in the same directory
+poetry run python train.py --config-name cifar10_resnet20 \
   hydra.run.dir=outputs/2026-01-01/12-00-00/
 ```
