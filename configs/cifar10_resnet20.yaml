@@ -2,7 +2,7 @@ defaults:
   - datasets: cifar10
   - model: resnet20
   - training: standard
-  - evaluation: standard_cifar10_test
+  - evaluation: standard_cifar10
   - _self_
 
 seed: 1

@@ -2,7 +2,7 @@ defaults:
   - datasets: cifar10
   - model: resnet20
   - training: bnn_sgld
-  - evaluation: bnn_cifar10_test
+  - evaluation: bnn_cifar10
   - _self_
 
 seed: 1

@@ -2,7 +2,7 @@ defaults:
   - datasets: cifar10
   - model: resnet20_dirichlet
   - training: edl
-  - evaluation: edl_cifar10_test
+  - evaluation: edl_cifar10
   - _self_
 
 seed: 1

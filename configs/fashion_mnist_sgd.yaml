@@ -2,7 +2,7 @@ defaults:
   - datasets: fashion_mnist
   - model: resnet20_grayscale
   - training: standard
-  - evaluation: standard_fashion_mnist_test
+  - evaluation: standard_fashion_mnist
   - _self_
 
 seed: 1

@@ -2,7 +2,7 @@ fashion_mnist_train:
   name: fashion_mnist
   source: train
   shuffle: true
-  batch_size: 256
+  batch_size: 1024
   num_workers: 4
   transforms:
     - name: random_crop
@@ -22,7 +22,7 @@ fashion_mnist_test:
   name: fashion_mnist
   source: test
   shuffle: false
-  batch_size: 256
+  batch_size: 1024
   num_workers: 4
   transforms:
     - name: to_tensor
@@ -35,7 +35,7 @@ mnist_ood:
   name: mnist
   source: test
   shuffle: false
-  batch_size: 256
+  batch_size: 1024
   num_workers: 4
   transforms:
     - name: to_tensor
@@ -48,7 +48,7 @@ random_noise_ood:
   name: random_noise
   source: test
   shuffle: false
-  batch_size: 256
+  batch_size: 1024
   num_workers: 0
   params:
     shape: [1, 28, 28]

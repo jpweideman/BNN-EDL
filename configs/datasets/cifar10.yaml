@@ -2,7 +2,7 @@ cifar10_train:
   name: cifar10
   source: train
   shuffle: true
-  batch_size: 256
+  batch_size: 1024
   num_workers: 4
   transforms:
     - name: random_crop
@@ -22,7 +22,7 @@ cifar10_test:
   name: cifar10
   source: test
   shuffle: false
-  batch_size: 256
+  batch_size: 1024
   num_workers: 4
   transforms:
     - name: to_tensor
