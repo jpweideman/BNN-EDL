@@ -5,6 +5,7 @@ fashion_mnist_test:
     - name: bma_dirichlet_accuracy
     - name: vacuity
     - name: dirichlet_strength
+    - name: bma_dirichlet_strength
     - name: dirichlet_nll
     - name: dirichlet_digamma_nll
     - name: bma_dirichlet_nll
@@ -35,6 +36,7 @@ mnist_ood:
   metrics:
     - name: vacuity
     - name: dirichlet_strength
+    - name: bma_dirichlet_strength
     - name: bma_dirichlet_mutual_information
     - name: bma_dirichlet_predictive_entropy
 random_noise_ood:
@@ -42,5 +44,6 @@ random_noise_ood:
   metrics:
     - name: vacuity
     - name: dirichlet_strength
+    - name: bma_dirichlet_strength
     - name: bma_dirichlet_mutual_information
     - name: bma_dirichlet_predictive_entropy

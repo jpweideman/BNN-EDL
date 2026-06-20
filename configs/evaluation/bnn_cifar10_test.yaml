@@ -4,6 +4,7 @@ cifar10_test:
     - name: accuracy
     - name: bma_accuracy
     - name: bma_nll
+    - name: bma_brier_score
     - name: nll
     - name: brier_score
     - name: calibration_error

@@ -5,6 +5,7 @@ cifar10_test:
     - name: bma_dirichlet_accuracy
     - name: vacuity
     - name: dirichlet_strength
+    - name: bma_dirichlet_strength
     - name: dirichlet_nll
     - name: dirichlet_digamma_nll
     - name: bma_dirichlet_nll
