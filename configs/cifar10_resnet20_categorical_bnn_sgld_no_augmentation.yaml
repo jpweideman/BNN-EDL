@@ -1,0 +1,34 @@
+defaults:
+  - datasets: cifar10
+  - model: resnet20
+  - training: bnn_sgld
+  - evaluation: bnn_cifar10_test
+  - _self_
+
+seed: 1
+
+datasets:
+  cifar10_train:
+    transforms:
+      - name: to_tensor
+      - name: normalize
+        params:
+          mean: [0.4914, 0.4822, 0.4465]
+          std: [0.2470, 0.2434, 0.2615]
+
+training:
+  dataset: cifar10_train
+  checkpoint:
+    dataset: cifar10_test
+  num_epochs: 500
+  wandb:
+    summary_metrics:
+      cifar10_test:
+        - name: accuracy
+          objective: maximize
+        - name: loss
+          objective: minimize
+  sampling:
+    enabled: true
+    start_epoch: 100
+    sample_interval: 20

@@ -1,41 +1,20 @@
 defaults:
   - datasets: fashion_mnist
-  - model: resnet20
+  - model: resnet20_grayscale_dirichlet
   - training: dirichlet_bnn_sgld
   - evaluation: dirichlet_bnn_fashion_mnist
   - _self_
 
 seed: 1
 
-model:
-  params:
-    in_channels: 1
-    output_layer_config:
-      type: dirichlet
-      params:
-        num_classes: 10
-
 training:
   dataset: fashion_mnist_train
   checkpoint:
     dataset: fashion_mnist_test
-  pretrained:
-    enabled: false
-    path: /home/ra65puy/ra65puy_lrz_mount/BNN-EDL/outputs/2026-04-26/18-37-21/best_model.pt
   wandb:
-    name: fashion_mnist_dirichlet_bnn_sgld_pretrained_edl
     summary_metrics:
       fashion_mnist_test:
         - name: accuracy
           objective: maximize
         - name: dirichlet_nll
-          objective: minimize
-  prior_fs:
-    name: gamma_alpha0
-    params:
-      concentration: 2.0
-      rate: 0.1     
-  sampler:
-    params:
-      lr: 1e-1
-  num_epochs: 30
+          objective: minimize   

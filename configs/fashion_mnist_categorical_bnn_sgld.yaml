@@ -1,34 +1,22 @@
 defaults:
   - datasets: fashion_mnist
-  - model: resnet20
+  - model: resnet20_grayscale
   - training: bnn_sgld
   - evaluation: bnn_fashion_mnist
   - _self_
 
 seed: 1
 
-model:
-  params:
-    in_channels: 1
-
 training:
   dataset: fashion_mnist_train
   checkpoint:
     dataset: fashion_mnist_test
-  pretrained:
-    enabled: true
-    path: /Users/jpweideman/BNN-EDL/outputs/2026-06-07/16-09-38/best_model.pt
   wandb:
-    name: fashion_mnist_categorical_bnn_sgld_temperature_0.01
     summary_metrics:
       fashion_mnist_test:
         - name: accuracy
           objective: maximize
         - name: loss
           objective: minimize
-  sampler:
-    name: sgld
-    params:
-      lr: 1e-1
-      temperature: 0.01
+
 

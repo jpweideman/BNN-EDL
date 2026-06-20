@@ -1,4 +1,4 @@
-num_epochs: 10
+num_epochs: 100
 device: auto
 
 pretrained:
@@ -20,13 +20,13 @@ prior:
 sampler:
   name: sgld
   params:
-    lr: 0.001
+    lr: 0.01
     temperature: 1.0
 
 sampling:
   enabled: true
-  start_epoch: 1
-  sample_interval: 1
+  start_epoch: 20
+  sample_interval: 10
 
 checkpoint:
   enabled: true

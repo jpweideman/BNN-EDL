@@ -1,13 +1,13 @@
-"""Gamma function-space prior on the total Dirichlet concentration α₀."""
+"""Gamma function-space prior on Dirichlet strength (total concentration)."""
 
 import torch
 from torch.distributions import Gamma
 from src.registry import PRIORS_FS_REGISTRY
 
 
-@PRIORS_FS_REGISTRY.register("gamma_alpha0")
-class GammaAlpha0Prior:
-    """Gamma function-space prior on the total concentration alpha_0(sum over all class concentrations).
+@PRIORS_FS_REGISTRY.register("gamma_strength")
+class GammaStrengthPrior:
+    """Gamma function-space prior on Dirichlet strength (sum of all class concentrations).
 
     Args:
         concentration:    Shape parameter (> 1). Prior mode at (a-1)/rate.

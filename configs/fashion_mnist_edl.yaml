@@ -1,34 +1,22 @@
 defaults:
   - datasets: fashion_mnist
-  - model: resnet20
+  - model: resnet20_grayscale_dirichlet
   - training: edl
   - evaluation: edl_fashion_mnist
   - _self_
 
 seed: 1
 
-model:
-  params:
-    in_channels: 1
-    output_layer_config:
-      type: dirichlet
-      params:
-        num_classes: 10
-
 training:
   dataset: fashion_mnist_train
   checkpoint:
     dataset: fashion_mnist_test
   wandb:
-    name: fashion_mnist_edl
     summary_metrics:
       fashion_mnist_test:
         - name: accuracy
           objective: maximize
         - name: dirichlet_nll
           objective: minimize
-  optimizer:
-    name: sgd
-    params:
-      lr: 1e-2
+
 

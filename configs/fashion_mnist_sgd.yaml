@@ -1,32 +1,22 @@
 defaults:
   - datasets: fashion_mnist
-  - model: resnet20
+  - model: resnet20_grayscale
   - training: standard
   - evaluation: standard_fashion_mnist_test
   - _self_
 
 seed: 1
 
-model:
-  params:
-    in_channels: 1
-
 training:
   dataset: fashion_mnist_train
   checkpoint:
     dataset: fashion_mnist_test
   wandb:
-    name: fashion_mnist_resnet20_sgd
     summary_metrics:
       fashion_mnist_test:
         - name: accuracy
           objective: maximize
         - name: loss
           objective: minimize
-  optimizer:
-    name: sgd
-    params:
-      lr: 1e-2
-      momentum: 0.9
-      weight_decay: 1e-4
+
 

@@ -1,8 +1,8 @@
 defaults:
   - datasets: cifar10
   - model: resnet20
-  - training: standard
-  - evaluation: standard_cifar10_test
+  - training: bnn_sgld
+  - evaluation: bnn_cifar10_test
   - _self_
 
 seed: 1
@@ -11,6 +11,7 @@ training:
   dataset: cifar10_train
   checkpoint:
     dataset: cifar10_test
+  num_epochs: 500
   wandb:
     summary_metrics:
       cifar10_test:
@@ -18,8 +19,6 @@ training:
           objective: maximize
         - name: loss
           objective: minimize
-  num_epochs: 400
-  scheduler:
-    params:
-      T_max: 400
-      eta_min: 0
+  sampling:
+    start_epoch: 100
+    sample_interval: 20

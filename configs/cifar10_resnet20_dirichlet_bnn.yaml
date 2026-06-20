@@ -1,8 +1,8 @@
 defaults:
   - datasets: cifar10
-  - model: resnet20
-  - training: standard
-  - evaluation: standard_cifar10_test
+  - model: resnet20_dirichlet
+  - training: dirichlet_bnn_sgld
+  - evaluation: dirichlet_bnn_cifar10_test
   - _self_
 
 seed: 1
@@ -11,15 +11,14 @@ training:
   dataset: cifar10_train
   checkpoint:
     dataset: cifar10_test
+  num_epochs: 500
   wandb:
     summary_metrics:
       cifar10_test:
         - name: accuracy
           objective: maximize
-        - name: loss
+        - name: dirichlet_nll
           objective: minimize
-  num_epochs: 400
-  scheduler:
-    params:
-      T_max: 400
-      eta_min: 0
+  sampling:
+    start_epoch: 100
+    sample_interval: 20

@@ -1,0 +1,6 @@
+name: resnet20
+params:
+  output_layer_config:
+    type: dirichlet
+    params:
+      num_classes: 10

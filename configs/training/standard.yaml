@@ -1,4 +1,4 @@
-num_epochs: 10
+num_epochs: 50
 device: auto
 
 pretrained:
@@ -11,14 +11,15 @@ loss:
 optimizer:
   name: adam
   params:
-    lr: 0.001
-    weight_decay: 0.0
+    lr: 0.01
+    momentum: 0.9
+    weight_decay: 1e-4
 
 scheduler:
-  enabled: false
+  enabled: true
   name: cosine_annealing
   params:
-    T_max: 10
+    T_max: 50
     eta_min: 0
 
 checkpoint:
