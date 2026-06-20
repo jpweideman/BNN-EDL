@@ -5,32 +5,37 @@ experiments:
   # ── CIFAR-10 Stage 1 ─────────────────────────────────────────────────────
   cifar10_resnet20:
     config: cifar10_resnet20
+    overrides:
+      - training.wandb.name=cifar10_resnet20_sgd
 
   edl_cifar10_digamma:
     config: edl_cifar10_resnet20
     overrides:
       - training.loss.name=edl_digamma
-      - training.wandb.name=edl_cifar10_digamma
+      - training.wandb.name=cifar10_digamma_sgd_edl
 
   edl_cifar10_log:
     config: edl_cifar10_resnet20
     overrides:
       - training.loss.name=edl_log
-      - training.wandb.name=edl_cifar10_log
+      - training.wandb.name=cifar10_log_sgd_edl
 
   edl_cifar10_mse:
     config: edl_cifar10_resnet20
     overrides:
       - training.loss.name=edl_mse
-      - training.wandb.name=edl_cifar10_mse
+      - training.wandb.name=cifar10_mse_sgd_edl
 
 
   # ── Fashion-MNIST Stage 1 ─────────────────────────────────────────────────
   fashion_mnist_sgd:
     config: fashion_mnist_sgd
-
+    overrides:
+      - training.wandb.name=fashion_mnist_sgd
   fashion_mnist_edl:
     config: fashion_mnist_edl
+    overrides:
+      - training.wandb.name=fashion_mnist_sgd_edl
 
   # ── CIFAR-10 Stage 2: Categorical BNN ────────────────────────────────────
 
