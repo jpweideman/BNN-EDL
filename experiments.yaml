@@ -9,6 +9,11 @@ experiments:
     overrides:
       - training.wandb.name=cifar10_resnet20_sgd
 
+  cifar10_resnet20_no_aug:
+    config: cifar10_resnet20_no_augmentation
+    overrides:
+      - training.wandb.name=cifar10_resnet20_sgd_no_aug
+
   edl_cifar10_digamma:
     config: edl_cifar10_resnet20
     overrides:
@@ -144,56 +149,56 @@ experiments:
       - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_T_0.0001
 
   cifar10_bnn_T_1_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.wandb.name=cifar10_bnn_sgld_T_1_no_aug
 
   cifar10_bnn_T_0.1_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.temperature=0.1
       - training.wandb.name=cifar10_bnn_sgld_T_0.1_no_aug
 
   cifar10_bnn_T_0.01_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.temperature=0.01
       - training.wandb.name=cifar10_bnn_sgld_T_0.01_no_aug
 
   cifar10_bnn_T_0.001_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.temperature=0.001
       - training.wandb.name=cifar10_bnn_sgld_T_0.001_no_aug
 
   cifar10_bnn_T_0.0001_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.temperature=0.0001
       - training.wandb.name=cifar10_bnn_sgld_T_0.0001_no_aug
 
   cifar10_bnn_lr_0.001_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.lr=0.001
       - training.wandb.name=cifar10_bnn_sgld_lr_0.001_no_aug
 
   cifar10_bnn_lr_0.0001_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.lr=0.0001
       - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_no_aug
 
   cifar10_bnn_lr_0.00001_no_aug:
-    config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation
-    pretrained_from: cifar10_resnet20
+    config: cifar10_resnet20_categorical_bnn_sgld_no_aug
+    pretrained_from: cifar10_resnet20_no_aug
     overrides:
       - training.sampler.params.lr=0.00001
       - training.wandb.name=cifar10_bnn_sgld_lr_0.00001_no_aug
