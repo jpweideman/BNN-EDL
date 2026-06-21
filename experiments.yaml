@@ -1,4 +1,5 @@
 wandb_project: evidential-bnn
+seed: 1
 
 experiments:
 
@@ -101,6 +102,46 @@ experiments:
     overrides:
       - training.sampler.params.lr=0.000001
       - training.wandb.name=cifar10_bnn_sgld_lr_0.000001
+
+  cifar10_bnn_lr_0.0001_T_0.1:
+    config: cifar10_resnet20_categorical_bnn_sgld
+    pretrained_from: cifar10_resnet20
+    overrides:
+      - training.sampler.params.lr=0.0001
+      - training.sampler.params.temperature=0.1
+      - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_T_0.1
+
+  cifar10_bnn_lr_0.0001_T_0.01:
+    config: cifar10_resnet20_categorical_bnn_sgld
+    pretrained_from: cifar10_resnet20
+    overrides:
+      - training.sampler.params.lr=0.0001
+      - training.sampler.params.temperature=0.01
+      - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_T_0.01
+
+  cifar10_bnn_lr_0.0001_T_0.001:
+    config: cifar10_resnet20_categorical_bnn_sgld
+    pretrained_from: cifar10_resnet20
+    overrides:
+      - training.sampler.params.lr=0.0001
+      - training.sampler.params.temperature=0.001
+      - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_T_0.001
+
+  cifar10_bnn_lr_0.0001_T_0.00001:
+    config: cifar10_resnet20_categorical_bnn_sgld
+    pretrained_from: cifar10_resnet20
+    overrides:
+      - training.sampler.params.lr=0.0001
+      - training.sampler.params.temperature=0.00001
+      - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_T_0.00001
+
+  cifar10_bnn_lr_0.0001_T_0.0001:
+    config: cifar10_resnet20_categorical_bnn_sgld
+    pretrained_from: cifar10_resnet20
+    overrides:
+      - training.sampler.params.lr=0.0001
+      - training.sampler.params.temperature=0.0001
+      - training.wandb.name=cifar10_bnn_sgld_lr_0.0001_T_0.0001
 
   cifar10_bnn_T_1_no_aug:
     config: cifar10_resnet20_categorical_bnn_sgld_no_augmentation

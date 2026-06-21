@@ -4,6 +4,7 @@ outputs/
 .venv/
 .DS_Store
 .python-version
+experiment_state.json
 
 # development scripts
 junk/
