@@ -1,5 +1,5 @@
-wandb_project: evidential-bnn
-seed: 1
+wandb_project: evidential-bnn-experiments
+seed: 0
 
 experiments:
 
