@@ -1,6 +1,8 @@
 """Main training script."""
 
+import json
 import hydra
+import wandb
 from omegaconf import DictConfig
 from hydra.core.hydra_config import HydraConfig
 
@@ -118,6 +120,10 @@ def main(cfg: DictConfig):
         trainer.run(loaders[cfg.training.dataset], max_epochs=cfg.training.num_epochs)
     else:
         print(f"Training already completed ({start_epoch}/{cfg.training.num_epochs} epochs)")
+
+    if wandb.run is not None:
+        summary = {k: v for k, v in wandb.run.summary.items() if not k.startswith('_')}
+        open(f"{output_dir}/metrics.json", "w").write(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
