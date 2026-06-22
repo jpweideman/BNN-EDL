@@ -122,8 +122,10 @@ def main(cfg: DictConfig):
         print(f"Training already completed ({start_epoch}/{cfg.training.num_epochs} epochs)")
 
     if wandb.run is not None:
-        summary = {k: v for k, v in wandb.run.summary.items() if not k.startswith('_')}
-        open(f"{output_dir}/metrics.json", "w").write(json.dumps(summary, indent=2))
+        summary = {k: v for k, v in wandb.run.summary._as_dict().items() if not k.startswith('_')}
+        open(f"{output_dir}/metrics.json", "w").write(
+            json.dumps(summary, indent=2, default=lambda o: o._as_dict() if hasattr(o, '_as_dict') else str(o))
+        )
 
 
 if __name__ == "__main__":
