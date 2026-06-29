@@ -210,110 +210,107 @@ experiments:
       - training.sampler.params.lr=0.00001
       - training.wandb.name=cifar10_bnn_sgld_lr_0.00001_no_aug
 
-  # # ── CIFAR-10 Stage 2: Dirichlet BNN (no prior_fs) ────────────────────────
-  # cifar10_dirichlet_bnn:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - training.wandb.name=cifar10_dirichlet_bnn_sgld
+  # ── CIFAR-10 Stage 2: Dirichlet BNN  ──────────────────────────────────────
+  cifar10_dirichlet_bnn:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - training.wandb.name=cifar10_dirichlet_bnn_sgld
 
-  # cifar10_dirichlet_bnn_T_0.01:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - training.sampler.params.temperature=0.01
-  #     - training.wandb.name=cifar10_dirichlet_bnn_sgld_T_0.01
+  cifar10_dirichlet_bnn_gamma_c1_r0.1:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 1.0, rate: 0.1}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_c1_r0.1
 
-  # cifar10_dirichlet_bnn_lr_0.0001:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - training.sampler.params.lr=0.0001
-  #     - training.wandb.name=cifar10_dirichlet_bnn_sgld_lr_0.0001
+  # ── Dirichlet BNN: gamma prior sweep ─────────────────────────────────────
+  # Mode ~10 (diffuse — high aleatoric assumption)
+  cifar10_dirichlet_bnn_gamma_m10_c2_r0.1:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 2.0, rate: 0.1}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m10_c2_r0.1
 
-  # cifar10_dirichlet_bnn_sglrw:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - training.sampler.name=sglrw
-  #     - training.wandb.name=cifar10_dirichlet_bnn_sglrw
+  cifar10_dirichlet_bnn_gamma_m10_c6_r0.5:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 6.0, rate: 0.5}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m10_c6_r0.5
 
-  # # ── CIFAR-10 Stage 2: Dirichlet BNN (gamma prior_fs) ─────────────────────
-  # cifar10_dirichlet_bnn_gamma_c1_r0.1:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 1.0, rate: 0.1}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c1_r0.1
+  cifar10_dirichlet_bnn_gamma_m10_c21_r2:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 21.0, rate: 2.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m10_c21_r2
 
-  # cifar10_dirichlet_bnn_gamma_c1_r0.1_T0.01:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 1.0, rate: 0.1}}"
-  #     - training.sampler.params.temperature=0.01
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c1_r0.1_T0.01
+  cifar10_dirichlet_bnn_gamma_m10_c101_r10:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 101.0, rate: 10.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m10_c101_r10
 
-  # cifar10_dirichlet_bnn_gamma_c2_r0.1:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 2.0, rate: 0.1}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c2_r0.1
+  # Mode ~96 (matched to pretrained strength)
+  cifar10_dirichlet_bnn_gamma_m96_c11_r0.1:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 11.0, rate: 0.1}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m96_c11_r0.1
 
-  # cifar10_dirichlet_bnn_gamma_c400_r2:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 400.0, rate: 2.0}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c400_r2
+  cifar10_dirichlet_bnn_gamma_m96_c49_r0.5:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 49.0, rate: 0.5}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m96_c49_r0.5
 
-  # cifar10_dirichlet_bnn_gamma_c400_r2_lr_0.0001:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 400.0, rate: 2.0}}"
-  #     - training.sampler.params.lr=0.0001
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c400_r2_lr_0.0001
+  cifar10_dirichlet_bnn_gamma_m96_c193_r2:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 193.0, rate: 2.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m96_c193_r2
 
-  # cifar10_dirichlet_bnn_gamma_c400_r2_annealing:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 400.0, rate: 2.0, annealing_epochs: 80}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c400_r2_annealing
+  cifar10_dirichlet_bnn_gamma_m96_c961_r10:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 961.0, rate: 10.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m96_c961_r10
 
-  # cifar10_dirichlet_bnn_gamma_c5_r0.033:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 5.0, rate: 0.033}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c5_r0.033
+  # Mode ~400 (overconfident — low aleatoric assumption)
+  cifar10_dirichlet_bnn_gamma_m400_c41_r0.1:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 41.0, rate: 0.1}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m400_c41_r0.1
 
-  # cifar10_dirichlet_bnn_gamma_c5_r0.033_lr_0.0001:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 5.0, rate: 0.033}}"
-  #     - training.sampler.params.lr=0.0001
-  #     - training.wandb.name=cifar10_dirichlet_bnn_gamma_c5_r0.033_lr_0.0001
+  cifar10_dirichlet_bnn_gamma_m400_c201_r0.5:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 201.0, rate: 0.5}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m400_c201_r0.5
 
-  # cifar10_dirichlet_bnn_sglrw_gamma_c400_r2_lr_0.0001:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - training.sampler.name=sglrw
-  #     - training.sampler.params.lr=0.0001
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 400.0, rate: 2.0}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_sglrw_gamma_c400_r2_lr_0.0001
+  cifar10_dirichlet_bnn_gamma_m400_c801_r2:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 801.0, rate: 2.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m400_c801_r2
 
-  # cifar10_dirichlet_bnn_sglrw_gamma_c5_r0.033:
-  #   config: cifar10_resnet20_dirichlet_bnn
-  #   pretrained_from: edl_cifar10_log
-  #   overrides:
-  #     - training.sampler.name=sglrw
-  #     - "training.prior_fs={name: gamma_strength, params: {concentration: 5.0, rate: 0.033}}"
-  #     - training.wandb.name=cifar10_dirichlet_bnn_sglrw_gamma_c5_r0.033
+  cifar10_dirichlet_bnn_gamma_m400_c4001_r10:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 4001.0, rate: 10.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m400_c4001_r10
 
   # # ── Fashion-MNIST Stage 2 ─────────────────────────────────────────────────
   # fashion_mnist_bnn:
