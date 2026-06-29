@@ -52,12 +52,12 @@ experiments:
       - training.sampler.params.temperature=1.0
       - training.wandb.name=cifar10_bnn_sgld_T_1
 
-  cifar10_bnn_T_1_4096_batch:
-    config: cifar10_resnet20_categorical_bnn_sgld_4096_batch
+  cifar10_bnn_T_1_3072_batch:
+    config: cifar10_resnet20_categorical_bnn_sgld_3072_batch
     pretrained_from: cifar10_resnet20
     overrides:
       - training.sampler.params.temperature=1.0
-      - training.wandb.name=cifar10_bnn_sgld_T_1_4096_batch
+      - training.wandb.name=cifar10_bnn_sgld_T_1_3072_batch
 
   cifar10_bnn_T_0.1:
     config: cifar10_resnet20_categorical_bnn_sgld

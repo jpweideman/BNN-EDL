@@ -9,7 +9,7 @@ seed: 1
 
 datasets:
   cifar10_train:
-    batch_size: 4096
+    batch_size: 3072
   
 training:
   dataset: cifar10_train
