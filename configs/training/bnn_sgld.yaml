@@ -25,8 +25,8 @@ sampler:
 
 sampling:
   enabled: true
-  start_epoch: 20
-  sample_interval: 10
+  start_epoch: 60
+  sample_interval: 5
 
 checkpoint:
   enabled: true

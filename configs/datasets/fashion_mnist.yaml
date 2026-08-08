@@ -18,6 +18,47 @@ fashion_mnist_train:
         mean: [0.2860]
         std: [0.3530]
 
+fashion_mnist_train_split:
+  name: fashion_mnist
+  source: train
+  split:
+    role: train
+    val_fraction: 0.1
+    seed: 0
+  shuffle: true
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: random_crop
+      params:
+        size: 28
+        padding: 4
+    - name: random_horizontal_flip
+      params:
+        p: 0.5
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.2860]
+        std: [0.3530]
+
+fashion_mnist_val:
+  name: fashion_mnist
+  source: train
+  split:
+    role: val
+    val_fraction: 0.1
+    seed: 0
+  shuffle: false
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.2860]
+        std: [0.3530]
+
 fashion_mnist_test:
   name: fashion_mnist
   source: test

@@ -312,6 +312,158 @@ experiments:
       - "training.prior_fs={name: gamma_strength, params: {concentration: 4001.0, rate: 10.0}}"
       - training.wandb.name=cifar10_dirichlet_bnn_gamma_m400_c4001_r10
 
+  # Mode ~130 (moderately overconfident)
+  cifar10_dirichlet_bnn_gamma_m130_c14_r0.1:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 14.0, rate: 0.1}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c14_r0.1
+
+  cifar10_dirichlet_bnn_gamma_m130_c66_r0.5:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 66.0, rate: 0.5}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c66_r0.5
+
+  cifar10_dirichlet_bnn_gamma_m130_c261_r2:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 261.0, rate: 2.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c261_r2
+
+  cifar10_dirichlet_bnn_gamma_m130_c1301_r10:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 1301.0, rate: 10.0}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c1301_r10
+
+  # Mode ~130 with annealing — prior weight ramps 0→1 over first N epochs,
+  # letting SGLD first improve the likelihood before the prior tightens.
+
+  cifar10_dirichlet_bnn_gamma_m130_c261_r2_anneal50:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 261.0, rate: 2.0, annealing_epochs: 50}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c261_r2_anneal50
+
+  cifar10_dirichlet_bnn_gamma_m130_c261_r2_anneal100:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 261.0, rate: 2.0, annealing_epochs: 100}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c261_r2_anneal100
+
+  cifar10_dirichlet_bnn_gamma_m130_c1301_r10_anneal200:
+    config: cifar10_resnet20_dirichlet_bnn
+    pretrained_from: edl_cifar10_log
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 1301.0, rate: 10.0, annealing_epochs: 200}}"
+      - training.wandb.name=cifar10_dirichlet_bnn_gamma_m130_c1301_r10_anneal200
+
+
+  # ── Fashion-MNIST: EDL log loss with val split ───────────────────────────
+  fashion_mnist_edl_log_val_split:
+    config: fashion_mnist_edl_val_split
+    overrides:
+      - training.wandb.name=fashion_mnist_edl_log_val_split
+
+  # ── Fashion-MNIST: Dirichlet BNN pretrained from EDL val-split ───────────
+  # Gamma prior: mode=52, variance=100 → concentration=29.0, rate=0.539
+  fashion_mnist_dirichlet_bnn_gamma_m52_v100:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: fashion_mnist_edl_log_val_split
+    overrides:
+      - training.dataset=fashion_mnist_train_split
+      - training.checkpoint.dataset=fashion_mnist_val
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 29.0, rate: 0.539}}"
+      - training.wandb.name=fashion_mnist_dirichlet_bnn_gamma_m52_v100
+
+  # ── Fashion-MNIST: BNN pretrained from SGD, temperature sweep ─────────────
+  fashion_mnist_bnn_pretrained_T_1:
+    config: fashion_mnist_categorical_bnn_sgld
+    pretrained_from: fashion_mnist_sgd
+    overrides:
+      - training.wandb.name=fashion_mnist_bnn_pretrained_T_1
+
+  fashion_mnist_bnn_pretrained_T_0.1:
+    config: fashion_mnist_categorical_bnn_sgld
+    pretrained_from: fashion_mnist_sgd
+    overrides:
+      - training.sampler.params.temperature=0.1
+      - training.wandb.name=fashion_mnist_bnn_pretrained_T_0.1
+
+  fashion_mnist_bnn_pretrained_T_0.01:
+    config: fashion_mnist_categorical_bnn_sgld
+    pretrained_from: fashion_mnist_sgd
+    overrides:
+      - training.sampler.params.temperature=0.01
+      - training.wandb.name=fashion_mnist_bnn_pretrained_T_0.01
+
+  fashion_mnist_bnn_pretrained_T_0.001:
+    config: fashion_mnist_categorical_bnn_sgld
+    pretrained_from: fashion_mnist_sgd
+    overrides:
+      - training.sampler.params.temperature=0.001
+      - training.wandb.name=fashion_mnist_bnn_pretrained_T_0.001
+
+  # ── Fashion-MNIST: BNN (no pretrain, temperature sweep) ──────────────────
+  fashion_mnist_bnn_T_1:
+    config: fashion_mnist_categorical_bnn_sgld
+    overrides:
+      - training.sampler.params.temperature=1.0
+      - training.wandb.name=fashion_mnist_bnn_T_1
+
+  fashion_mnist_bnn_T_0.1:
+    config: fashion_mnist_categorical_bnn_sgld
+    overrides:
+      - training.sampler.params.temperature=0.1
+      - training.wandb.name=fashion_mnist_bnn_T_0.1
+
+  fashion_mnist_bnn_T_0.01:
+    config: fashion_mnist_categorical_bnn_sgld
+    overrides:
+      - training.sampler.params.temperature=0.01
+      - training.wandb.name=fashion_mnist_bnn_T_0.01
+
+  fashion_mnist_bnn_T_0.001:
+    config: fashion_mnist_categorical_bnn_sgld
+    overrides:
+      - training.sampler.params.temperature=0.001
+      - training.wandb.name=fashion_mnist_bnn_T_0.001
+
+  # ── Fashion-MNIST: Dirichlet BNN (no pretrain, gamma prior_fs, fixed var=100) ─
+  # mode = (α-1)/β, variance = α/β² = 100 for all entries
+  fashion_mnist_dirichlet_bnn_gamma_m10_v100:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 2.62, rate: 0.162}}"
+      - training.wandb.name=fashion_mnist_dirichlet_bnn_gamma_m10_v100
+
+  fashion_mnist_dirichlet_bnn_gamma_m50_v100:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 27.0, rate: 0.52}}"
+      - training.wandb.name=fashion_mnist_dirichlet_bnn_gamma_m50_v100
+
+  fashion_mnist_dirichlet_bnn_gamma_m100_v100:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 102.0, rate: 1.01}}"
+      - training.wandb.name=fashion_mnist_dirichlet_bnn_gamma_m100_v100
+
+  fashion_mnist_dirichlet_bnn_gamma_m500_v100:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - "training.prior_fs={name: gamma_strength, params: {concentration: 2502.0, rate: 5.0}}"
+      - training.wandb.name=fashion_mnist_dirichlet_bnn_gamma_m500_v100
+
+
+
   # # ── Fashion-MNIST Stage 2 ─────────────────────────────────────────────────
   # fashion_mnist_bnn:
   #   config: fashion_mnist_categorical_bnn_sgld
