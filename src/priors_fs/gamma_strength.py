@@ -1,5 +1,6 @@
 """Gamma function-space prior on Dirichlet strength (total concentration)."""
 
+import warnings
 import torch
 from torch.distributions import Gamma
 from src.registry import PRIORS_FS_REGISTRY
@@ -12,14 +13,32 @@ class GammaStrengthPrior:
     Args:
         concentration:    Shape parameter (> 1). Prior mode at (a-1)/rate.
         rate:             Rate parameter (> 0).
+        num_classes:      Number of output classes; used to validate that the prior mode > num_classes.
         annealing_epochs: Linearly anneal weight from 0 to 1 over this many epochs.
     """
 
-    def __init__(self, concentration: float, rate: float, annealing_epochs: int = 0):
+    def __init__(self, concentration: float, rate: float, num_classes: int, annealing_epochs: int = 0):
         self.concentration = concentration
         self.rate = rate
+        self.num_classes = num_classes
         self.annealing_epochs = annealing_epochs
         self.current_epoch = 0
+
+        if concentration <= 1:
+            warnings.warn(
+                f"GammaStrengthPrior: concentration={concentration} <= 1, so the Gamma has no "
+                f"interior mode (mode=0). The prior cannot pin alpha_0 > {num_classes}.",
+                stacklevel=2,
+            )
+        else:
+            mode = (concentration - 1) / rate
+            if mode <= num_classes:
+                warnings.warn(
+                    f"GammaStrengthPrior: prior mode = (concentration-1)/rate = "
+                    f"({concentration}-1)/{rate} = {mode:.4g} <= num_classes={num_classes}. "
+                    f"The Dirichlet requires alpha_0 > {num_classes} for a valid interior mode.",
+                    stacklevel=2,
+                )
 
     @property
     def weight(self) -> float:
