@@ -1,0 +1,21 @@
+# CIFAR-10 EDL: Dirichlet head trained with the log loss.
+defaults:
+  - datasets: cifar10
+  - model: resnet20_dirichlet
+  - training: edl
+  - evaluation: edl_cifar10
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10_train_split
+  checkpoint:
+    dataset: cifar10_val
+  num_epochs: 300
+  loss:
+    params:
+      annealing_step: 300
+  scheduler:
+    params:
+      T_max: 300

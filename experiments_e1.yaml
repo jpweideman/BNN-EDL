@@ -1,0 +1,153 @@
+# Experiment set 1 — cold starts, warm starts, and the stated level.
+# See EXPERIMENT_1_PLAN.md for design, decision rules, and prerequisites.
+#
+# Run by passing this file to the runner:
+#   python run_experiments.py --file_name experiments_e1.yaml --runs 3
+#
+# The runner loops seeds (--runs 3 -> s0, s1, s2) and resolves pretrained_from
+# per seed, so each entry below appears once. The duplicate-anchor entry warm
+# starts from the NEXT seed, so the runner defers it to a second pass over the
+# seeds; no separate invocation is needed.
+#
+# Entries carry only what makes them differ from their config's defaults. The
+# prior level is the one swept axis, so it is always stated: at firmness
+# sd = 20% of the mode, concentration = 27 and rate = 26 / level, giving
+# rate 1.73333 / 0.86667 / 0.26 / 0.086667 for levels 15 / 30 / 100 / 300.
+# Scratch arms restate the epoch budget, to match the warm arms' total.
+
+wandb_project: ebnn-thesis
+seed: 0
+
+experiments:
+
+  # ── Pretrains, doubling as the deterministic baselines ────────────────
+  # SGD softmax net: the non-Bayesian reference and the BNN's warm start.
+  e1_fm_pretrain_sgd:
+    config: fashion_mnist_sgd
+
+  # EDL (log loss, standard Sensoy ramp): the deterministic Dirichlet
+  # baseline and the eBNN's warm start.
+  e1_fm_pretrain_edl:
+    config: fashion_mnist_edl
+
+  # ── Categorical BNN baseline (warm-started, T = 1) ────────────────────
+  e1_fm_bnn_T1:
+    config: fashion_mnist_categorical_bnn_sgld
+    pretrained_from: e1_fm_pretrain_sgd
+
+  # ── eBNN grid: level x start ──────────────────────────────────────────
+  # Level 15 (the deliberate low-level cell: ceiling 40%, ~5 votes per
+  # image; expect heavy clipping in the shift and soft predictions by
+  # construction — judge the starts against each other, not the level)
+  e1_fm_L15_scratch:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=1.73333
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
+  e1_fm_L15_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=1.73333
+  e1_fm_L15_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=1.73333
+      - training.pretrained.match_prior_mode=true
+
+  # Level 30
+  e1_fm_L30_scratch:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.86667
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
+  e1_fm_L30_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.86667
+  e1_fm_L30_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.86667
+      - training.pretrained.match_prior_mode=true
+
+  # Level 100 (the anchor cell, and the config's own default level)
+  e1_fm_L100_scratch:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
+  e1_fm_L100_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.26
+  e1_fm_L100_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.pretrained.match_prior_mode=true
+
+  # Level 300
+  e1_fm_L300_scratch:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.086667
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
+  e1_fm_L300_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.086667
+  e1_fm_L300_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.086667
+      - training.pretrained.match_prior_mode=true
+
+  # ── Duplicate anchor runs (deferred to the runner's second pass) ──────
+  # Same configuration as e1_fm_L100_shift per seed, but started from the
+  # NEXT seed's EDL checkpoint (cyclic: s0<-ckpt1, s1<-ckpt2, s2<-ckpt0).
+  # Three same-config pairs with independent checkpoints: run-to-run
+  # agreement and pooled vs single-run epistemic term, with mean and range
+  # instead of one point.
+  e1_fm_L100_shift_chainB:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    pretrained_from_next_seed: true
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.pretrained.match_prior_mode=true
+
+  # ── CIFAR-10 slice (run after the Fashion results settle) ─────────────
+  # Total budget 600 epochs: pretrain 300 + SGLD 300 (warm), or 600 SGLD
+  # (scratch). The configs already hold the 300-epoch budget and the
+  # 10 snapshots at interval 20, so only the scratch arm restates them.
+  e1_c10_pretrain_sgd:
+    config: cifar10_sgd
+  e1_c10_pretrain_edl:
+    config: cifar10_edl
+  e1_c10_bnn_T1:
+    config: cifar10_categorical_bnn_sgld
+    pretrained_from: e1_c10_pretrain_sgd
+  e1_c10_L100_scratch:
+    config: cifar10_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.num_epochs=600
+      - training.sampling.start_epoch=420
+  e1_c10_L100_shift:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.pretrained.match_prior_mode=true

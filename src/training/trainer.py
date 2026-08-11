@@ -13,7 +13,8 @@ from src.training.handlers import (
     attach_last_checkpoint_handler,
     attach_early_stopping,
     attach_scheduler_handler,
-    attach_annealing_handler
+    attach_annealing_handler,
+    attach_array_dump_handler
 )
 
 
@@ -35,6 +36,7 @@ def create_trainer(model, optimizer, criterion, device, output_dir, evaluators,
         checkpoint_config: Optional checkpoint configuration
         wandb_config: Optional W&B configuration
         early_stopping_config: Optional early stopping configuration
+        prior_fs_fn: Optional function-space prior (for its annealing schedule)
 
     Returns:
         Configured training engine
@@ -66,6 +68,9 @@ def create_trainer(model, optimizer, criterion, device, output_dir, evaluators,
         attach_evaluator_handler(trainer, evaluator, eval_data['loader'], split_name, eval_data['interval'])
         if wandb_config is not None:
             attach_wandb_logger_to_evaluator(evaluator, trainer, split_name, optimizer)
+
+    # Attached after the evaluator handlers, so it sees the final evaluations
+    attach_array_dump_handler(trainer, evaluators, output_dir)
 
     # Epoch-level handlers
     if scheduler is not None:

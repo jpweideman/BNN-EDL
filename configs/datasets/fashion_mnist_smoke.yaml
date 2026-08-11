@@ -1,41 +1,18 @@
-fashion_mnist_train:
-  name: fashion_mnist
-  source: train
-  shuffle: true
-  batch_size: 1024
-  num_workers: 4
-  transforms:
-    - name: random_crop
-      params:
-        size: 28
-        padding: 4
-    - name: random_horizontal_flip
-      params:
-        p: 0.5
-    - name: to_tensor
-    - name: normalize
-      params:
-        mean: [0.2860]
-        std: [0.3530]
+# Tiny Fashion-MNIST group for smoke-testing the pipeline on CPU. Same entry
+# names as fashion_mnist.yaml, so the e1_* presets work unchanged, but every
+# split is cut to a few hundred images. Not for real experiments.
 
 fashion_mnist_train_split:
   name: fashion_mnist
   source: train
   split:
     role: train
-    val_fraction: 0.1
+    val_fraction: 0.99   # keep 1% (600 images)
     seed: 0
   shuffle: true
-  batch_size: 1024
-  num_workers: 4
+  batch_size: 128
+  num_workers: 2
   transforms:
-    - name: random_crop
-      params:
-        size: 28
-        padding: 4
-    - name: random_horizontal_flip
-      params:
-        p: 0.5
     - name: to_tensor
     - name: normalize
       params:
@@ -47,11 +24,11 @@ fashion_mnist_val:
   source: train
   split:
     role: val
-    val_fraction: 0.1
+    val_fraction: 0.01   # 600 images
     seed: 0
   shuffle: false
-  batch_size: 1024
-  num_workers: 4
+  batch_size: 128
+  num_workers: 2
   transforms:
     - name: to_tensor
     - name: normalize
@@ -59,17 +36,16 @@ fashion_mnist_val:
         mean: [0.2860]
         std: [0.3530]
 
-# The training images with eval transforms and no shuffle (alpha_0 diagnostic)
 fashion_mnist_train_diagnostic:
   name: fashion_mnist
   source: train
   split:
     role: train
-    val_fraction: 0.1
+    val_fraction: 0.99
     seed: 0
   shuffle: false
-  batch_size: 1024
-  num_workers: 4
+  batch_size: 128
+  num_workers: 2
   transforms:
     - name: to_tensor
     - name: normalize
@@ -80,9 +56,13 @@ fashion_mnist_train_diagnostic:
 fashion_mnist_test:
   name: fashion_mnist
   source: test
+  split:
+    role: train
+    val_fraction: 0.94   # keep 6% (600 images)
+    seed: 0
   shuffle: false
-  batch_size: 1024
-  num_workers: 4
+  batch_size: 128
+  num_workers: 2
   transforms:
     - name: to_tensor
     - name: normalize
@@ -93,9 +73,13 @@ fashion_mnist_test:
 mnist_ood:
   name: mnist
   source: test
+  split:
+    role: train
+    val_fraction: 0.94
+    seed: 0
   shuffle: false
-  batch_size: 1024
-  num_workers: 4
+  batch_size: 128
+  num_workers: 2
   transforms:
     - name: to_tensor
     - name: normalize
@@ -107,10 +91,10 @@ random_noise_ood:
   name: random_noise
   source: test
   shuffle: false
-  batch_size: 1024
+  batch_size: 128
   num_workers: 0
   params:
     shape: [1, 28, 28]
-    size: 10000
+    size: 512
     num_classes: 10
     seed: 0

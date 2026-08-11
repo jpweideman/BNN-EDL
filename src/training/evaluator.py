@@ -19,7 +19,7 @@ def create_evaluators(model, criterion, device, loaders, evaluation_config, opti
         optimizer: Optimizer (used to detect if BNN training)
 
     Returns:
-        Dict mapping split names to {evaluator, loader, interval}
+        Dict mapping split names to {evaluator, loader, interval, metrics}
     """
     is_bnn = isinstance(optimizer, BNNOptimizer)
     evaluators = {}
@@ -42,7 +42,8 @@ def create_evaluators(model, criterion, device, loaders, evaluation_config, opti
         evaluators[split_name] = {
             'evaluator': evaluator,
             'loader': loaders[split_name],
-            'interval': eval_config.interval
+            'interval': eval_config.interval,
+            'metrics': metrics
         }
 
     return evaluators

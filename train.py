@@ -11,6 +11,7 @@ from src.training.checkpoint import CheckpointSetup
 from src.training.evaluator import create_evaluators
 from src.training.trainer import create_trainer
 from src.utils.weights import load_pretrained_weights
+from src.utils.bias_shift import shift_output_bias_to_prior_mode
 from src.builders.model_builder import ModelBuilder
 from src.builders.loss_builder import LossBuilder
 from src.builders.likelihood_builder import LikelihoodBuilder
@@ -82,10 +83,19 @@ def main(cfg: DictConfig):
     # W&B
     checkpoint_setup.init_wandb(cfg.training.wandb, cfg)
 
-    # Pretrained weights
+    # Pretrained weights: a one-time edit to the weights, so it is skipped when
+    # resuming, where the restored checkpoint already holds it (and the shift).
     pretrained_config = cfg.training.pretrained if hasattr(cfg.training, 'pretrained') and cfg.training.pretrained.enabled else None
-    if pretrained_config is not None:
+    if pretrained_config is not None and start_epoch == 0:
         load_pretrained_weights(model, pretrained_config.path, device)
+        if pretrained_config.get('match_prior_mode', False):
+            if prior_fs_fn is None:
+                raise ValueError("match_prior_mode requires a configured training.prior_fs.")
+            diagnostics = shift_output_bias_to_prior_mode(
+                model, loaders[cfg.training.dataset], prior_fs_fn.mode, device
+            )
+            if wandb.run is not None:
+                wandb.run.summary.update(diagnostics)
 
     # Evaluators
     evaluators = create_evaluators(

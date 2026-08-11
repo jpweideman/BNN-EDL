@@ -1,0 +1,19 @@
+# CIFAR-10 categorical BNN: softmax head sampled with SGLD.
+defaults:
+  - datasets: cifar10
+  - model: resnet20
+  - training: bnn_sgld
+  - evaluation: bnn_cifar10
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10_train_split
+  checkpoint:
+    dataset: cifar10_val
+  num_epochs: 300
+  sampling:
+    # 10 snapshots, counted back from the final epoch: 120, 140, ..., 300
+    start_epoch: 120
+    sample_interval: 20

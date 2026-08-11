@@ -1,3 +1,4 @@
+# Fashion-MNIST categorical BNN: softmax head sampled with SGLD.
 defaults:
   - datasets: fashion_mnist
   - model: resnet20_grayscale
@@ -5,18 +6,14 @@ defaults:
   - evaluation: bnn_fashion_mnist
   - _self_
 
-seed: 1
+seed: 0
 
 training:
-  dataset: fashion_mnist_train
+  dataset: fashion_mnist_train_split
   checkpoint:
-    dataset: fashion_mnist_test
-  wandb:
-    summary_metrics:
-      fashion_mnist_test:
-        - name: accuracy
-          objective: maximize
-        - name: loss
-          objective: minimize
-
-
+    dataset: fashion_mnist_val
+  num_epochs: 100
+  sampling:
+    # 10 snapshots, counted back from the final epoch: 55, 60, ..., 100
+    start_epoch: 55
+    sample_interval: 5

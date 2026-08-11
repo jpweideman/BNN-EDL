@@ -4,6 +4,7 @@ device: auto
 pretrained:
   enabled: false
   path: null
+  match_prior_mode: false
 
 loss:
   name: edl_log

@@ -59,6 +59,24 @@ cifar10_val:
         mean: [0.4914, 0.4822, 0.4465]
         std: [0.2470, 0.2434, 0.2615]
 
+# The training images with eval transforms and no shuffle (alpha_0 diagnostic)
+cifar10_train_diagnostic:
+  name: cifar10
+  source: train
+  split:
+    role: train
+    val_fraction: 0.1
+    seed: 0
+  shuffle: false
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]
+
 cifar10_test:
   name: cifar10
   source: test

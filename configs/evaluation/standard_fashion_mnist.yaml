@@ -1,5 +1,12 @@
-fashion_mnist_test:
+# Deterministic softmax baseline. Val every epoch for checkpoint selection,
+# test and OOD final-only with the per-input array dump.
+fashion_mnist_val:
   interval: 1
+  metrics:
+    - name: accuracy
+    - name: nll
+fashion_mnist_test:
+  interval: -1
   metrics:
     - name: accuracy
     - name: nll
@@ -9,3 +16,18 @@ fashion_mnist_test:
         num_classes: 10
         num_bins: 15
         norm: l1
+    - name: array_dump
+      params:
+        output_type: softmax
+mnist_ood:
+  interval: -1
+  metrics:
+    - name: array_dump
+      params:
+        output_type: softmax
+random_noise_ood:
+  interval: -1
+  metrics:
+    - name: array_dump
+      params:
+        output_type: softmax

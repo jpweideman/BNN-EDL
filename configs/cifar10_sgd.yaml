@@ -1,0 +1,18 @@
+# CIFAR-10 softmax baseline: SGD with cosine annealing.
+defaults:
+  - datasets: cifar10
+  - model: resnet20
+  - training: standard
+  - evaluation: standard_cifar10
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10_train_split
+  checkpoint:
+    dataset: cifar10_val
+  num_epochs: 300
+  scheduler:
+    params:
+      T_max: 300

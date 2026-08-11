@@ -1,5 +1,12 @@
-fashion_mnist_test:
+# Deterministic Dirichlet (EDL) baseline. Val every epoch for checkpoint
+# selection, test and OOD final-only with the per-input array dump.
+fashion_mnist_val:
   interval: 1
+  metrics:
+    - name: accuracy
+    - name: dirichlet_nll
+fashion_mnist_test:
+  interval: -1
   metrics:
     - name: accuracy
     - name: vacuity
@@ -16,17 +23,22 @@ fashion_mnist_test:
     - name: analytical_dirichlet_total_uncertainty
     - name: analytical_dirichlet_aleatoric_uncertainty
     - name: analytical_dirichlet_distributional_uncertainty
+    - name: array_dump
+      params:
+        output_type: dirichlet
 mnist_ood:
-  interval: 1
+  interval: -1
   metrics:
     - name: vacuity
     - name: dirichlet_strength
-    - name: bma_dirichlet_mutual_information
-    - name: bma_dirichlet_predictive_entropy
+    - name: array_dump
+      params:
+        output_type: dirichlet
 random_noise_ood:
-  interval: 1
+  interval: -1
   metrics:
     - name: vacuity
     - name: dirichlet_strength
-    - name: bma_dirichlet_mutual_information
-    - name: bma_dirichlet_predictive_entropy
+    - name: array_dump
+      params:
+        output_type: dirichlet

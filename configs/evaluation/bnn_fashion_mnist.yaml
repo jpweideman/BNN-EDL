@@ -1,5 +1,14 @@
+# Categorical BNN. Val at the snapshot interval for the convergence curve,
+# test and OOD final-only over all snapshots.
+fashion_mnist_val:
+  interval: 5
+  metrics:
+    - name: accuracy
+    - name: nll
+    - name: bma_accuracy
+    - name: bma_nll
 fashion_mnist_test:
-  interval: 1
+  interval: -1
   metrics:
     - name: accuracy
     - name: bma_accuracy
@@ -21,15 +30,22 @@ fashion_mnist_test:
     - name: bma_expected_entropy
     - name: bma_mutual_information
     - name: bma_predictive_variance
+    - name: array_dump
+      params:
+        output_type: softmax
 mnist_ood:
-  interval: 1
+  interval: -1
   metrics:
     - name: bma_predictive_entropy
     - name: bma_mutual_information
-    - name: bma_nll
+    - name: array_dump
+      params:
+        output_type: softmax
 random_noise_ood:
-  interval: 1
+  interval: -1
   metrics:
     - name: bma_predictive_entropy
     - name: bma_mutual_information
-    - name: bma_nll
+    - name: array_dump
+      params:
+        output_type: softmax

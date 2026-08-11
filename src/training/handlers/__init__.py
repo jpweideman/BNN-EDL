@@ -13,6 +13,7 @@ from src.training.handlers.checkpoint import (
 from src.training.handlers.early_stopping import attach_early_stopping
 from src.training.handlers.scheduler import attach_scheduler_handler
 from src.training.handlers.annealing import attach_annealing_handler
+from src.training.handlers.array_dump import attach_array_dump_handler
 
 __all__ = [
     'attach_progress_bar_to_engine',
@@ -24,5 +25,6 @@ __all__ = [
     'attach_early_stopping',
     'attach_scheduler_handler',
     'attach_annealing_handler',
+    'attach_array_dump_handler',
 ]
 

@@ -30,15 +30,18 @@ class GammaStrengthPrior:
                 f"interior mode (mode=0). The prior cannot pin alpha_0 > {num_classes}.",
                 stacklevel=2,
             )
-        else:
-            mode = (concentration - 1) / rate
-            if mode <= num_classes:
-                warnings.warn(
-                    f"GammaStrengthPrior: prior mode = (concentration-1)/rate = "
-                    f"({concentration}-1)/{rate} = {mode:.4g} <= num_classes={num_classes}. "
-                    f"The Dirichlet requires alpha_0 > {num_classes} for a valid interior mode.",
-                    stacklevel=2,
-                )
+        elif self.mode <= num_classes:
+            warnings.warn(
+                f"GammaStrengthPrior: prior mode = (concentration-1)/rate = "
+                f"({concentration}-1)/{rate} = {self.mode:.4g} <= num_classes={num_classes}. "
+                f"The Dirichlet requires alpha_0 > {num_classes} for a valid interior mode.",
+                stacklevel=2,
+            )
+
+    @property
+    def mode(self) -> float:
+        """Prior mode of alpha_0 (0 when the Gamma has no interior mode)."""
+        return max(self.concentration - 1.0, 0.0) / self.rate
 
     @property
     def weight(self) -> float:

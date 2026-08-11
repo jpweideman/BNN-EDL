@@ -1,5 +1,23 @@
+# eBNN (Dirichlet head). Val at the snapshot interval for the convergence
+# curve, train_diagnostic for realised alpha_0, test and OOD final-only.
+fashion_mnist_val:
+  interval: 5
+  metrics:
+    - name: accuracy
+    - name: dirichlet_nll
+    - name: bma_dirichlet_accuracy
+    - name: bma_dirichlet_nll
+fashion_mnist_train_diagnostic:
+  interval: 10
+  metrics:
+    - name: dirichlet_strength
+    - name: bma_dirichlet_strength
+    - name: array_dump
+      params:
+        output_type: dirichlet
+        store_snapshots: false
 fashion_mnist_test:
-  interval: 1
+  interval: -1
   metrics:
     - name: accuracy
     - name: bma_dirichlet_accuracy
@@ -31,19 +49,28 @@ fashion_mnist_test:
     - name: analytical_dirichlet_total_uncertainty
     - name: analytical_dirichlet_aleatoric_uncertainty
     - name: analytical_dirichlet_distributional_uncertainty
+    - name: array_dump
+      params:
+        output_type: dirichlet
 mnist_ood:
-  interval: 1
+  interval: -1
   metrics:
     - name: vacuity
     - name: dirichlet_strength
     - name: bma_dirichlet_strength
     - name: bma_dirichlet_mutual_information
     - name: bma_dirichlet_predictive_entropy
+    - name: array_dump
+      params:
+        output_type: dirichlet
 random_noise_ood:
-  interval: 1
+  interval: -1
   metrics:
     - name: vacuity
     - name: dirichlet_strength
     - name: bma_dirichlet_strength
     - name: bma_dirichlet_mutual_information
     - name: bma_dirichlet_predictive_entropy
+    - name: array_dump
+      params:
+        output_type: dirichlet

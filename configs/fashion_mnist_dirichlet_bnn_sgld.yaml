@@ -1,3 +1,6 @@
+# Fashion-MNIST eBNN: Dirichlet head sampled with SGLD under a Gamma
+# function-space prior on the total concentration. The prior level is the
+# Gamma mode (concentration - 1) / rate; entries override rate to move it.
 defaults:
   - datasets: fashion_mnist
   - model: resnet20_grayscale_dirichlet
@@ -5,16 +8,20 @@ defaults:
   - evaluation: dirichlet_bnn_fashion_mnist
   - _self_
 
-seed: 1
+seed: 0
 
 training:
-  dataset: fashion_mnist_train
+  dataset: fashion_mnist_train_split
   checkpoint:
-    dataset: fashion_mnist_test
-  wandb:
-    summary_metrics:
-      fashion_mnist_test:
-        - name: accuracy
-          objective: maximize
-        - name: dirichlet_nll
-          objective: minimize   
+    dataset: fashion_mnist_val
+  num_epochs: 100
+  sampling:
+    # 10 snapshots, counted back from the final epoch: 55, 60, ..., 100
+    start_epoch: 55
+    sample_interval: 5
+  prior_fs:
+    name: gamma_strength
+    params:
+      concentration: 27   # prior sd = 20% of the level
+      rate: 0.26          # level 100
+      annealing_epochs: 0

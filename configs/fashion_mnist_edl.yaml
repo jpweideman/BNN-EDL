@@ -1,3 +1,4 @@
+# Fashion-MNIST EDL: Dirichlet head trained with the log loss.
 defaults:
   - datasets: fashion_mnist
   - model: resnet20_grayscale_dirichlet
@@ -5,18 +6,9 @@ defaults:
   - evaluation: edl_fashion_mnist
   - _self_
 
-seed: 1
+seed: 0
 
 training:
-  dataset: fashion_mnist_train
+  dataset: fashion_mnist_train_split
   checkpoint:
-    dataset: fashion_mnist_test
-  wandb:
-    summary_metrics:
-      fashion_mnist_test:
-        - name: accuracy
-          objective: maximize
-        - name: dirichlet_nll
-          objective: minimize
-
-
+    dataset: fashion_mnist_val

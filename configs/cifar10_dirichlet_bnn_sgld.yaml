@@ -1,0 +1,27 @@
+# CIFAR-10 eBNN: Dirichlet head sampled with SGLD under a Gamma function-space
+# prior on the total concentration. The prior level is the Gamma mode
+# (concentration - 1) / rate; entries override rate to move it.
+defaults:
+  - datasets: cifar10
+  - model: resnet20_dirichlet
+  - training: dirichlet_bnn_sgld
+  - evaluation: dirichlet_bnn_cifar10
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10_train_split
+  checkpoint:
+    dataset: cifar10_val
+  num_epochs: 300
+  sampling:
+    # 10 snapshots, counted back from the final epoch: 120, 140, ..., 300
+    start_epoch: 120
+    sample_interval: 20
+  prior_fs:
+    name: gamma_strength
+    params:
+      concentration: 27   # prior sd = 20% of the level
+      rate: 0.26          # level 100
+      annealing_epochs: 0
