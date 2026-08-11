@@ -30,10 +30,17 @@ experiments:
   e1_fm_pretrain_edl:
     config: fashion_mnist_edl
 
-  # ── Categorical BNN baseline (warm-started, T = 1) ────────────────────
-  e1_fm_bnn_T1:
+  # ── Categorical BNN baseline (T = 1), both starts ─────────────────────
+  # The scratch arm spends the whole 150-epoch budget on SGLD, exactly as the
+  # eBNN scratch arms do, so cold starts are comparable across model classes.
+  e1_fm_bnn_T1_warm:
     config: fashion_mnist_categorical_bnn_sgld
     pretrained_from: e1_fm_pretrain_sgd
+  e1_fm_bnn_T1_scratch:
+    config: fashion_mnist_categorical_bnn_sgld
+    overrides:
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
 
   # ── eBNN grid: level x start ──────────────────────────────────────────
   # Level 15 (the deliberate low-level cell: ceiling 40%, ~5 votes per
@@ -136,9 +143,14 @@ experiments:
     config: cifar10_sgd
   e1_c10_pretrain_edl:
     config: cifar10_edl
-  e1_c10_bnn_T1:
+  e1_c10_bnn_T1_warm:
     config: cifar10_categorical_bnn_sgld
     pretrained_from: e1_c10_pretrain_sgd
+  e1_c10_bnn_T1_scratch:
+    config: cifar10_categorical_bnn_sgld
+    overrides:
+      - training.num_epochs=600
+      - training.sampling.start_epoch=420
   e1_c10_L100_scratch:
     config: cifar10_dirichlet_bnn_sgld
     overrides:
