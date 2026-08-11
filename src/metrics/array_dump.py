@@ -33,7 +33,7 @@ class ArrayDump(BaseMetric):
 
     def __init__(self, output_type="dirichlet", store_snapshots=True):
         if output_type not in ("dirichlet", "softmax"):
-            raise ValueError(f"output_type must be 'dirichlet' or 'softmax', got {output_type}")
+            raise ValueError(f"output_type must be 'dirichlet' or 'softmax', got '{output_type}'")
         self.output_type = output_type
         self.store_snapshots = store_snapshots
         super().__init__()

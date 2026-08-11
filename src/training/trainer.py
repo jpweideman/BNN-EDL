@@ -11,6 +11,7 @@ from src.training.handlers import (
     attach_wandb_logger_to_evaluator,
     attach_checkpoint_handler_to_evaluator,
     attach_last_checkpoint_handler,
+    attach_best_checkpoint_restore,
     attach_early_stopping,
     attach_scheduler_handler,
     attach_annealing_handler,
@@ -59,6 +60,10 @@ def create_trainer(model, optimizer, criterion, device, output_dir, evaluators,
     elif is_bnn:
         print("Warning: BNN training without sampling. No ensemble evaluation possible.")
     trainer.sampling_manager = sampling_manager
+
+    # Report the selected model, not the last epoch.
+    if checkpoint_config is not None and not is_bnn:
+        attach_best_checkpoint_restore(trainer, model, Path(output_dir) / "best_model.pt", device)
 
     # Evaluators
     for split_name, eval_data in evaluators.items():

@@ -8,7 +8,8 @@ from src.training.handlers.wandb_logger import (
 )
 from src.training.handlers.checkpoint import (
     attach_checkpoint_handler_to_evaluator,
-    attach_last_checkpoint_handler
+    attach_last_checkpoint_handler,
+    attach_best_checkpoint_restore
 )
 from src.training.handlers.early_stopping import attach_early_stopping
 from src.training.handlers.scheduler import attach_scheduler_handler
@@ -22,6 +23,7 @@ __all__ = [
     'attach_wandb_logger_to_evaluator',
     'attach_checkpoint_handler_to_evaluator',
     'attach_last_checkpoint_handler',
+    'attach_best_checkpoint_restore',
     'attach_early_stopping',
     'attach_scheduler_handler',
     'attach_annealing_handler',

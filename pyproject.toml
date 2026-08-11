@@ -18,6 +18,7 @@ posteriors = {git = "https://github.com/jpweideman/posteriors.git", branch = "fi
 torchmetrics = "^1.8.2"
 edl-pytorch = "^0.0.2"
 matplotlib = "<3.11"
+scipy = ">=1.14,<1.16"
 
 
 [tool.poetry.group.dev.dependencies]

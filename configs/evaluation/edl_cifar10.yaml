@@ -1,10 +1,23 @@
 # Deterministic Dirichlet (EDL) baseline, CIFAR-10. Val every epoch for
-# checkpoint selection, test final-only with the per-input array dump.
+# checkpoint selection, test and OOD final-only with the per-input array dump.
 cifar10_val:
   interval: 1
   metrics:
     - name: accuracy
+    - name: vacuity
+    - name: dirichlet_strength
     - name: dirichlet_nll
+    - name: dirichlet_digamma_nll
+    - name: dirichlet_brier_score
+    - name: dirichlet_expected_brier
+    - name: dirichlet_calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: analytical_dirichlet_total_uncertainty
+    - name: analytical_dirichlet_aleatoric_uncertainty
+    - name: analytical_dirichlet_distributional_uncertainty
 cifar10_test:
   interval: -1
   metrics:
@@ -23,6 +36,22 @@ cifar10_test:
     - name: analytical_dirichlet_total_uncertainty
     - name: analytical_dirichlet_aleatoric_uncertainty
     - name: analytical_dirichlet_distributional_uncertainty
+    - name: array_dump
+      params:
+        output_type: dirichlet
+svhn_ood:
+  interval: -1
+  metrics:
+    - name: vacuity
+    - name: dirichlet_strength
+    - name: array_dump
+      params:
+        output_type: dirichlet
+random_noise_ood:
+  interval: -1
+  metrics:
+    - name: vacuity
+    - name: dirichlet_strength
     - name: array_dump
       params:
         output_type: dirichlet

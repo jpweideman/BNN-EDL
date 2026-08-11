@@ -1,12 +1,28 @@
 # Categorical BNN, CIFAR-10. Val at the snapshot interval for the convergence
-# curve, test final-only over all snapshots.
+# curve, test and OOD final-only over all snapshots.
 cifar10_val:
   interval: 20
   metrics:
     - name: accuracy
-    - name: nll
     - name: bma_accuracy
     - name: bma_nll
+    - name: bma_brier_score
+    - name: nll
+    - name: brier_score
+    - name: calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: bma_calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: bma_predictive_entropy
+    - name: bma_expected_entropy
+    - name: bma_mutual_information
+    - name: bma_predictive_variance
 cifar10_test:
   interval: -1
   metrics:
@@ -30,6 +46,22 @@ cifar10_test:
     - name: bma_expected_entropy
     - name: bma_mutual_information
     - name: bma_predictive_variance
+    - name: array_dump
+      params:
+        output_type: softmax
+svhn_ood:
+  interval: -1
+  metrics:
+    - name: bma_predictive_entropy
+    - name: bma_mutual_information
+    - name: array_dump
+      params:
+        output_type: softmax
+random_noise_ood:
+  interval: -1
+  metrics:
+    - name: bma_predictive_entropy
+    - name: bma_mutual_information
     - name: array_dump
       params:
         output_type: softmax

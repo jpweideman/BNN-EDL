@@ -2,6 +2,7 @@
 
 import torch
 import wandb
+from pathlib import Path
 from ignite.engine import Events
 from src.utils.objective import get_comparison_fn
 
@@ -62,6 +63,33 @@ def attach_checkpoint_handler_to_evaluator(evaluator, model, trainer, optimizer,
                 }
             
             torch.save(checkpoint, filepath)
+
+
+def attach_best_checkpoint_restore(trainer, model, filepath, device):
+    """
+    Restore the best checkpoint's weights when training completes.
+
+    Attached before the evaluator handlers, so the final (interval=-1)
+    evaluations report the selected model instead of the last epoch. Only for
+    deterministic runs: sampled runs report the BMA over their snapshots.
+
+    Args:
+        trainer: Training engine
+        model: Model to restore the weights into
+        filepath: Path to the best checkpoint
+        device: Device to map the checkpoint to
+    """
+    @trainer.on(Events.COMPLETED)
+    def restore_best_checkpoint(engine):
+        if not Path(filepath).exists():
+            print(f"No checkpoint at {filepath}. Final evaluation uses the last epoch.")
+            return
+
+        checkpoint = torch.load(filepath, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        print(f"\nRestored best checkpoint for the final evaluation: epoch "
+              f"{checkpoint.get('epoch')}, {checkpoint.get('metric_name')}="
+              f"{checkpoint.get('best_metric')}")
 
 
 def attach_last_checkpoint_handler(trainer, model, optimizer, filepath, scheduler=None, sampling_manager=None, early_stopping_handler=None):
