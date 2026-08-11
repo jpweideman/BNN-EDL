@@ -1,4 +1,8 @@
-"""W&B logging handlers."""
+"""W&B logging handlers.
+
+Metric names are '<section>/<metric>': W&B groups its panels by the part
+before the slash, giving training and each evaluation split its own section.
+"""
 
 import wandb
 from ignite.engine import Events
@@ -7,7 +11,7 @@ from ignite.engine import Events
 def attach_wandb_logger_to_trainer(trainer, log_interval):
     """
     Attach W&B logging for training loss.
-    
+
     Args:
         trainer: Training engine
         log_interval: Log every N iterations
@@ -15,9 +19,9 @@ def attach_wandb_logger_to_trainer(trainer, log_interval):
     @trainer.on(Events.ITERATION_COMPLETED(every=log_interval))
     def log_train_metrics(engine):
         output = engine.state.output
-        
+
         wandb.log({
-            **{f'train_{k}': v for k, v in output.items()},
+            **{f'train/{k}': v for k, v in output.items()},
             'iteration': engine.state.iteration
         })
 
@@ -29,18 +33,18 @@ def attach_wandb_logger_to_evaluator(evaluator, trainer, prefix, optimizer):
     Args:
         evaluator: Evaluation engine
         trainer: Training engine (for epoch number)
-        prefix: Prefix for metric names (e.g., 'val', 'test')
+        prefix: Section for metric names, i.e. the split (e.g. 'cifar10_test')
         optimizer: Optimizer (for learning rate)
     """
     @evaluator.on(Events.COMPLETED)
     def log_eval_metrics(engine):
         # Get learning rate (handle both standard and BNN optimizers)
-        lr = (optimizer.param_groups[0]['lr'] if hasattr(optimizer, 'param_groups') 
+        lr = (optimizer.param_groups[0]['lr'] if hasattr(optimizer, 'param_groups')
               else optimizer.lr)
-        
+
         wandb.log({
-            **{f'{prefix}_{k}': v for k, v in engine.state.metrics.items()},
+            **{f'{prefix}/{k}': v for k, v in engine.state.metrics.items()},
             'epoch': trainer.state.epoch,
-            'learning_rate': lr
+            'train/learning_rate': lr
         })
 

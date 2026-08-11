@@ -91,7 +91,7 @@ class CheckpointSetup:
             for split, metrics in wandb_config.summary_metrics.items():
                 for metric_config in metrics:
                     wandb.define_metric(
-                        f"{split}_{metric_config.name}",
+                        f"{split}/{metric_config.name}",
                         summary=to_wandb_summary(metric_config.objective)
                     )
 
