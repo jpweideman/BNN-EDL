@@ -15,7 +15,8 @@ training:
   num_epochs: 300
   loss:
     params:
-      annealing_step: 300
+      # KL ramp over the first 80% of the budget
+      annealing_step: 240
   scheduler:
     params:
       T_max: 300
