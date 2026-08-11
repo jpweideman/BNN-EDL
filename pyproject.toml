@@ -17,6 +17,7 @@ tqdm = "^4.67.1"
 posteriors = {git = "https://github.com/jpweideman/posteriors.git", branch = "fix-sglrw-tree-params"}
 torchmetrics = "^1.8.2"
 edl-pytorch = "^0.0.2"
+matplotlib = "<3.11"
 
 
 [tool.poetry.group.dev.dependencies]
