@@ -98,3 +98,8 @@ random_noise_ood:
     size: 512
     num_classes: 10
     seed: 0
+  transforms:
+    - name: normalize
+      params:
+        mean: [0.2860]
+        std: [0.3530]

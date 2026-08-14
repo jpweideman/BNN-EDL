@@ -4,25 +4,23 @@ import math
 
 import torch
 import torch.nn.functional as F
+from edl_pytorch import Dirichlet
 
 
-def _final_linear(model):
-    """Return the model's last nn.Linear, whose pre-activations feed softplus."""
-    final = None
-    for module in model.modules():
-        if isinstance(module, torch.nn.Linear):
-            final = module
+def _dirichlet_head_dense(model):
+    """Return the dense layer of the model's one Dirichlet head.
 
-    if final is None:
-        raise ValueError("No nn.Linear layer found in model.")
-    if final.bias is None:
-        raise ValueError("Final Linear layer has no bias to shift.")
-    return final
+    The head computes alpha = softplus(dense(x)) + 1, so the dense layer's
+    bias is what the shift moves. The head is found by type. The
+    unpacking requires exactly one head.
+    """
+    [head] = [module for module in model.modules() if isinstance(module, Dirichlet)]
+    return head.dense
 
 
 def _probe_pre_activations(model, layer, loader, device, num_batches):
-    """Return the layer's pre-activations, checking the model turns them into alpha."""
-    cached, alphas = [], []
+    """Return the dense layer's pre-activations over a few training batches."""
+    cached = []
     hook = layer.register_forward_hook(lambda module, args, output: cached.append(output.detach()))
 
     model.eval()
@@ -30,18 +28,12 @@ def _probe_pre_activations(model, layer, loader, device, num_batches):
         for batch_idx, (x, _) in enumerate(loader):
             if batch_idx >= num_batches:
                 break
-            alphas.append(model(x.to(device)))
+            model(x.to(device))
     hook.remove()
 
-    z, alpha = torch.cat(cached), torch.cat(alphas)
+    z = torch.cat(cached)
     if not torch.isfinite(z).all():
         raise ValueError("Pre-activations are not finite; the pretrained checkpoint diverged.")
-    if z.shape != alpha.shape or not torch.allclose(alpha, F.softplus(z) + 1.0):
-        raise ValueError(
-            "Model output is not softplus(last nn.Linear) + 1, so shifting that bias would "
-            "not control alpha_0: the last Linear is not the Dirichlet head, or the head "
-            "applies a different activation."
-        )
     return z
 
 
@@ -73,10 +65,10 @@ def shift_output_bias_to_prior_mode(model, loader, prior_mode, device,
             below the alpha_c >= 1 floor), and 'prior_mode_target'
 
     Raises:
-        ValueError: If prior_mode <= num_classes, if the probed pre-activations
-            are not finite, or if the model's output is not softplus(z) + 1
+        ValueError: If the model does not have exactly one Dirichlet head, if
+            prior_mode <= num_classes, or if the pre-activations are not finite
     """
-    layer = _final_linear(model)
+    layer = _dirichlet_head_dense(model)
     num_classes = layer.out_features
     if prior_mode <= num_classes:
         raise ValueError(

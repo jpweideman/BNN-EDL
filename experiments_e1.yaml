@@ -163,3 +163,94 @@ experiments:
     overrides:
       - training.prior_fs.params.rate=0.26
       - training.pretrained.match_prior_mode=true
+
+  # ══════════════════════════════════════════════════════════════════════
+  # Second pass. Everything above sweeps the prior mode at a fixed prior sd
+  # of 20% of the mode, and never asks whether the prior is needed at all.
+  # The entries below close both gaps. All warm start from the pretrains
+  # above, so no checkpoint is retrained.
+  #
+  # Gamma(concentration k, rate b) has mode (k-1)/b and sd sqrt(k)/b. The
+  # entries above all use k = 27, which fixes sd at 20% of the mode. To move
+  # the sd at a fixed mode, both parameters change together.
+  # ══════════════════════════════════════════════════════════════════════
+
+  # ── Prior strength at the anchor mode, Fashion-MNIST ──────────────────
+  # One axis: how tightly the prior holds alpha_0, from none to very tight.
+  # The mode is 100 throughout, so e1_fm_L100_shift above is the 20% point
+  # and these four arms extend it to five.
+  #
+  # match_prior_mode reads its target from the prior, so the no-prior arm
+  # cannot shift and takes the plain warm start. The sd 1000 arm is the
+  # near-flat prior that keeps the shift available: k must exceed 1 for a
+  # mode to exist, and k = 1.1051 is close to that floor.
+  e1_fm_noprior_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs=null
+  e1_fm_L100_sd1000_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.concentration=1.1051
+      - training.prior_fs.params.rate=0.00105
+      - training.pretrained.match_prior_mode=true
+  e1_fm_L100_sd60_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.concentration=4.5584
+      - training.prior_fs.params.rate=0.03558
+      - training.pretrained.match_prior_mode=true
+  e1_fm_L100_sd5_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.concentration=401.9975
+      - training.prior_fs.params.rate=4.00998
+      - training.pretrained.match_prior_mode=true
+
+  # ── The missing CIFAR-10 cells ────────────────────────────────────────
+  # The plain warm arm completes the three-start comparison on the second
+  # dataset. Its checkpoint realises alpha_0 near 88 against a mode of 100,
+  # a 12% gap where Fashion-MNIST has 42%, so this is where the shift is
+  # least likely to be needed and the start rule is most likely to break.
+  e1_c10_L100_warm:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.26
+
+  # The no-prior control on the second dataset.
+  e1_c10_noprior_warm:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs=null
+
+  # A second prior mode, so the mode sweep stops being Fashion-MNIST only.
+  # Mode 300 is where Fashion-MNIST showed the largest effect.
+  e1_c10_L300_shift:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.086667
+      - training.pretrained.match_prior_mode=true
+
+  # ── Matched mode, Fashion-MNIST (optional) ────────────────────────────
+  # The prior mode is set to the value the EDL checkpoints already realise,
+  # so the prior asks the chain to stay where it starts. No shift: the whole
+  # point of this arm is to add the weight posterior and change nothing else,
+  # and any shift would move the mean vector, which is the one thing we are
+  # trying not to do. Plain warm also follows the start rule, which adds the
+  # shift only to drag alpha_0 a long way upward.
+  #
+  # The three checkpoints realise 56.8, 54.1 and 62.7, so a single mode of 58
+  # sits within 8% of all of them. That is inside the prior sd of 11.6, so
+  # the prior is not pulling against the checkpoint in any seed.
+  e1_fm_L58_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.4483

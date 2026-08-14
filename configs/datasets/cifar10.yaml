@@ -114,3 +114,10 @@ random_noise_ood:
     size: 10000
     num_classes: 10
     seed: 0
+  # Already tensors, so normalize only: the noise reaches the model on the
+  # same scale as the images, isolating the content from the input range.
+  transforms:
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]
