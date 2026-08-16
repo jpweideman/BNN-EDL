@@ -238,6 +238,65 @@ experiments:
       - training.prior_fs.params.rate=0.086667
       - training.pretrained.match_prior_mode=true
 
+  # ── CIFAR-10 prior width sweep, mode 100 ──────────────────────────────
+  # Section 4.2 of the experiments plan rests on Fashion-MNIST alone: the
+  # width decides whether the realised alpha_0 reaches the stated mode, and
+  # the mode and the width act on the decomposition through that one number.
+  # Both conclusions need the second dataset. Mode is 100 in every arm, so
+  # the concentration and rate pairs are the same as the Fashion-MNIST ones.
+  e1_c10_L100_sd1000_shift:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.concentration=1.1051
+      - training.prior_fs.params.rate=0.00105
+      - training.pretrained.match_prior_mode=true
+  e1_c10_L100_sd60_shift:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.concentration=4.5584
+      - training.prior_fs.params.rate=0.03558
+      - training.pretrained.match_prior_mode=true
+  e1_c10_L100_sd5_shift:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.concentration=401.9975
+      - training.prior_fs.params.rate=4.00998
+      - training.pretrained.match_prior_mode=true
+
+  # ── CIFAR-10 prior mode below the checkpoint ──────────────────────────
+  # Two jobs. The warm arm is the third point of the CIFAR-10 prior-mode
+  # sweep, which otherwise has only modes 100 and 300. The pair is the only
+  # CIFAR-10 test of the start rule's lower half, that warm beats the shift
+  # below the checkpoint's 88.0; a warm arm alone tests nothing about the
+  # start, because there is no shift arm for it to beat. Fashion-MNIST shows
+  # the effect at its own mode 30: warm 0.918 against shift 0.857.
+  # Concentration 27 with rate 26/mode is the sd 20% convention.
+  e1_c10_L30_warm:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.86667
+  e1_c10_L30_shift:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.86667
+      - training.pretrained.match_prior_mode=true
+
+  # ── CIFAR-10 mode 300 warm ────────────────────────────────────────────
+  # Section 1's discriminating case, shift beats warm far above the
+  # checkpoint, is Fashion-MNIST only. At CIFAR-10 mode 100 the checkpoint is
+  # already at 88, so warm and shift tie and the rule is untested there. This
+  # arm is the pair for the existing e1_c10_L300_shift.
+  e1_c10_L300_warm:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.086667
+
   # ── Matched mode, Fashion-MNIST (optional) ────────────────────────────
   # The prior mode is set to the value the EDL checkpoints already realise,
   # so the prior asks the chain to stay where it starts. No shift: the whole
