@@ -14,15 +14,12 @@ class GammaStrengthPrior:
         concentration:    Shape parameter (> 1). Prior mode at (a-1)/rate.
         rate:             Rate parameter (> 0).
         num_classes:      Number of output classes; used to validate that the prior mode > num_classes.
-        annealing_epochs: Linearly anneal weight from 0 to 1 over this many epochs.
     """
 
-    def __init__(self, concentration: float, rate: float, num_classes: int, annealing_epochs: int = 0):
+    def __init__(self, concentration: float, rate: float, num_classes: int):
         self.concentration = concentration
         self.rate = rate
         self.num_classes = num_classes
-        self.annealing_epochs = annealing_epochs
-        self.current_epoch = 0
 
         if concentration <= 1:
             warnings.warn(
@@ -43,10 +40,6 @@ class GammaStrengthPrior:
         """Prior mode of alpha_0 (0 when the Gamma has no interior mode)."""
         return max(self.concentration - 1.0, 0.0) / self.rate
 
-    @property
-    def weight(self) -> float:
-        return 1.0 if self.annealing_epochs == 0 else min(self.current_epoch / self.annealing_epochs, 1.0)
-
     def __call__(self, alpha: torch.Tensor) -> torch.Tensor:
         """Compute log prior.
 
@@ -54,11 +47,11 @@ class GammaStrengthPrior:
             alpha: Dirichlet parameters, shape [B, C]
 
         Returns:
-            Log prior (scalar tensor), weighted by annealing schedule.
+            Log prior (scalar tensor)
         """
         alpha_0 = alpha.sum(dim=-1)
         dist = Gamma(
             torch.tensor(self.concentration, device=alpha_0.device),
             torch.tensor(self.rate, device=alpha_0.device),
         )
-        return self.weight * dist.log_prob(alpha_0).mean()
+        return dist.log_prob(alpha_0).mean()

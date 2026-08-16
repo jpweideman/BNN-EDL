@@ -24,4 +24,3 @@ training:
     params:
       concentration: 27   # prior sd = 20% of the level
       rate: 0.26          # level 100
-      annealing_epochs: 0
