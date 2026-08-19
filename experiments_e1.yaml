@@ -313,3 +313,30 @@ experiments:
     pretrained_from: e1_fm_pretrain_edl
     overrides:
       - training.prior_fs.params.rate=0.4483
+
+  # ── No-regularizer EDL pretrain, and the anchor eBNN started from it ──
+  # The log loss alone is scale-invariant in alpha_0, so this pretrain pins
+  # only the mean vector. The checkpoint's alpha_0 level and shape are then
+  # a byproduct of the parametrization and weight decay, not of the data.
+  # Purpose: test whether the Gamma prior erases the pretrain's alpha_0
+  # footprint at the anchor (mode 100, sd 20%). Fair pairs, per seed:
+  # e1_fm_L100_warm_noreg vs e1_fm_L100_warm, and the shift arms likewise.
+  # annealing_step=999999 makes the pretrain loss exactly the likelihood
+  # term of the eBNN potential (dirichlet_bnn_sgld uses the same value).
+  # The parser in analysis/experiment_runs.py skips these names, so no
+  # existing table changes until the runs are integrated deliberately.
+  e1_fm_pretrain_edl_noreg:
+    config: fashion_mnist_edl
+    overrides:
+      - training.loss.params.annealing_step=999999
+  e1_fm_L100_warm_noreg:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl_noreg
+    overrides:
+      - training.prior_fs.params.rate=0.26
+  e1_fm_L100_shift_noreg:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl_noreg
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.pretrained.match_prior_mode=true
