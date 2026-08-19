@@ -340,3 +340,20 @@ experiments:
     overrides:
       - training.prior_fs.params.rate=0.26
       - training.pretrained.match_prior_mode=true
+
+  # ── CIFAR-10 pair of the no-regularizer pretrain ablation ─────────────
+  # Same purpose and pairing as the Fashion-MNIST arms above: measure what
+  # the aligned (regularizer-free) pretrain changes at the anchor. Only the
+  # selected start (shift) is run; on Fashion-MNIST warm and shift were
+  # identical under this pretrain because its checkpoint alpha_0 already
+  # sits at the mode. Pair: e1_c10_L100_shift_noreg vs e1_c10_L100_shift.
+  e1_c10_pretrain_edl_noreg:
+    config: cifar10_edl
+    overrides:
+      - training.loss.params.annealing_step=999999
+  e1_c10_L100_shift_noreg:
+    config: cifar10_dirichlet_bnn_sgld
+    pretrained_from: e1_c10_pretrain_edl_noreg
+    overrides:
+      - training.prior_fs.params.rate=0.26
+      - training.pretrained.match_prior_mode=true
