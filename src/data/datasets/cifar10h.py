@@ -1,5 +1,6 @@
 """CIFAR-10H dataset wrapper: CIFAR-10 test images paired with human count vectors."""
 
+import urllib.request
 from pathlib import Path
 import numpy as np
 import torch
@@ -45,6 +46,12 @@ class CIFAR10HCounts:
         self.images = datasets.CIFAR10(root=data_dir, train=False, download=True)
         self.targets = self.images.targets
         counts_path = Path(data_dir) / "cifar10h" / "cifar10h-counts.npy"
+        if not counts_path.exists():
+            url = ("https://raw.githubusercontent.com/jcpeterson/cifar-10h/"
+                   "master/data/cifar10h-counts.npy")
+            counts_path.parent.mkdir(parents=True, exist_ok=True)
+            print(f"downloading {url}")
+            urllib.request.urlretrieve(url, counts_path)
         self.counts = torch.as_tensor(np.load(counts_path), dtype=torch.float32)
 
     def __getitem__(self, idx):
