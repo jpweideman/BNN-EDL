@@ -16,10 +16,8 @@ Every component is registered by name in `src/registry.py` and selected from a H
 | Likelihoods | `categorical`, `dirichlet` |
 | Losses | `cross_entropy`, `edl_log`, `edl_digamma`, `edl_mse` |
 | Priors | `diagonal_normal` over the weights, `gamma_strength` over the Dirichlet total concentration |
-| Datasets | `fashion_mnist` (OOD: `mnist`, `random_noise`), `cifar10` (OOD: `svhn`, `random_noise`) |
+| Datasets | `fashion_mnist`, `cifar10` |
 | Transforms | `to_tensor`, `normalize`, `random_crop`, `random_horizontal_flip`, `flatten` |
-
-OOD sets are normalised with the in-distribution statistics, so the model sees them through the preprocessing it was trained on. SVHN needs `scipy`, which torchvision uses to read its `.mat` files.
 
 ### Metrics
 
@@ -39,7 +37,7 @@ Hydra composes each experiment config from four defaults groups:
 
 ```
 defaults:
-  - datasets: cifar10                 # configs/datasets/  — train/val/test/OOD loaders
+  - datasets: cifar10                 # configs/datasets/  — train/val/test loaders
   - model: resnet20                   # configs/model/     — architecture and output layer
   - training: standard                # configs/training/  — optimizer or sampler, loss, priors, W&B
   - evaluation: standard_cifar10      # configs/evaluation/— per-split intervals and metrics
@@ -48,7 +46,7 @@ defaults:
 
 Training defines either `optimizer` or `sampler`, not both. LR schedulers apply only to optimizer-based training and are ignored, with a warning, for samplers.
 
-There is one experiment config per dataset × method, each carrying the protocol as its defaults — train on the train split, checkpoint on val, evaluate test and OOD only at the end — so an experiments yaml overrides only what it changes:
+There is one experiment config per dataset × method, each carrying the protocol as its defaults — train on the train split, checkpoint on val, evaluate test only at the end — so an experiments yaml overrides only what it changes:
 
 | Method | Fashion-MNIST | CIFAR-10 |
 |---|---|---|
@@ -78,6 +76,8 @@ BNN-EDL/
 │   ├── builders/          # Config -> component, via the registry
 │   ├── utils/
 │   └── registry.py
+├── analysis/              # Scripts that produce every reported number
+├── results/               # Their outputs: csv files and LaTeX tables
 ├── tests/
 ├── experiments_*.yaml     # Experiment lists for run_experiments.py
 ├── train.py
@@ -184,3 +184,17 @@ python run_experiments.py --file_name experiments_e1.yaml --list
 ### Warm starts
 
 `training.pretrained` loads another run's checkpoint before training. For a Dirichlet head under a `gamma_strength` prior, `training.pretrained.match_prior_mode=true` also adds one constant to the output bias, so the pretrained model's median total concentration starts at the prior mode without changing which class it predicts.
+
+## Analysis
+
+Every number, table, and figure reported from these experiments comes from one named script under `analysis/`, reading the run directories in `outputs/` and writing to `results/`:
+
+```bash
+python -m analysis.measurements     # per-run decomposition.csv, terms tables, per-seed appendix tables
+python -m analysis.chapter_tables   # start-procedure, predictive, prior-mode and prior-sd sweep tables
+python -m analysis.seed_stability   # seed-stability tables
+python -m analysis.chain_pool       # two-chain pooling diagnostic (chain_pool.csv)
+python -m analysis.cifar10h         # cross-entropy against CIFAR-10H human label distributions
+```
+
+`analysis.cifar10h` downloads the CIFAR-10H counts (~0.8 MB) into `data/cifar10h/` on first use.

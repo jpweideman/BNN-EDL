@@ -69,37 +69,3 @@ fashion_mnist_test:
       params:
         mean: [0.2860]
         std: [0.3530]
-
-mnist_ood:
-  name: mnist
-  source: test
-  split:
-    role: train
-    val_fraction: 0.94
-    seed: 0
-  shuffle: false
-  batch_size: 128
-  num_workers: 2
-  transforms:
-    - name: to_tensor
-    - name: normalize
-      params:
-        mean: [0.2860]
-        std: [0.3530]
-
-random_noise_ood:
-  name: random_noise
-  source: test
-  shuffle: false
-  batch_size: 128
-  num_workers: 0
-  params:
-    shape: [1, 28, 28]
-    size: 512
-    num_classes: 10
-    seed: 0
-  transforms:
-    - name: normalize
-      params:
-        mean: [0.2860]
-        std: [0.3530]

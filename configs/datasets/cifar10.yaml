@@ -89,35 +89,3 @@ cifar10_test:
       params:
         mean: [0.4914, 0.4822, 0.4465]
         std: [0.2470, 0.2434, 0.2615]
-
-svhn_ood:
-  name: svhn
-  source: test
-  shuffle: false
-  batch_size: 1024
-  num_workers: 4
-  transforms:
-    - name: to_tensor
-    - name: normalize
-      params:
-        mean: [0.4914, 0.4822, 0.4465]
-        std: [0.2470, 0.2434, 0.2615]
-
-random_noise_ood:
-  name: random_noise
-  source: test
-  shuffle: false
-  batch_size: 1024
-  num_workers: 4
-  params:
-    shape: [3, 32, 32]
-    size: 10000
-    num_classes: 10
-    seed: 0
-  # Already tensors, so normalize only: the noise reaches the model on the
-  # same scale as the images, isolating the content from the input range.
-  transforms:
-    - name: normalize
-      params:
-        mean: [0.4914, 0.4822, 0.4465]
-        std: [0.2470, 0.2434, 0.2615]

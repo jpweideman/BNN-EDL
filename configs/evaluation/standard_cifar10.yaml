@@ -1,5 +1,5 @@
 # Deterministic softmax baseline, CIFAR-10. Val every epoch for checkpoint
-# selection, test and OOD final-only with the per-input array dump.
+# test final-only with the per-input array dump.
 cifar10_val:
   interval: 1
   metrics:
@@ -22,18 +22,6 @@ cifar10_test:
         num_classes: 10
         num_bins: 15
         norm: l1
-    - name: array_dump
-      params:
-        output_type: softmax
-svhn_ood:
-  interval: -1
-  metrics:
-    - name: array_dump
-      params:
-        output_type: softmax
-random_noise_ood:
-  interval: -1
-  metrics:
     - name: array_dump
       params:
         output_type: softmax

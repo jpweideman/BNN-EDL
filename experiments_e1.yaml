@@ -1,38 +1,24 @@
-# Experiment set 1 — cold starts, warm starts, and the stated level.
-# See EXPERIMENT_1_PLAN.md for design, decision rules, and prerequisites.
-#
-# Run by passing this file to the runner:
-#   python run_experiments.py --file_name experiments_e1.yaml --runs 3
-#
-# The runner loops seeds (--runs 3 -> s0, s1, s2) and resolves pretrained_from
-# per seed, so each entry below appears once. The duplicate-anchor entry warm
-# starts from the NEXT seed, so the runner defers it to a second pass over the
-# seeds; no separate invocation is needed.
-#
-# Entries carry only what makes them differ from their config's defaults. The
-# prior level is the one swept axis, so it is always stated: at firmness
-# sd = 20% of the mode, concentration = 27 and rate = 26 / level, giving
-# rate 1.73333 / 0.86667 / 0.26 / 0.086667 for levels 15 / 30 / 100 / 300.
-# Scratch arms restate the epoch budget, to match the warm arms' total.
+# All runs of the thesis experiments chapter.
+# Run: python run_experiments.py --file_name experiments_e1.yaml --runs 3
+# The runner loops seeds (s0, s1, s2) and resolves pretrained_from per seed.
+# Gamma prior defaults to sd = 20% of the mode: concentration 27,
+# rate = 26 / mode. The _sd arms override both parameters.
+# e1_fm_L100_shift_chainB starts from the next seed's checkpoint and is
+# the second chain of the pooling diagnostic.
 
 wandb_project: ebnn-thesis
 seed: 0
 
 experiments:
 
-  # ── Pretrains, doubling as the deterministic baselines ────────────────
-  # SGD softmax net: the non-Bayesian reference and the BNN's warm start.
+  # Fashion-MNIST: pretrains (also the deterministic baselines)
   e1_fm_pretrain_sgd:
     config: fashion_mnist_sgd
 
-  # EDL (log loss, standard Sensoy ramp): the deterministic Dirichlet
-  # baseline and the eBNN's warm start.
   e1_fm_pretrain_edl:
     config: fashion_mnist_edl
 
-  # ── Categorical BNN baseline (T = 1), both starts ─────────────────────
-  # The scratch arm spends the whole 150-epoch budget on SGLD, exactly as the
-  # eBNN scratch arms do, so cold starts are comparable across model classes.
+  # Fashion-MNIST: BNN
   e1_fm_bnn_T1_warm:
     config: fashion_mnist_categorical_bnn_sgld
     pretrained_from: e1_fm_pretrain_sgd
@@ -42,10 +28,7 @@ experiments:
       - training.num_epochs=150
       - training.sampling.start_epoch=105
 
-  # ── eBNN grid: level x start ──────────────────────────────────────────
-  # Level 15 (the deliberate low-level cell: ceiling 40%, ~5 votes per
-  # image; expect heavy clipping in the shift and soft predictions by
-  # construction — judge the starts against each other, not the level)
+  # Fashion-MNIST: eBNN prior-mode grid, three starts
   e1_fm_L15_scratch:
     config: fashion_mnist_dirichlet_bnn_sgld
     overrides:
@@ -64,7 +47,6 @@ experiments:
       - training.prior_fs.params.rate=1.73333
       - training.pretrained.match_prior_mode=true
 
-  # Level 30
   e1_fm_L30_scratch:
     config: fashion_mnist_dirichlet_bnn_sgld
     overrides:
@@ -83,7 +65,6 @@ experiments:
       - training.prior_fs.params.rate=0.86667
       - training.pretrained.match_prior_mode=true
 
-  # Level 100 (the anchor cell, and the config's own default level)
   e1_fm_L100_scratch:
     config: fashion_mnist_dirichlet_bnn_sgld
     overrides:
@@ -102,7 +83,6 @@ experiments:
       - training.prior_fs.params.rate=0.26
       - training.pretrained.match_prior_mode=true
 
-  # Level 300
   e1_fm_L300_scratch:
     config: fashion_mnist_dirichlet_bnn_sgld
     overrides:
@@ -121,12 +101,7 @@ experiments:
       - training.prior_fs.params.rate=0.086667
       - training.pretrained.match_prior_mode=true
 
-  # ── Duplicate anchor runs (deferred to the runner's second pass) ──────
-  # Same configuration as e1_fm_L100_shift per seed, but started from the
-  # NEXT seed's EDL checkpoint (cyclic: s0<-ckpt1, s1<-ckpt2, s2<-ckpt0).
-  # Three same-config pairs with independent checkpoints: run-to-run
-  # agreement and pooled vs single-run epistemic term, with mean and range
-  # instead of one point.
+  # Fashion-MNIST: second chain of the pooling diagnostic
   e1_fm_L100_shift_chainB:
     config: fashion_mnist_dirichlet_bnn_sgld
     pretrained_from: e1_fm_pretrain_edl
@@ -135,14 +110,13 @@ experiments:
       - training.prior_fs.params.rate=0.26
       - training.pretrained.match_prior_mode=true
 
-  # ── CIFAR-10 slice (run after the Fashion results settle) ─────────────
-  # Total budget 600 epochs: pretrain 300 + SGLD 300 (warm), or 600 SGLD
-  # (scratch). The configs already hold the 300-epoch budget and the
-  # 10 snapshots at interval 20, so only the scratch arm restates them.
+  # CIFAR-10: pretrains (also the deterministic baselines)
   e1_c10_pretrain_sgd:
     config: cifar10_sgd
   e1_c10_pretrain_edl:
     config: cifar10_edl
+
+  # CIFAR-10: BNN
   e1_c10_bnn_T1_warm:
     config: cifar10_categorical_bnn_sgld
     pretrained_from: e1_c10_pretrain_sgd
@@ -151,6 +125,8 @@ experiments:
     overrides:
       - training.num_epochs=600
       - training.sampling.start_epoch=420
+
+  # CIFAR-10: eBNN anchor
   e1_c10_L100_scratch:
     config: cifar10_dirichlet_bnn_sgld
     overrides:
@@ -164,31 +140,14 @@ experiments:
       - training.prior_fs.params.rate=0.26
       - training.pretrained.match_prior_mode=true
 
-  # ══════════════════════════════════════════════════════════════════════
-  # Second pass. Everything above sweeps the prior mode at a fixed prior sd
-  # of 20% of the mode, and never asks whether the prior is needed at all.
-  # The entries below close both gaps. All warm start from the pretrains
-  # above, so no checkpoint is retrained.
-  #
-  # Gamma(concentration k, rate b) has mode (k-1)/b and sd sqrt(k)/b. The
-  # entries above all use k = 27, which fixes sd at 20% of the mode. To move
-  # the sd at a fixed mode, both parameters change together.
-  # ══════════════════════════════════════════════════════════════════════
-
-  # ── Prior strength at the anchor mode, Fashion-MNIST ──────────────────
-  # One axis: how tightly the prior holds alpha_0, from none to very tight.
-  # The mode is 100 throughout, so e1_fm_L100_shift above is the 20% point
-  # and these four arms extend it to five.
-  #
-  # match_prior_mode reads its target from the prior, so the no-prior arm
-  # cannot shift and takes the plain warm start. The sd 1000 arm is the
-  # near-flat prior that keeps the shift available: k must exceed 1 for a
-  # mode to exist, and k = 1.1051 is close to that floor.
+  # No-prior reference arms
   e1_fm_noprior_warm:
     config: fashion_mnist_dirichlet_bnn_sgld
     pretrained_from: e1_fm_pretrain_edl
     overrides:
       - training.prior_fs=null
+
+  # Fashion-MNIST: prior-standard-deviation sweep at mode 100
   e1_fm_L100_sd1000_shift:
     config: fashion_mnist_dirichlet_bnn_sgld
     pretrained_from: e1_fm_pretrain_edl
@@ -211,26 +170,19 @@ experiments:
       - training.prior_fs.params.rate=4.00998
       - training.pretrained.match_prior_mode=true
 
-  # ── The missing CIFAR-10 cells ────────────────────────────────────────
-  # The plain warm arm completes the three-start comparison on the second
-  # dataset. Its checkpoint realises alpha_0 near 88 against a mode of 100,
-  # a 12% gap where Fashion-MNIST has 42%, so this is where the shift is
-  # least likely to be needed and the start rule is most likely to break.
+  # CIFAR-10: remaining eBNN arms (modes 30 and 300, sd sweep)
   e1_c10_L100_warm:
     config: cifar10_dirichlet_bnn_sgld
     pretrained_from: e1_c10_pretrain_edl
     overrides:
       - training.prior_fs.params.rate=0.26
 
-  # The no-prior control on the second dataset.
   e1_c10_noprior_warm:
     config: cifar10_dirichlet_bnn_sgld
     pretrained_from: e1_c10_pretrain_edl
     overrides:
       - training.prior_fs=null
 
-  # A second prior mode, so the mode sweep stops being Fashion-MNIST only.
-  # Mode 300 is where Fashion-MNIST showed the largest effect.
   e1_c10_L300_shift:
     config: cifar10_dirichlet_bnn_sgld
     pretrained_from: e1_c10_pretrain_edl
@@ -238,12 +190,6 @@ experiments:
       - training.prior_fs.params.rate=0.086667
       - training.pretrained.match_prior_mode=true
 
-  # ── CIFAR-10 prior width sweep, mode 100 ──────────────────────────────
-  # Section 4.2 of the experiments plan rests on Fashion-MNIST alone: the
-  # width decides whether the realised alpha_0 reaches the stated mode, and
-  # the mode and the width act on the decomposition through that one number.
-  # Both conclusions need the second dataset. Mode is 100 in every arm, so
-  # the concentration and rate pairs are the same as the Fashion-MNIST ones.
   e1_c10_L100_sd1000_shift:
     config: cifar10_dirichlet_bnn_sgld
     pretrained_from: e1_c10_pretrain_edl
@@ -266,14 +212,6 @@ experiments:
       - training.prior_fs.params.rate=4.00998
       - training.pretrained.match_prior_mode=true
 
-  # ── CIFAR-10 prior mode below the checkpoint ──────────────────────────
-  # Two jobs. The warm arm is the third point of the CIFAR-10 prior-mode
-  # sweep, which otherwise has only modes 100 and 300. The pair is the only
-  # CIFAR-10 test of the start rule's lower half, that warm beats the shift
-  # below the checkpoint's 88.0; a warm arm alone tests nothing about the
-  # start, because there is no shift arm for it to beat. Fashion-MNIST shows
-  # the effect at its own mode 30: warm 0.918 against shift 0.857.
-  # Concentration 27 with rate 26/mode is the sd 20% convention.
   e1_c10_L30_warm:
     config: cifar10_dirichlet_bnn_sgld
     pretrained_from: e1_c10_pretrain_edl
@@ -286,28 +224,13 @@ experiments:
       - training.prior_fs.params.rate=0.86667
       - training.pretrained.match_prior_mode=true
 
-  # ── CIFAR-10 mode 300 warm ────────────────────────────────────────────
-  # Section 1's discriminating case, shift beats warm far above the
-  # checkpoint, is Fashion-MNIST only. At CIFAR-10 mode 100 the checkpoint is
-  # already at 88, so warm and shift tie and the rule is untested there. This
-  # arm is the pair for the existing e1_c10_L300_shift.
   e1_c10_L300_warm:
     config: cifar10_dirichlet_bnn_sgld
     pretrained_from: e1_c10_pretrain_edl
     overrides:
       - training.prior_fs.params.rate=0.086667
 
-  # ── Matched mode, Fashion-MNIST (optional) ────────────────────────────
-  # The prior mode is set to the value the EDL checkpoints already realise,
-  # so the prior asks the chain to stay where it starts. No shift: the whole
-  # point of this arm is to add the weight posterior and change nothing else,
-  # and any shift would move the mean vector, which is the one thing we are
-  # trying not to do. Plain warm also follows the start rule, which adds the
-  # shift only to drag alpha_0 a long way upward.
-  #
-  # The three checkpoints realise 56.8, 54.1 and 62.7, so a single mode of 58
-  # sits within 8% of all of them. That is inside the prior sd of 11.6, so
-  # the prior is not pulling against the checkpoint in any seed.
+  # Fashion-MNIST: matched-mode arm (prior mode at the checkpoint level)
   e1_fm_L58_warm:
     config: fashion_mnist_dirichlet_bnn_sgld
     pretrained_from: e1_fm_pretrain_edl
