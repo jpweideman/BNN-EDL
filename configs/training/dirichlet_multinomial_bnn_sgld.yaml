@@ -1,0 +1,45 @@
+num_epochs: 600
+device: auto
+
+pretrained:
+  enabled: false
+  path: null
+
+loss:
+  name: dirichlet_multinomial_count_nll
+
+likelihood:
+  name: dirichlet_multinomial
+
+prior:
+  name: diagonal_normal
+  params:
+    sd: 1.0
+    normalize: false
+
+# The Dirichlet-multinomial likelihood informs alpha_0; no function-space prior.
+prior_fs: null
+
+sampler:
+  name: sgld
+  params:
+    lr: 0.0002
+    temperature: 1.0
+
+# 10 snapshots, counted back from the final epoch: 420, 440, ..., 600
+sampling:
+  enabled: true
+  start_epoch: 420
+  sample_interval: 20
+
+checkpoint:
+  enabled: false
+
+early_stopping:
+  enabled: false
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 20

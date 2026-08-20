@@ -1,0 +1,66 @@
+# CIFAR-10H: CIFAR-10 test images paired with human count vectors. All three
+# loaders share one stratified split (seed 0) of the full 10,000-image set:
+# 800 train / 100 val / 100 test images per original CIFAR-10 class.
+cifar10h_train:
+  name: cifar10h
+  source: all
+  split:
+    role: train
+    val_fraction: 0.1
+    test_fraction: 0.1
+    seed: 0
+    stratify: true
+  shuffle: true
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: random_crop
+      params:
+        size: 32
+        padding: 4
+    - name: random_horizontal_flip
+      params:
+        p: 0.5
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]
+
+cifar10h_val:
+  name: cifar10h
+  source: all
+  split:
+    role: val
+    val_fraction: 0.1
+    test_fraction: 0.1
+    seed: 0
+    stratify: true
+  shuffle: false
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]
+
+cifar10h_test:
+  name: cifar10h
+  source: all
+  split:
+    role: test
+    val_fraction: 0.1
+    test_fraction: 0.1
+    seed: 0
+    stratify: true
+  shuffle: false
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]

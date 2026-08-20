@@ -76,8 +76,6 @@ BNN-EDL/
 │   ├── builders/          # Config -> component, via the registry
 │   ├── utils/
 │   └── registry.py
-├── analysis/              # Scripts that produce every reported number
-├── results/               # Their outputs: csv files and LaTeX tables
 ├── tests/
 ├── experiments_*.yaml     # Experiment lists for run_experiments.py
 ├── train.py
@@ -184,17 +182,3 @@ python run_experiments.py --file_name experiments_e1.yaml --list
 ### Warm starts
 
 `training.pretrained` loads another run's checkpoint before training. For a Dirichlet head under a `gamma_strength` prior, `training.pretrained.match_prior_mode=true` also adds one constant to the output bias, so the pretrained model's median total concentration starts at the prior mode without changing which class it predicts.
-
-## Analysis
-
-Every number, table, and figure reported from these experiments comes from one named script under `analysis/`, reading the run directories in `outputs/` and writing to `results/`:
-
-```bash
-python -m analysis.measurements     # per-run decomposition.csv, terms tables, per-seed appendix tables
-python -m analysis.chapter_tables   # start-procedure, predictive, prior-mode and prior-sd sweep tables
-python -m analysis.seed_stability   # seed-stability tables
-python -m analysis.chain_pool       # two-chain pooling diagnostic (chain_pool.csv)
-python -m analysis.cifar10h         # cross-entropy against CIFAR-10H human label distributions
-```
-
-`analysis.cifar10h` downloads the CIFAR-10H counts (~0.8 MB) into `data/cifar10h/` on first use.

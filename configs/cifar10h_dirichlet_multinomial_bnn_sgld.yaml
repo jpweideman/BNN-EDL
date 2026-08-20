@@ -1,0 +1,13 @@
+# CIFAR-10H counts: eBNN with a Dirichlet-multinomial likelihood, sampled
+# with SGLD. No function-space prior; the likelihood informs alpha_0.
+defaults:
+  - datasets: cifar10h
+  - model: resnet20_dirichlet
+  - training: dirichlet_multinomial_bnn_sgld
+  - evaluation: dirichlet_multinomial_bnn_cifar10h
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10h_train

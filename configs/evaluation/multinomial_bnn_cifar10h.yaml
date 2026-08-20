@@ -1,0 +1,24 @@
+# Multinomial BNN, CIFAR-10H counts. Val at the snapshot interval; its array
+# dump lets the analysis rebuild the cumulative BMA curve offline. Test
+# final-only, with count-mode array dumping.
+cifar10h_val:
+  interval: 20
+  metrics:
+    - name: loss
+    - name: bma_multinomial_count_nll
+    - name: array_dump
+      params:
+        output_type: softmax
+        target_type: counts
+cifar10h_test:
+  interval: -1
+  metrics:
+    - name: bma_multinomial_count_nll
+    - name: bma_predictive_entropy
+    - name: bma_expected_entropy
+    - name: bma_mutual_information
+    - name: bma_predictive_variance
+    - name: array_dump
+      params:
+        output_type: softmax
+        target_type: counts

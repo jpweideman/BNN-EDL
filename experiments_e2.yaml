@@ -1,0 +1,9 @@
+# Run: python run_experiments.py --file_name experiments_e2.yaml --runs 3
+wandb_project: ebnn-thesis
+seed: 0
+
+experiments:
+  e2_c10h_bnn_mult_scratch:
+    config: cifar10h_multinomial_bnn_sgld
+  e2_c10h_ebnn_dm_scratch:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld

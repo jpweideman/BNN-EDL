@@ -1,0 +1,32 @@
+# Dirichlet-multinomial eBNN, CIFAR-10H counts. Val at the snapshot interval;
+# its array dump lets the analysis rebuild the cumulative BMA curve offline.
+# Test final-only, with count-mode array dumping.
+cifar10h_val:
+  interval: 20
+  metrics:
+    - name: loss
+    - name: bma_dirichlet_multinomial_count_nll
+    - name: bma_mean_matched_multinomial_count_nll
+    - name: array_dump
+      params:
+        output_type: dirichlet
+        target_type: counts
+cifar10h_test:
+  interval: -1
+  metrics:
+    - name: bma_dirichlet_multinomial_count_nll
+    - name: bma_mean_matched_multinomial_count_nll
+    - name: vacuity
+    - name: dirichlet_strength
+    - name: bma_dirichlet_strength
+    - name: bma_dirichlet_predictive_entropy
+    - name: bma_dirichlet_expected_entropy
+    - name: bma_dirichlet_mutual_information
+    - name: bma_dirichlet_predictive_variance
+    - name: analytical_dirichlet_total_uncertainty
+    - name: analytical_dirichlet_aleatoric_uncertainty
+    - name: analytical_dirichlet_distributional_uncertainty
+    - name: array_dump
+      params:
+        output_type: dirichlet
+        target_type: counts
