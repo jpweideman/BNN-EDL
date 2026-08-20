@@ -13,7 +13,7 @@ cifar10h_train:
     seed: 0
     stratify: true
   shuffle: true
-  batch_size: 1024
+  batch_size: 128
   num_workers: 4
   transforms:
     - name: random_crop

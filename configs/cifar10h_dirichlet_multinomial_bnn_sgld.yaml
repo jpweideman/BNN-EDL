@@ -15,8 +15,3 @@ seed: 0
 
 training:
   dataset: cifar10h_train
-  prior_fs:
-    name: gamma_strength
-    params:
-      concentration: 27   # prior sd = 20% of the level
-      rate: 0.52          # level 50

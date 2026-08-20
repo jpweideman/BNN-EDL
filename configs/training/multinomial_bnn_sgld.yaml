@@ -1,4 +1,4 @@
-num_epochs: 600
+num_epochs: 2400
 device: auto
 
 pretrained:
@@ -23,10 +23,10 @@ sampler:
     lr: 0.0002
     temperature: 1.0
 
-# 10 snapshots, counted back from the final epoch: 420, 440, ..., 600
+# 10 snapshots, counted back from the final epoch: 2220, 2240, ..., 2400
 sampling:
   enabled: true
-  start_epoch: 420
+  start_epoch: 2220
   sample_interval: 20
 
 checkpoint:
