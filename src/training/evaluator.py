@@ -30,7 +30,7 @@ def create_evaluators(model, criterion, device, loaders, evaluation_config, opti
 
         if is_bnn:
             from src.training.bnn_engine import create_bnn_eval_engine
-            evaluator = create_bnn_eval_engine(model, criterion, device)
+            evaluator = create_bnn_eval_engine(model, device)
         else:
             evaluator = create_eval_engine(model, criterion, device)
 

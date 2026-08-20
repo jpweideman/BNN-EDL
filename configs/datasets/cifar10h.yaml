@@ -1,6 +1,8 @@
-# CIFAR-10H: CIFAR-10 test images paired with human count vectors. All three
-# loaders share one stratified split (seed 0) of the full 10,000-image set:
-# 800 train / 100 val / 100 test images per original CIFAR-10 class.
+# CIFAR-10H: CIFAR-10 test images paired with human count vectors. The three
+# cifar10h loaders share one stratified split (seed 0) of the full
+# 10,000-image set: 800 train / 100 val / 100 test images per original
+# CIFAR-10 class. cifar10_train_holdout is the standard labeled CIFAR-10
+# training set, which the count experiment never trains on.
 cifar10h_train:
   name: cifar10h
   source: all
@@ -55,6 +57,19 @@ cifar10h_test:
     test_fraction: 0.1
     seed: 0
     stratify: true
+  shuffle: false
+  batch_size: 1024
+  num_workers: 4
+  transforms:
+    - name: to_tensor
+    - name: normalize
+      params:
+        mean: [0.4914, 0.4822, 0.4465]
+        std: [0.2470, 0.2434, 0.2615]
+
+cifar10_train_holdout:
+  name: cifar10
+  source: train
   shuffle: false
   batch_size: 1024
   num_workers: 4
