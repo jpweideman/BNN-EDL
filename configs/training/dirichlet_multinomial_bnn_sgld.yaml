@@ -24,11 +24,11 @@ prior_fs:
     rate: 0.52          # level 50
 
 
-# lr = 6.1 x the BNN's 2e-4: equal SGLD steps per measured likelihood gradient scale.
+# lr = 6.2 x the BNN's 1e-4: equal SGLD steps per measured likelihood gradient scale.
 sampler:
   name: sgld
   params:
-    lr: 0.0012
+    lr: 0.00062
     temperature: 1.0
 
 # 40 snapshots after the burn-in: 2220, 2240, ..., 3000

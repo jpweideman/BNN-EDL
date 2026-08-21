@@ -17,10 +17,11 @@ prior:
     sd: 1.0
     normalize: false
 
+# Drift per step (lr x measured gradient norm) matched to the validated resnet20 runs.
 sampler:
   name: sgld
   params:
-    lr: 0.0002
+    lr: 0.0001
     temperature: 1.0
 
 # 40 snapshots after the burn-in: 2220, 2240, ..., 3000

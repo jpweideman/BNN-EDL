@@ -1,6 +1,8 @@
 """
-ResNet20 for CIFAR-10 with Filter Response Normalization.
-Adapted from https://github.com/activatedgeek/understanding-bayesian-classification/
+ResNets for CIFAR-10 with Filter Response Normalization.
+ResNet20 adapted from https://github.com/activatedgeek/understanding-bayesian-classification/
+ResNet18 adapted from https://github.com/ruqizhang/csgmcmc/blob/master/models/resnet.py,
+with batch norm replaced by FRN and ReLU replaced by TLU.
 """
 
 import torch
@@ -129,8 +131,45 @@ class ResNet20(_ResNet):
     """
     def __init__(self, output_layer_config, in_channels=3):
         super().__init__(_BasicBlock, [3, 3, 3], in_channels=in_channels)
-        
+
         # Build output layer
         self.output_layer = OutputLayerBuilder(output_layer_config).build(
             input_dim=64
         )
+
+
+@MODEL_REGISTRY.register("resnet18")
+class ResNet18(nn.Module):
+    """
+    ResNet18 for CIFAR-10 with Filter Response Normalization.
+    ~11.2M parameters.
+    """
+    def __init__(self, output_layer_config, in_channels=3):
+        super().__init__()
+        self.in_planes = 64
+
+        self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=3,
+                               stride=1, padding=1, bias=False)
+        self.bn1 = FilterResponseNorm2d(64)
+        self.tlu1 = TLU2d(64)
+        self.layer1 = self._make_layer(_BasicBlock, 64, 2, stride=1)
+        self.layer2 = self._make_layer(_BasicBlock, 128, 2, stride=2)
+        self.layer3 = self._make_layer(_BasicBlock, 256, 2, stride=2)
+        self.layer4 = self._make_layer(_BasicBlock, 512, 2, stride=2)
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.output_layer = OutputLayerBuilder(output_layer_config).build(
+            input_dim=512
+        )
+
+    _make_layer = _ResNet._make_layer
+
+    def forward(self, x):
+        out = self.tlu1(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = self.pool(out)
+        out = out.view(out.size(0), -1)
+        out = self.output_layer(out)
+        return out
