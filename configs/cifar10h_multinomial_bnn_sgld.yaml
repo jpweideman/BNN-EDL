@@ -10,3 +10,5 @@ seed: 0
 
 training:
   dataset: cifar10h_train
+  checkpoint:
+    dataset: cifar10h_val

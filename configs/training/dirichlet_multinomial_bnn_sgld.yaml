@@ -1,4 +1,4 @@
-num_epochs: 2400
+num_epochs: 3000
 device: auto
 
 pretrained:
@@ -31,14 +31,16 @@ sampler:
     lr: 0.0012
     temperature: 1.0
 
-# 10 snapshots, counted back from the final epoch: 2220, 2240, ..., 2400
+# 40 snapshots after the burn-in: 2220, 2240, ..., 3000
 sampling:
   enabled: true
   start_epoch: 2220
   sample_interval: 20
 
 checkpoint:
-  enabled: false
+  enabled: true
+  metric: count_accuracy
+  objective: maximize
 
 early_stopping:
   enabled: false
