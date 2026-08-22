@@ -236,3 +236,15 @@ experiments:
     pretrained_from: e1_fm_pretrain_edl
     overrides:
       - training.prior_fs.params.rate=0.4483
+  e1_fm_L58_scratch:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.4483
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
+  e1_fm_L58_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.4483
+      - training.pretrained.match_prior_mode=true
