@@ -7,3 +7,11 @@ experiments:
     config: cifar10h_multinomial_bnn_sgld
   e2_c10h_ebnn_dm_scratch:
     config: cifar10h_dirichlet_multinomial_bnn_sgld
+  e2_c10h_ebnn_dm_mode200_scratch:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.13
+  e2_c10h_ebnn_dm_noprior_scratch:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    overrides:
+      - training.prior_fs=null
