@@ -3,8 +3,6 @@
 # The runner loops seeds (s0, s1, s2) and resolves pretrained_from per seed.
 # Gamma prior defaults to sd = 20% of the mode: concentration 27,
 # rate = 26 / mode. The _sd arms override both parameters.
-# e1_fm_L100_shift_chainB starts from the next seed's checkpoint and is
-# the second chain of the pooling diagnostic.
 
 wandb_project: ebnn-thesis
 seed: 0
@@ -29,24 +27,6 @@ experiments:
       - training.sampling.start_epoch=105
 
   # Fashion-MNIST: eBNN prior-mode grid, three starts
-  e1_fm_L15_scratch:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    overrides:
-      - training.prior_fs.params.rate=1.73333
-      - training.num_epochs=150
-      - training.sampling.start_epoch=105
-  e1_fm_L15_warm:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    pretrained_from: e1_fm_pretrain_edl
-    overrides:
-      - training.prior_fs.params.rate=1.73333
-  e1_fm_L15_shift:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    pretrained_from: e1_fm_pretrain_edl
-    overrides:
-      - training.prior_fs.params.rate=1.73333
-      - training.pretrained.match_prior_mode=true
-
   e1_fm_L30_scratch:
     config: fashion_mnist_dirichlet_bnn_sgld
     overrides:
@@ -63,6 +43,25 @@ experiments:
     pretrained_from: e1_fm_pretrain_edl
     overrides:
       - training.prior_fs.params.rate=0.86667
+      - training.pretrained.match_prior_mode=true
+
+  # Fashion-MNIST: matched-mode arm (prior mode at the checkpoint level)
+  e1_fm_L58_warm:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.4483
+  e1_fm_L58_scratch:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.4483
+      - training.num_epochs=150
+      - training.sampling.start_epoch=105
+  e1_fm_L58_shift:
+    config: fashion_mnist_dirichlet_bnn_sgld
+    pretrained_from: e1_fm_pretrain_edl
+    overrides:
+      - training.prior_fs.params.rate=0.4483
       - training.pretrained.match_prior_mode=true
 
   e1_fm_L100_scratch:
@@ -101,15 +100,6 @@ experiments:
       - training.prior_fs.params.rate=0.086667
       - training.pretrained.match_prior_mode=true
 
-  # Fashion-MNIST: second chain of the pooling diagnostic
-  e1_fm_L100_shift_chainB:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    pretrained_from: e1_fm_pretrain_edl
-    pretrained_from_next_seed: true
-    overrides:
-      - training.prior_fs.params.rate=0.26
-      - training.pretrained.match_prior_mode=true
-
   # CIFAR-10: pretrains (also the deterministic baselines)
   e1_c10_pretrain_sgd:
     config: cifar10_sgd
@@ -140,13 +130,6 @@ experiments:
       - training.prior_fs.params.rate=0.26
       - training.pretrained.match_prior_mode=true
 
-  # No-prior reference arms
-  e1_fm_noprior_warm:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    pretrained_from: e1_fm_pretrain_edl
-    overrides:
-      - training.prior_fs=null
-
   # Fashion-MNIST: prior-standard-deviation sweep at mode 100
   e1_fm_L100_sd1000_shift:
     config: fashion_mnist_dirichlet_bnn_sgld
@@ -176,12 +159,6 @@ experiments:
     pretrained_from: e1_c10_pretrain_edl
     overrides:
       - training.prior_fs.params.rate=0.26
-
-  e1_c10_noprior_warm:
-    config: cifar10_dirichlet_bnn_sgld
-    pretrained_from: e1_c10_pretrain_edl
-    overrides:
-      - training.prior_fs=null
 
   e1_c10_L300_shift:
     config: cifar10_dirichlet_bnn_sgld
@@ -230,21 +207,3 @@ experiments:
     overrides:
       - training.prior_fs.params.rate=0.086667
 
-  # Fashion-MNIST: matched-mode arm (prior mode at the checkpoint level)
-  e1_fm_L58_warm:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    pretrained_from: e1_fm_pretrain_edl
-    overrides:
-      - training.prior_fs.params.rate=0.4483
-  e1_fm_L58_scratch:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    overrides:
-      - training.prior_fs.params.rate=0.4483
-      - training.num_epochs=150
-      - training.sampling.start_epoch=105
-  e1_fm_L58_shift:
-    config: fashion_mnist_dirichlet_bnn_sgld
-    pretrained_from: e1_fm_pretrain_edl
-    overrides:
-      - training.prior_fs.params.rate=0.4483
-      - training.pretrained.match_prior_mode=true
