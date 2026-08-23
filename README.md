@@ -184,14 +184,3 @@ python run_experiments.py --file_name experiments_e1.yaml --list
 ### Warm starts
 
 `training.pretrained` loads another run's checkpoint before training. For a Dirichlet head under a `gamma_strength` prior, `training.pretrained.match_prior_mode=true` also adds one constant to the output bias, so the pretrained model's median total concentration starts at the prior mode without changing which class it predicts.
-
-## Analysis
-
-Every number, table, and figure reported from these experiments comes from one named script under `analysis/`, reading the run directories in `outputs/` and writing to `results/`:
-
-```bash
-python -m analysis.measurements           # per-run decomposition.csv, terms table, per-seed appendix tables
-python -m analysis.chapter_tables         # initialisation, predictive, prior mode and prior sd tables
-python -m analysis.checkpoint_validation  # EDL checkpoint total concentration on the validation split
-python -m analysis.start_trajectory       # the two initialisation trajectory figures
-```
