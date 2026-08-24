@@ -35,29 +35,27 @@ def create_train_engine(model, optimizer, criterion, device):
     return Engine(train_step)
 
 
-def create_eval_engine(model, criterion, device):
+def create_eval_engine(model, device):
     """
     Create evaluation engine.
-    
+
     Args:
         model: PyTorch model
-        criterion: Loss function
         device: Device to run on
-    
+
     Returns:
         Ignite Engine for evaluation
     """
     def eval_step(engine, batch):
         model.eval()
-        
+
         with torch.no_grad():
             x, y = batch
             x, y = x.to(device), y.to(device)
-            
+
             y_pred = model(x)
-            loss = criterion(y_pred, y)
-            
-            return {'y_pred': y_pred, 'y': y, 'loss': loss}
-    
+
+            return {'y_pred': y_pred, 'y': y}
+
     return Engine(eval_step)
 

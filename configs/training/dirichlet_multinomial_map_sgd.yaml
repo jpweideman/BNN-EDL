@@ -1,0 +1,48 @@
+num_epochs: 400
+device: auto
+
+pretrained:
+  enabled: false
+  path: null
+
+# Keep the Gamma parameters equal to the eBNN's training.prior_fs, so this is
+# the MAP objective of the posterior the SGLD chain samples.
+loss:
+  name: dirichlet_multinomial_count_map
+  params:
+    concentration: 27
+    rate: 0.52
+
+# lr step-matched to the multinomial pretrain by the measured gradient ratio;
+# weight_decay = 1 / (N sd^2): the sd 1.0 weight prior at N = 8000.
+optimizer:
+  name: sgd
+  params:
+    lr: 0.012
+    momentum: 0.9
+    weight_decay: 1.25e-4
+
+scheduler:
+  enabled: true
+  name: cosine_annealing
+  params:
+    T_max: 400
+    eta_min: 0
+
+checkpoint:
+  enabled: true
+  metric: count_accuracy
+  objective: maximize
+
+early_stopping:
+  enabled: false
+  metric: loss
+  patience: 10
+  min_delta: 0.0
+  objective: minimize
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 10

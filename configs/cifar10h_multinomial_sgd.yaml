@@ -1,0 +1,16 @@
+# CIFAR-10H counts: deterministic multinomial baseline, SGD with cosine
+# annealing (the MAP of the multinomial BNN posterior). Also its warm-start
+# pretrain.
+defaults:
+  - datasets: cifar10h
+  - model: resnet20
+  - training: multinomial_sgd
+  - evaluation: multinomial_bnn_cifar10h
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10h_train
+  checkpoint:
+    dataset: cifar10h_val

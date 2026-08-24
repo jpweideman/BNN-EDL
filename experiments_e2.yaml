@@ -1,4 +1,6 @@
 # Run: python run_experiments.py --file_name experiments_e2.yaml --runs 3
+# The warm arms start from their own MAP pretrain (SGD on each posterior's
+# negative log density) and sample 40 snapshots: epochs 220, 240, ..., 1000.
 wandb_project: ebnn-thesis
 seed: 0
 
@@ -15,3 +17,23 @@ experiments:
     config: cifar10h_dirichlet_multinomial_bnn_sgld
     overrides:
       - training.prior_fs=null
+
+
+
+  e2_c10h_bnn_mult_pretrain:
+    config: cifar10h_multinomial_sgd
+  e2_c10h_ebnn_dm_pretrain:
+    config: cifar10h_dirichlet_multinomial_map_sgd
+
+  e2_c10h_bnn_mult_warm:
+    config: cifar10h_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_bnn_mult_pretrain
+    overrides:
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_ebnn_dm_pretrain
+    overrides:
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
