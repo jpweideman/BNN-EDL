@@ -7,6 +7,7 @@ cifar10h_val:
   metrics:
     - name: count_accuracy
     - name: bma_count_accuracy
+    - name: multinomial_count_nll
     - name: bma_multinomial_count_nll
     - name: bma_predictive_entropy
     - name: bma_expected_entropy
@@ -21,6 +22,7 @@ cifar10h_test:
   metrics:
     - name: count_accuracy
     - name: bma_count_accuracy
+    - name: multinomial_count_nll
     - name: bma_multinomial_count_nll
     - name: bma_predictive_entropy
     - name: bma_expected_entropy

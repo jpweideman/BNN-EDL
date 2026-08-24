@@ -1,0 +1,30 @@
+# Deterministic multinomial baseline, CIFAR-10H counts. Val every epoch for
+# checkpoint, test final-only with the per-input array dump. The label metrics
+# (accuracy, nll, brier, calibration) need integer labels, so they run on
+# cifar10_train_holdout, the 50,000 labeled CIFAR-10 training images the count
+# experiment never trains on.
+cifar10h_val:
+  interval: 1
+  metrics:
+    - name: count_accuracy
+    - name: multinomial_count_nll
+cifar10h_test:
+  interval: -1
+  metrics:
+    - name: count_accuracy
+    - name: multinomial_count_nll
+    - name: array_dump
+      params:
+        output_type: softmax
+        target_type: counts
+cifar10_train_holdout:
+  interval: -1
+  metrics:
+    - name: accuracy
+    - name: nll
+    - name: brier_score
+    - name: calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1

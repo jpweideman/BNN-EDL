@@ -5,7 +5,7 @@ defaults:
   - datasets: cifar10h
   - model: resnet20
   - training: multinomial_sgd
-  - evaluation: multinomial_bnn_cifar10h
+  - evaluation: multinomial_sgd_cifar10h
   - _self_
 
 seed: 0

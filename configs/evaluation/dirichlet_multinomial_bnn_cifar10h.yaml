@@ -8,6 +8,8 @@ cifar10h_val:
   metrics:
     - name: count_accuracy
     - name: bma_dirichlet_count_accuracy
+    - name: dirichlet_multinomial_count_nll
+    - name: mean_matched_multinomial_count_nll
     - name: bma_dirichlet_multinomial_count_nll
     - name: bma_mean_matched_multinomial_count_nll
     - name: vacuity
@@ -29,6 +31,8 @@ cifar10h_test:
   metrics:
     - name: count_accuracy
     - name: bma_dirichlet_count_accuracy
+    - name: dirichlet_multinomial_count_nll
+    - name: mean_matched_multinomial_count_nll
     - name: bma_dirichlet_multinomial_count_nll
     - name: bma_mean_matched_multinomial_count_nll
     - name: vacuity
