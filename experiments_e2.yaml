@@ -22,8 +22,16 @@ experiments:
 
   e2_c10h_bnn_mult_pretrain:
     config: cifar10h_multinomial_sgd
-  e2_c10h_ebnn_dm_pretrain:
+  e2_c10h_ebnn_dm_mode50_pretrain:
     config: cifar10h_dirichlet_multinomial_map_sgd
+  e2_c10h_ebnn_dm_mode200_pretrain:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.13
+  e2_c10h_ebnn_dm_mode20_pretrain:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=1.3
 
   e2_c10h_bnn_mult_warm:
     config: cifar10h_multinomial_bnn_sgld
@@ -31,9 +39,23 @@ experiments:
     overrides:
       - training.num_epochs=1000
       - training.sampling.start_epoch=220
-  e2_c10h_ebnn_dm_warm:
+  e2_c10h_ebnn_dm_mode50_warm:
     config: cifar10h_dirichlet_multinomial_bnn_sgld
     pretrained_from: e2_c10h_ebnn_dm_pretrain
     overrides:
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode200_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_ebnn_dm_mode200_pretrain
+    overrides:
+      - training.prior_fs.params.rate=0.13
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode20_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_ebnn_dm_mode20_pretrain
+    overrides:
+      - training.prior_fs.params.rate=1.3
       - training.num_epochs=1000
       - training.sampling.start_epoch=220
