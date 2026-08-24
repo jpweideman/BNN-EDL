@@ -41,4 +41,4 @@ wandb:
   enabled: true
   project: bnn-edl
   name: null
-  log_interval: 10
+  log_interval: 20
