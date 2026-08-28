@@ -2026,9 +2026,9 @@ test = ["pre-commit", "pytest-cov", "pytest-xdist", "ruff"]
 
 [package.source]
 type = "git"
-url = "https://github.com/jpweideman/posteriors.git"
-reference = "fix-sglrw-tree-params"
-resolved_reference = "5ca99e8dc6110dfdc23194bdd8eaf0924403de26"
+url = "https://github.com/normal-computing/posteriors.git"
+reference = "main"
+resolved_reference = "bc5eac383fd2e8a68eaf53bf667a96c826f18ac6"
 
 [[package]]
 name = "prompt-toolkit"
@@ -3229,4 +3229,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.10"
-content-hash = "d97dc91ea0b7450e1694e146627308072854ebd1a926d210d8c0b6d784fc52c0"
+content-hash = "6a16f3ffb6417e54d56d7e382a4662882ec7c8f47091679531822c303ded66b6"
