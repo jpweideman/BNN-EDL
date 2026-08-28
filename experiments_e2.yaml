@@ -67,3 +67,17 @@ experiments:
       - training.prior_fs.params.rate=0.00809017
       - training.num_epochs=1000
       - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode50_noprior_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_map_sgd_dm_mode50_pretrain
+    overrides:
+      - training.prior_fs=null
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode200_noprior_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_map_sgd_dm_mode200_pretrain
+    overrides:
+      - training.prior_fs=null
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
