@@ -6,13 +6,12 @@ from src.training.engine import create_eval_engine
 from src.training.handlers import attach_progress_bar_to_engine
 
 
-def create_evaluators(model, criterion, device, loaders, evaluation_config, optimizer=None):
+def create_evaluators(model, device, loaders, evaluation_config, optimizer=None):
     """
     Create evaluation engines for all configured splits.
 
     Args:
         model: PyTorch model
-        criterion: Loss function
         device: Device to run on
         loaders: Dict mapping split names to DataLoaders
         evaluation_config: Evaluation configuration for all splits
@@ -30,9 +29,9 @@ def create_evaluators(model, criterion, device, loaders, evaluation_config, opti
 
         if is_bnn:
             from src.training.bnn_engine import create_bnn_eval_engine
-            evaluator = create_bnn_eval_engine(model, criterion, device)
+            evaluator = create_bnn_eval_engine(model, device)
         else:
-            evaluator = create_eval_engine(model, criterion, device)
+            evaluator = create_eval_engine(model, device)
 
         metrics = MetricsBuilder(eval_config.metrics).build()
         for name, metric in metrics.items():

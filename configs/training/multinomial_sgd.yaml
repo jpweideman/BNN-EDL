@@ -1,0 +1,44 @@
+num_epochs: 400
+device: auto
+
+pretrained:
+  enabled: false
+  path: null
+
+loss:
+  name: multinomial_count_nll
+
+# lr = standard.yaml's 0.1 / 50: the multinomial gradients carry the ~50 annotations
+# per image. weight_decay = 1 / (N sd^2): the sd 1.0 weight prior at N = 8000, so
+# SGD minimizes the exact negative log posterior (MAP).
+optimizer:
+  name: sgd
+  params:
+    lr: 0.002
+    momentum: 0.9
+    weight_decay: 1.25e-4
+
+scheduler:
+  enabled: true
+  name: cosine_annealing
+  params:
+    T_max: 400
+    eta_min: 0
+
+checkpoint:
+  enabled: true
+  metric: count_accuracy
+  objective: maximize
+
+early_stopping:
+  enabled: false
+  metric: loss
+  patience: 10
+  min_delta: 0.0
+  objective: minimize
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 20

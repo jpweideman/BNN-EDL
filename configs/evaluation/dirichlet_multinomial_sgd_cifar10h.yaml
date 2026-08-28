@@ -1,0 +1,49 @@
+# Deterministic Dirichlet-multinomial baseline (MAP), CIFAR-10H counts. Val
+# every epoch for checkpoint, test final-only with the per-input array dump.
+# The label metrics (accuracy, the dirichlet nll/brier/calibration family)
+# need integer labels, so they run on cifar10_train_holdout, the 50,000
+# labeled CIFAR-10 training images the count experiment never trains on.
+cifar10h_val:
+  interval: 1
+  metrics:
+    - name: count_accuracy
+    - name: dirichlet_multinomial_count_nll
+    - name: mean_matched_multinomial_count_nll
+    - name: vacuity
+    - name: dirichlet_strength
+    - name: analytical_dirichlet_total_uncertainty
+    - name: analytical_dirichlet_aleatoric_uncertainty
+    - name: analytical_dirichlet_distributional_uncertainty
+cifar10h_test:
+  interval: -1
+  metrics:
+    - name: count_accuracy
+    - name: dirichlet_multinomial_count_nll
+    - name: mean_matched_multinomial_count_nll
+    - name: vacuity
+    - name: dirichlet_strength
+    - name: analytical_dirichlet_total_uncertainty
+    - name: analytical_dirichlet_aleatoric_uncertainty
+    - name: analytical_dirichlet_distributional_uncertainty
+    - name: array_dump
+      params:
+        output_type: dirichlet
+        target_type: counts
+cifar10_train_holdout:
+  interval: -1
+  metrics:
+    - name: accuracy
+    - name: vacuity
+    - name: dirichlet_strength
+    - name: dirichlet_nll
+    - name: dirichlet_digamma_nll
+    - name: dirichlet_brier_score
+    - name: dirichlet_expected_brier
+    - name: dirichlet_calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: analytical_dirichlet_total_uncertainty
+    - name: analytical_dirichlet_aleatoric_uncertainty
+    - name: analytical_dirichlet_distributional_uncertainty

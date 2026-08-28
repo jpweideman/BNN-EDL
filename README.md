@@ -76,8 +76,6 @@ BNN-EDL/
 │   ├── builders/          # Config -> component, via the registry
 │   ├── utils/
 │   └── registry.py
-├── analysis/              # Scripts that produce every reported number
-├── results/               # Their outputs: csv files and LaTeX tables
 ├── tests/
 ├── experiments_*.yaml     # Experiment lists for run_experiments.py
 ├── train.py

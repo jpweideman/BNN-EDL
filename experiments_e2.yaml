@@ -1,0 +1,69 @@
+# Run: python run_experiments.py --file_name experiments_e2.yaml --runs 3
+# The warm arms start from their own MAP pretrain (SGD on each posterior's
+# negative log density) and sample 40 snapshots: epochs 220, 240, ..., 1000.
+# The _wide_ warm arms keep those default sd MAP starts and widen only the
+# sampling prior: concentration 2.618034 makes the Gamma sd equal its mode
+# (sd = 100% of the mode at both modes), against sd = 20% in the default arms.
+wandb_project: ebnn-thesis
+seed: 0
+
+experiments:
+  e2_c10h_bnn_mult_scratch:
+    config: cifar10h_multinomial_bnn_sgld
+  e2_c10h_ebnn_dm_scratch:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+  e2_c10h_ebnn_dm_mode200_scratch:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    overrides:
+      - training.prior_fs.params.rate=0.13
+  e2_c10h_ebnn_dm_noprior_scratch:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    overrides:
+      - training.prior_fs=null
+
+
+
+  e2_c10h_sgd_mult_pretrain:
+    config: cifar10h_multinomial_sgd
+  e2_c10h_map_sgd_dm_mode50_pretrain:
+    config: cifar10h_dirichlet_multinomial_map_sgd
+  e2_c10h_map_sgd_dm_mode200_pretrain:
+    config: cifar10h_dirichlet_multinomial_map_sgd
+    overrides:
+      - training.loss.params.rate=0.13
+
+  e2_c10h_bnn_mult_warm:
+    config: cifar10h_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_sgd_mult_pretrain
+    overrides:
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode50_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_map_sgd_dm_mode50_pretrain
+    overrides:
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode200_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_map_sgd_dm_mode200_pretrain
+    overrides:
+      - training.prior_fs.params.rate=0.13
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode50_wide_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_map_sgd_dm_mode50_pretrain
+    overrides:
+      - training.prior_fs.params.concentration=2.618034
+      - training.prior_fs.params.rate=0.03236068
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220
+  e2_c10h_ebnn_dm_mode200_wide_warm:
+    config: cifar10h_dirichlet_multinomial_bnn_sgld
+    pretrained_from: e2_c10h_map_sgd_dm_mode200_pretrain
+    overrides:
+      - training.prior_fs.params.concentration=2.618034
+      - training.prior_fs.params.rate=0.00809017
+      - training.num_epochs=1000
+      - training.sampling.start_epoch=220

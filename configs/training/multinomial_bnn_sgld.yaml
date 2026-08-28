@@ -1,0 +1,44 @@
+num_epochs: 3000
+device: auto
+
+pretrained:
+  enabled: false
+  path: null
+
+loss:
+  name: multinomial_count_nll
+
+likelihood:
+  name: multinomial
+
+prior:
+  name: diagonal_normal
+  params:
+    sd: 1.0
+    normalize: false
+
+sampler:
+  name: sgld
+  params:
+    lr: 0.0002
+    temperature: 1.0
+
+# 40 snapshots after the burn-in: 2220, 2240, ..., 3000
+sampling:
+  enabled: true
+  start_epoch: 2220
+  sample_interval: 20
+
+checkpoint:
+  enabled: true
+  metric: count_accuracy
+  objective: maximize
+
+early_stopping:
+  enabled: false
+
+wandb:
+  enabled: true
+  project: bnn-edl
+  name: null
+  log_interval: 20

@@ -31,32 +31,31 @@ def create_bnn_train_engine(model, optimizer, device):
     return Engine(bnn_train_step)
 
 
-def create_bnn_eval_engine(model, criterion, device):
+def create_bnn_eval_engine(model, device):
     """
     Create BNN evaluation engine.
-    
+
     Args:
         model: PyTorch model
-        criterion: Loss function
         device: Device to run on
-    
+
     Returns:
         Ignite Engine for BNN evaluation
-        
+
     Note:
         The sampling_manager will be set on the engine by the trainer after creation.
     """
-    
+
     def bnn_eval_step(engine, batch):
         model.eval()
         x, y = batch
         x, y = x.to(device), y.to(device)
-        
+
         with torch.no_grad():
             # Get sampling_manager from engine (set by trainer)
             sampling_manager = getattr(engine, 'sampling_manager', None)
             current_sample_files = sampling_manager.get_sample_files() if sampling_manager else []
-            
+
             # Check if samples are available
             if current_sample_files and len(current_sample_files) > 0:
                 current_state = {k: v.clone() for k, v in model.state_dict().items()}
@@ -70,20 +69,17 @@ def create_bnn_eval_engine(model, criterion, device):
 
                 model.load_state_dict(current_state)
                 y_pred = model(x)
-                loss = criterion(y_pred, y)
-                
+
                 # Return all_preds for BNN ensemble metrics to compute BMA
                 return {
                     'y_pred': y_pred,
                     'y': y,
-                    'loss': loss,
                     'all_preds': all_preds
                 }
             else:
                 # Single model evaluation (no samples yet)
                 y_pred = model(x)
-                loss = criterion(y_pred, y)
-                return {'y_pred': y_pred, 'y': y, 'loss': loss}
+                return {'y_pred': y_pred, 'y': y}
     
     engine = Engine(bnn_eval_step)
     return engine

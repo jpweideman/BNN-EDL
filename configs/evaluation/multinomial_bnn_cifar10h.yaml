@@ -1,0 +1,60 @@
+# Multinomial BNN, CIFAR-10H counts. Val logs the same metrics as test; its
+# array dump lets the analysis rebuild the cumulative BMA curve offline. Test
+# final-only. cifar10_train_holdout scores the label metrics on the 50,000
+# CIFAR-10 training images, which the count experiment never trains on.
+cifar10h_val:
+  interval: 20
+  metrics:
+    - name: count_accuracy
+    - name: bma_count_accuracy
+    - name: multinomial_count_nll
+    - name: bma_multinomial_count_nll
+    - name: bma_predictive_entropy
+    - name: bma_expected_entropy
+    - name: bma_mutual_information
+    - name: bma_predictive_variance
+    - name: array_dump
+      params:
+        output_type: softmax
+        target_type: counts
+cifar10h_test:
+  interval: -1
+  metrics:
+    - name: count_accuracy
+    - name: bma_count_accuracy
+    - name: multinomial_count_nll
+    - name: bma_multinomial_count_nll
+    - name: bma_predictive_entropy
+    - name: bma_expected_entropy
+    - name: bma_mutual_information
+    - name: bma_predictive_variance
+    - name: array_dump
+      params:
+        output_type: softmax
+        target_type: counts
+cifar10_train_holdout:
+  interval: -1
+  metrics:
+    - name: accuracy
+    - name: bma_accuracy
+    - name: bma_nll
+    - name: bma_brier_score
+    - name: nll
+    - name: brier_score
+    - name: calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: bma_calibration_error
+      params:
+        num_classes: 10
+        num_bins: 15
+        norm: l1
+    - name: bma_predictive_entropy
+    - name: bma_expected_entropy
+    - name: bma_mutual_information
+    - name: bma_predictive_variance
+    - name: array_dump
+      params:
+        output_type: softmax

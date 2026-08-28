@@ -99,7 +99,7 @@ def main(cfg: DictConfig):
 
     # Evaluators
     evaluators = create_evaluators(
-        model, criterion, device, loaders, cfg.evaluation,
+        model, device, loaders, cfg.evaluation,
         optimizer=optimizer
     )
 

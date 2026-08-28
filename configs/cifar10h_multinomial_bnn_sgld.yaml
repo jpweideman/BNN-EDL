@@ -1,0 +1,14 @@
+# CIFAR-10H counts: BNN with a multinomial likelihood, sampled with SGLD.
+defaults:
+  - datasets: cifar10h
+  - model: resnet20
+  - training: multinomial_bnn_sgld
+  - evaluation: multinomial_bnn_cifar10h
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10h_train
+  checkpoint:
+    dataset: cifar10h_val

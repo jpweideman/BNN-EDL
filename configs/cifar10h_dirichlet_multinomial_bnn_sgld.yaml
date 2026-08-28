@@ -1,0 +1,19 @@
+# CIFAR-10H counts: eBNN with a Dirichlet-multinomial likelihood, sampled
+# with SGLD under a Gamma function-space prior on the total concentration.
+# The prior mode 50 matches one annotation panel (totals 47-63), and keeps a
+# cold start out of the vacuous alpha = 1 collapse; the likelihood moves
+# alpha_0 from there. The prior level is the Gamma mode (concentration - 1)
+# / rate.
+defaults:
+  - datasets: cifar10h
+  - model: resnet20_dirichlet
+  - training: dirichlet_multinomial_bnn_sgld
+  - evaluation: dirichlet_multinomial_bnn_cifar10h
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10h_train
+  checkpoint:
+    dataset: cifar10h_val

@@ -19,8 +19,9 @@ class ArrayDump(BaseMetric):
 
     Per input (averaged over snapshots where they differ): total concentration
     alpha_0, the aleatoric, distributional and epistemic uncertainty terms, max
-    mean probability, predicted class, true label, and position in the
-    (unshuffled) loader. Per snapshot: the mean vectors (S x N x C) and alpha_0
+    mean probability, predicted class, the target (true label, or count vector
+    in counts mode), and position in the (unshuffled) loader. Per snapshot:
+    the mean vectors (S x N x C) and alpha_0
     (S x N) in float16, which make the full concentration vectors
     reconstructible as alpha = alpha_0 * m.
 
@@ -29,21 +30,26 @@ class ArrayDump(BaseMetric):
             (logits, e.g. the categorical BNN and the deterministic nets)
         store_snapshots: Keep the per-snapshot arrays (default: True). Set
             False on large diagnostic splits that only need the scalars.
+        target_type: 'labels' (default) stores true_label; 'counts' stores
+            the integer count vectors instead.
     """
 
-    def __init__(self, output_type="dirichlet", store_snapshots=True):
+    def __init__(self, output_type="dirichlet", store_snapshots=True, target_type="labels"):
         if output_type not in ("dirichlet", "softmax"):
             raise ValueError(f"output_type must be 'dirichlet' or 'softmax', got '{output_type}'")
+        if target_type not in ("labels", "counts"):
+            raise ValueError(f"target_type must be 'labels' or 'counts', got '{target_type}'")
         self.output_type = output_type
         self.store_snapshots = store_snapshots
+        self.target_type = target_type
         super().__init__()
 
     def reset(self):
-        self._rows = {
-            'alpha0': [], 'aleatoric': [], 'distributional': [],
-            'epistemic': [], 'max_mean_prob': [], 'pred_class': [],
-            'true_label': [], 'index': [],
-        }
+        target_key = 'true_label' if self.target_type == "labels" else 'true_counts'
+        self._rows = {key: [] for key in [
+            'alpha0', 'aleatoric', 'distributional', 'epistemic',
+            'max_mean_prob', 'pred_class', target_key, 'index',
+        ]}
         self._snapshot_means = []   # per batch: (S, B, C)
         self._snapshot_alpha0 = []  # per batch: (S, B)
         self._count = 0
@@ -86,7 +92,10 @@ class ArrayDump(BaseMetric):
         rows['epistemic'].append(epistemic.cpu())
         rows['max_mean_prob'].append(max_mean_prob.cpu())
         rows['pred_class'].append(pred_class.cpu())
-        rows['true_label'].append(output['y'].cpu())
+        if self.target_type == "counts":
+            rows['true_counts'].append(output['y'].cpu().to(torch.int64))
+        else:
+            rows['true_label'].append(output['y'].cpu())
         rows['index'].append(torch.arange(self._count, self._count + batch_size))
         if self.store_snapshots:
             self._snapshot_means.append(m_s.cpu().to(torch.float16))

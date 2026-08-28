@@ -1,0 +1,16 @@
+# CIFAR-10H counts: deterministic Dirichlet-multinomial baseline, SGD on the
+# MAP objective (count NLL + Gamma strength prior). Also the eBNN's warm-start
+# pretrain.
+defaults:
+  - datasets: cifar10h
+  - model: resnet20_dirichlet
+  - training: dirichlet_multinomial_map_sgd
+  - evaluation: dirichlet_multinomial_sgd_cifar10h
+  - _self_
+
+seed: 0
+
+training:
+  dataset: cifar10h_train
+  checkpoint:
+    dataset: cifar10h_val
