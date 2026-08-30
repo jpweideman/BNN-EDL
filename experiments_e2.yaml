@@ -37,6 +37,7 @@ experiments:
   e2_c10h_map_sgd_dm_noprior_pretrain:
     config: cifar10h_dirichlet_multinomial_map_sgd
     overrides:
+      - training.loss.name=dirichlet_multinomial_count_nll
       - training.loss.params=null
 
   e2_c10h_bnn_mult_warm:
