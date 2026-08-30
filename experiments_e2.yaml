@@ -4,6 +4,9 @@
 # The _wide_ warm arms keep those default sd MAP starts and widen only the
 # sampling prior: concentration 2.618034 makes the Gamma sd equal its mode
 # (sd = 100% of the mode at both modes), against sd = 20% in the default arms.
+# The _noprior_ warm arms keep the MAP starts and drop the sampling prior
+# entirely, separating what the prior does at initialisation from what it does
+# during sampling.
 wandb_project: ebnn-thesis
 seed: 0
 
@@ -31,6 +34,10 @@ experiments:
     config: cifar10h_dirichlet_multinomial_map_sgd
     overrides:
       - training.loss.params.rate=0.13
+  e2_c10h_map_sgd_dm_noprior_pretrain:
+    config: cifar10h_dirichlet_multinomial_map_sgd
+    overrides:
+      - training.loss.params=null
 
   e2_c10h_bnn_mult_warm:
     config: cifar10h_multinomial_bnn_sgld
